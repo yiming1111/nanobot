@@ -120,7 +120,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - MCP 启动时提前构造检索服务并加载 FAISS 索引，避免首次工具调用才触发索引导入；BGE-M3 与 reranker 仍按需加载。模型缓存启用离线读取，避免每次重启重复访问 Hugging Face。
 - Skill 明确将引用格式与引用验证视为回答要求，不能拆成独立子问题；用户明确要求单一子问题时必须只创建一个。
 
-### 阶段 7：Claim 提取与引用验证【核心代码已完成，真实 WebUI 回归待验证】
+### 阶段 7：Claim 提取与引用验证【核心代码已完成，首次真实 WebUI 回归通过】
 
 已实现：
 
@@ -135,7 +135,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 状态文件持久化主张、逐对引用检查、验证轮数和缺口检索记录，旧状态文件通过默认字段保持兼容；
 - 更新 `paper-research` Skill，强制“先形成草稿 → 原子主张 → 独立语义复核 → 服务端结构校验 → 必要时一次修订/补检索 → 最终回答”的顺序。
 
-尚待真实 WebUI 回归：分别验证完全支持、部分支持、伪造 evidence ID、证据冲突和本地语料不足五类结果，并观察主 Agent 是否严格执行独立复核轮。
+首次真实 WebUI 回归已验证完全支持场景与同一 Session 内的追问。尚待验证部分支持、伪造 evidence ID、证据冲突和本地语料不足四类结果，并观察主 Agent 是否严格执行独立复核轮。
 
 ### 阶段 8：Pipeline Trace 与评测【未开始】
 
@@ -191,10 +191,10 @@ tests/research/                            对应单元测试
 - 预加载后的首次真实提问未再超时：论文粗召回约 1 秒，chunk 检索与精排约 56 秒，包含 LLM 规划和回答生成的整轮耗时约 79 秒；结果成功引用目标论文。阶段 6 的首次查询超时问题已关闭。
 - 阶段 7 新增模型、引用可定位性、语义判断聚合、子问题覆盖、验证轮数、伪造 evidence ID 和有边界缺口检索测试；完整 research 测试现为 19 项通过。
 - 本机 `nanobot-dev` 环境没有 pytest；测试通过复用本机已有 pytest 包执行，没有安装或修改依赖。测试出现的 `asyncio_mode` 警告来自该复用环境缺少 pytest-asyncio，不影响本次同步测试结果。
+- 阶段 7 首次真实 WebUI 回归通过：两轮问题使用同一 nanobot Session；第二轮“刚才那篇论文”被正确还原为完整论文标题，两轮均按 `research_start → research_retrieve → research_verify` 完成且没有超时。两个独立 ResearchState 均为 `completed`，对应 Claim 均为 `supported`。
+- Windows 的通用版 FAISS wheel 仅包含 `_swigfaiss.pyd` 时，现会在导入前自动选择 `FAISS_OPT_LEVEL=generic`，避免先探测不存在的 `swigfaiss_avx2` 并打印误导性的 `ModuleNotFoundError`。真实 FAISS 导入与向量查询通过，检索测试 4 项通过。
 
 ## 7. 下一步
 
-1. 重启 WebUI，等待 `research MCP runtime preparation completed` 和 `MCP server 'paperResearch': connected`，确认连接日志显示六个工具。
-2. 用已有简单问题做阶段 7 首次回归。正常调用顺序应为 `research_start → research_retrieve → 必要时 get_neighbor_evidence → research_status → research_verify`；只有必要主张验证失败时才出现 `research_retrieve_claim_gap → research_verify`。
-3. 分别测试完全支持、部分支持、伪造 evidence ID、证据冲突和语料不足，确认最终状态及回答行为与 Claim-Evidence Matrix 一致。
-4. 阶段 7 回归通过后，建立固定评测集和 Pipeline Trace，进入阶段 8；评测发现的问题再反馈到阶段 6、7 修正。
+1. 继续测试阶段 7 的部分支持、伪造 evidence ID、证据冲突和语料不足场景，确认最终状态及回答行为与 Claim-Evidence Matrix 一致。
+2. 阶段 7 剩余回归通过后，建立固定评测集和 Pipeline Trace，进入阶段 8；评测发现的问题再反馈到阶段 6、7 修正。

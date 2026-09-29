@@ -3,10 +3,35 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Sequence, cast
 
 from nanobot.research.models import SearchHit
+
+
+def _configure_faiss_loader() -> None:
+    """Skip unavailable SIMD probes in generic-only Windows FAISS wheels."""
+    if sys.platform != "win32" or os.environ.get("FAISS_OPT_LEVEL"):
+        return
+    spec = find_spec("faiss")
+    locations = spec.submodule_search_locations if spec is not None else None
+    if not locations:
+        return
+    package_dir = Path(next(iter(locations)))
+    optimized_patterns = (
+        "swigfaiss_avx*",
+        "_swigfaiss_avx*",
+        "swigfaiss_sve*",
+        "_swigfaiss_sve*",
+    )
+    optimized_wrapper_found = any(
+        next(package_dir.glob(pattern), None) is not None for pattern in optimized_patterns
+    )
+    if not optimized_wrapper_found:
+        os.environ["FAISS_OPT_LEVEL"] = "generic"
 
 
 def _research_dependency_error(package: str) -> RuntimeError:
@@ -60,6 +85,7 @@ class FaissDenseIndex:
     @staticmethod
     def _modules() -> tuple[Any, Any]:
         try:
+            _configure_faiss_loader()
             import faiss
         except ImportError as exc:
             raise _research_dependency_error("faiss-cpu") from exc
