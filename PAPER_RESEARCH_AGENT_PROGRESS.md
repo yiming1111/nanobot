@@ -86,7 +86,7 @@
 - `research_retrieve`：对符合年份和章节约束的全库 chunk 执行 BM25、BGE-M3、RRF 与 Rerank。
 - `research_reflect`：判断各证据需求是否已被当前候选证据直接覆盖，并在首次不足时给出一个聚焦补检索 Query。
 - `get_neighbor_evidence`：读取证据前后段落，降低断章取义风险。
-- `research_status`：读取任务计划和当前证据状态。
+- `research_status`：读取任务计划和当前证据状态，并可短暂等待正在执行的检索结束。
 - `research_finalize`：在回答生成后检查引用 chunk 是否经过对应子问题的 Reflect 确认，并补全论文标题和页码。
 
 论文级 `search_papers` 仍作为评测和后续对比实验能力保留，不参与当前主检索路径；Agent 只调用统一的全库 chunk 检索工具。
@@ -109,19 +109,21 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 论文级 `search_papers` 从主路径移除，避免论文粗筛漏召回导致正确 chunk 无法进入 RRF 与 Rerank；
 - 检索阶段只负责返回候选证据，Rerank 分数用于排序和观测，不再把“返回了一个 chunk”误判为“证据已经足够回答问题”；
 - 每个子问题最多执行两轮语义检索：首次检索，以及一次由 Reflect 明确触发的聚焦补检索；第三次语义检索由服务端拒绝；
-- 记录每轮 Query、全库检索范围、证据 ID、充分性原因和耗时；
+- 记录每轮 Query、全库检索范围、chunk ID、充分性原因和耗时；
 - Rerank 候选从 30 降至 12，默认返回证据从 8 降至 4；`research_status` 默认省略证据正文，避免上下文重复膨胀；
 - 本地模型在同一 MCP 进程中只初始化一次并加锁复用；运行配置使用本地 Hugging Face 缓存，工具超时调整为 240 秒。
 - `research_retrieve` 记录入口和全库证据检索耗时，用于区分 MCP 调度等待、模型冷启动和实际检索耗时。
 - MCP 启动时提前构造检索服务并加载 FAISS 索引，避免首次工具调用才触发索引导入；BGE-M3 与 reranker 仍按需加载。模型缓存启用离线读取，避免每次重启重复访问 Hugging Face。
 - Skill 明确将引用格式与引用验证视为回答要求，不能拆成独立子问题；用户明确要求单一子问题时必须只创建一个。
+- 检索调用超时后先读取原任务状态，不立即重复启动：后台仍在执行时每次最多等待 10 秒并检查，最多检查 3 次；已完成则复用落盘证据，明确失败后允许同一语义轮技术重试 1 次，第二次失败后停止。技术重试不占用 Reflect 的两轮语义检索额度。
+- 同一任务、同一子问题使用执行锁防止并发重复检索；运行中、完成和失败状态写入 ResearchState，进程中断后遗留的运行状态会转为失败并进入有限重试。
 
 ### 阶段 7：证据充分性 Reflect 与有界二次检索【已完成】
 
 已实现：
 
 - 将 Reflect 定义为 Rerank 后、Generate 前的证据充分性门禁；它只判断现有证据是否直接覆盖每个证据需求，不再把 Claim 拆分和多状态聚合作为主流程；
-- 新增 `research_reflect`，每个待检查子问题只返回“充分/不充分”、所依据的证据 ID、原因，以及首次不足时使用的一个聚焦 `next_query`；
+- 新增 `research_reflect`，每个待检查子问题只返回“充分/不充分”、所依据的 supporting chunk ID、原因，以及首次不足时使用的一个聚焦 `next_query`；
 - 对首次 Reflect 不充分的子问题允许一次补检索；第二次仍不充分就停止，全部子问题不足时进入 `refused`，部分充分时只允许回答有证据的部分；
 - 两轮检索均使用全库 chunk；第二轮只替换为 Reflect 针对证据缺口生成的聚焦 Query；
 - Generate 后只运行 `research_finalize` 的确定性引用检查：验证内部 chunk ID 属于当前任务、经过对应子问题的 Reflect 确认，并具有论文标题和页码；
@@ -132,7 +134,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 
 已实现：
 
-- 新增按 `task_id` 持久化的 `PipelineTrace`，记录 Plan、Retrieve、邻接证据、Reflect、Status 和 Finalize 的输入摘要、输出摘要、证据 ID、决策与耗时；Trace 不复制证据正文，避免再次制造超长工具历史；
+- 新增按 `task_id` 持久化的 `PipelineTrace`，记录 Plan、Retrieve、邻接证据、Reflect、Status 和 Finalize 的输入摘要、输出摘要、chunk ID、决策与耗时；Trace 不复制证据正文，避免再次制造超长工具历史；
 - Trace 写入失败不阻断论文问答主流程，并提供 `nanobot-research trace <task_id>` 汇总工具调用次数、阶段耗时、chunk ID、错误、最近一次 Reflect 与最终引用检查结果；
 - 新增 JSONL 固定检索评测集、`nanobot-research eval` 命令与统一 JSON 报告，计算 Paper Recall@K、Paper MRR、Evidence Recall@K、Evidence Paper Recall@K 和检索延迟；
 - 第一版真实基线包含 4 个已人工确认目标论文与目标 chunk 的问题，覆盖 MEC 广义纳什均衡、动态势博弈、车联网卸载和区块链资源定价；
@@ -174,7 +176,7 @@ tests/research/                            对应单元测试
 
 ## 6. 当前验证记录
 
-- 科研模块流程测试：22 项通过，其中 16 项非 MCP 测试、6 项 MCP 工具流程测试。
+- 科研模块流程测试：25 项通过，其中包含防止重复检索、技术失败仅重试一次、等待运行中任务和复用超时后已完成结果的测试。
 - nanobot 现有 Skill Loader 回归测试：26 项通过。
 - `nanobot.research` Python 编译检查通过。
 - `nanobot-research --help` 启动通过。
@@ -201,7 +203,8 @@ tests/research/                            对应单元测试
 - 4 项真实固定集基线已运行成功：Paper Recall@10 与 MRR 均为 1.0，Evidence Recall@8 为 0.875，证据精排平均约 45.3 秒。报告由统一 JSON 评测命令生成。
 - Agentic RAG 流程完成收敛：删除新任务中的 Claim Matrix 与五状态语义聚合，MCP 工具调整为 `research_start`、`research_retrieve`、`research_reflect`、`get_neighbor_evidence`、`research_status`、`research_finalize`。14 项非 MCP research 测试及 6 项 MCP 工具流程测试通过；13 个历史 ResearchState 均能继续读取。
 - 主检索路径由论文 Top-N 粗筛后检索改为全库 chunk 混合检索；年份和章节约束直接作用于 chunk 候选集。新增全库单次调用与年份过滤测试，当前共 15 项非 MCP 测试及 6 项 MCP 流程测试通过。论文级索引保留用于检索评测和后续对比实验。
-- 新任务不再生成或提交 evidence ID。Reflect 直接记录每个子问题采用的多个 supporting chunk ID；Finalize 接收“子问题 ID + chunk ID”并验证该 chunk 已通过 Reflect。chunk ID 只用于内部追踪，读者侧引用只显示论文标题和页码；旧 evidence ID 字段仅用于读取历史状态。当前共 16 项非 MCP 测试及 6 项 MCP 工具流程测试通过。
+- 新任务不再生成或提交 evidence ID。Reflect 直接记录每个子问题采用的多个 supporting chunk ID；Finalize 接收“子问题 ID + chunk ID”并验证该 chunk 已通过 Reflect。chunk ID 只用于内部追踪，读者侧引用只显示论文标题和页码；旧 evidence ID 字段仅用于读取历史状态。对应流程测试通过。
+- 检索工具新增有界故障恢复：技术执行状态区分 `running/completed/failed`；超时后由 Agent 最多进行 3 次、每次 10 秒的状态检查，后台完成则直接使用已保存证据，明确失败则原参数技术重试 1 次；执行锁保证旧调用未结束时不会启动重复检索。科研模块 25 项测试通过。
 
 ## 7. 下一步
 

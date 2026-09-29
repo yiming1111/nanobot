@@ -57,6 +57,12 @@ class RetrievalScope(StrEnum):
     GLOBAL_FALLBACK = "global_fallback"
 
 
+class RetrievalExecutionStatus(StrEnum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class ClaimStatus(StrEnum):
     PENDING = "pending"
     SUPPORTED = "supported"
@@ -123,6 +129,18 @@ class RetrievalAttempt(ResearchModel):
     coverage_reason: str = ""
 
 
+class RetrievalExecution(ResearchModel):
+    """Technical execution state for one semantic retrieval round."""
+
+    query: str = Field(min_length=1)
+    semantic_round: int = Field(ge=1)
+    technical_attempt: int = Field(default=1, ge=1, le=2)
+    status: RetrievalExecutionStatus
+    error: str | None = None
+    started_at: datetime = Field(default_factory=utc_now)
+    finished_at: datetime | None = None
+
+
 class EvidenceAssessment(ResearchModel):
     """Reflect's semantic sufficiency decision for one evidence need."""
 
@@ -176,6 +194,7 @@ class SubQuestion(ResearchModel):
     next_query: str | None = None
     candidate_paper_ids: list[str] = Field(default_factory=list)
     retrieval_attempts: list[RetrievalAttempt] = Field(default_factory=list)
+    retrieval_execution: RetrievalExecution | None = None
     reflections: list[EvidenceReflection] = Field(default_factory=list)
 
 

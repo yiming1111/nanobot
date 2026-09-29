@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from functools import lru_cache
 from time import perf_counter
 from typing import Any
@@ -21,6 +23,7 @@ from nanobot.research.models import (
     ResearchPlan,
     ResearchState,
     ResearchTaskStatus,
+    RetrievalExecutionStatus,
     RetrievalScope,
     SubQuestion,
     SubQuestionStatus,
@@ -47,6 +50,80 @@ class ResearchTools:
         self.states = ResearchStateStore(config.states_dir)
         self.traces = PipelineTraceStore(config.traces_dir)
         self._retrieval = retrieval
+        self._retrieval_locks: dict[tuple[str, str], threading.Lock] = {}
+        self._retrieval_locks_guard = threading.Lock()
+
+    def _retrieval_lock(self, task_id: str, sub_question_id: str) -> threading.Lock:
+        key = (task_id, sub_question_id)
+        with self._retrieval_locks_guard:
+            return self._retrieval_locks.setdefault(key, threading.Lock())
+
+    def _reconcile_interrupted_retrievals(self, task_id: str) -> ResearchState:
+        """Turn stale `running` records from an earlier process into failures."""
+        state = self.states.load(task_id)
+        changed = False
+        for item in state.plan.sub_questions:
+            execution = item.retrieval_execution
+            if (
+                execution is not None
+                and execution.status == RetrievalExecutionStatus.RUNNING
+                and not self._retrieval_lock(task_id, item.sub_question_id).locked()
+            ):
+                self.states.fail_retrieval(
+                    task_id,
+                    item.sub_question_id,
+                    query=execution.query,
+                    error="retrieval process ended before completion",
+                )
+                changed = True
+        return self.states.load(task_id) if changed else state
+
+    @staticmethod
+    def _find_sub_question(state: ResearchState, sub_question_id: str) -> SubQuestion:
+        sub_question = next(
+            (
+                item
+                for item in state.plan.sub_questions
+                if item.sub_question_id == sub_question_id
+            ),
+            None,
+        )
+        if sub_question is None:
+            raise ValueError(f"unknown sub-question: {sub_question_id}")
+        return sub_question
+
+    def _cached_retrieval_payload(
+        self,
+        state: ResearchState,
+        sub_question: SubQuestion,
+    ) -> dict[str, Any] | None:
+        """Return a completed, not-yet-reflected round without searching again."""
+        if not sub_question.retrieval_attempts:
+            return None
+        if len(sub_question.retrieval_attempts) == len(sub_question.reflections):
+            return None
+        attempt = sub_question.retrieval_attempts[-1]
+        evidence = [
+            state.evidence[f"{sub_question.sub_question_id}:{chunk_id}"]
+            for chunk_id in attempt.chunk_ids
+            if f"{sub_question.sub_question_id}:{chunk_id}" in state.evidence
+        ]
+        return {
+            "task_id": state.task_id,
+            "sub_question_id": sub_question.sub_question_id,
+            "semantic_round": attempt.round_index,
+            "max_semantic_rounds": state.max_retrieval_rounds,
+            "retrieval_scope": attempt.scope.value,
+            "retrieval_attempt": attempt.model_dump(mode="json"),
+            "evidence": [item.model_dump(mode="json") for item in evidence],
+            "candidate_passages_found": bool(evidence),
+            "semantic_sufficiency": "pending_reflect",
+            "task_status": state.status.value,
+            "sub_question_status": sub_question.status.value,
+            "execution_status": "completed",
+            "recovered": True,
+            "next_step": "run research_reflect after all pending sub-questions are retrieved",
+        }
 
     def _record_trace(
         self,
@@ -204,113 +281,156 @@ class ResearchTools:
         query = query.strip()
         if not query:
             raise ValueError("query must not be empty")
+
         state = self.states.load(task_id)
-        sub_question = next(
-            (
-                item
-                for item in state.plan.sub_questions
-                if item.sub_question_id == sub_question_id
-            ),
-            None,
-        )
-        if sub_question is None:
-            raise ValueError(f"unknown sub-question: {sub_question_id}")
-        if sub_question.status == SubQuestionStatus.SUFFICIENT:
-            raise RuntimeError(f"evidence is already sufficient for {sub_question_id}")
-        if len(sub_question.retrieval_attempts) >= state.max_retrieval_rounds:
-            raise RuntimeError(
-                f"maximum semantic retrieval rounds reached for {sub_question_id}"
-            )
-        if sub_question.retrieval_attempts and sub_question.next_query is None:
-            raise RuntimeError(
-                f"run research_reflect before retrying {sub_question_id}"
-            )
-        if (
-            sub_question.retrieval_attempts
-            and sub_question.next_query is not None
-            and query != sub_question.next_query.strip()
-        ):
-            raise ValueError(
-                f"retry query must match Reflect next_query: {sub_question.next_query}"
-            )
+        sub_question = self._find_sub_question(state, sub_question_id)
+        cached = self._cached_retrieval_payload(state, sub_question)
+        if cached is not None and sub_question.retrieval_attempts[-1].query == query:
+            return cached
 
-        semantic_round = len(sub_question.retrieval_attempts) + 1
-        logger.info(
-            "research retrieval started task=%s sub_question=%s semantic_round=%d",
-            task_id,
-            sub_question_id,
-            semantic_round,
-        )
-        results, retrieval_attempt = self._retrieve_full_corpus(
-            query=query,
-            top_k=top_k,
-            year_from=year_from,
-            year_to=year_to,
-            sections=sections,
-        )
+        execution_lock = self._retrieval_lock(task_id, sub_question_id)
+        if not execution_lock.acquire(blocking=False):
+            return {
+                "task_id": task_id,
+                "sub_question_id": sub_question_id,
+                "execution_status": "running",
+                "task_status": state.status.value,
+                "next_step": (
+                    "call research_status with wait_seconds=10; "
+                    "do not start a duplicate retrieval"
+                ),
+            }
 
-        evidence = self._evidence_items(
-            sub_question_id=sub_question_id,
-            results=results,
-        )
-        total_elapsed_ms = round((perf_counter() - total_started_at) * 1000)
-        coverage_reason = (
-            "full-corpus candidate passages retrieved; semantic sufficiency awaits "
-            "research_reflect"
-            if evidence
-            else "no candidate passages were found in the eligible corpus chunks"
-        )
-        updated = self.states.add_evidence(
-            task_id,
-            sub_question_id,
-            evidence,
-            query=query,
-            paper_ids=None,
-            scope=RetrievalScope.FULL_CORPUS,
-            elapsed_ms=total_elapsed_ms,
-            coverage_reason=coverage_reason,
-        )
-        updated_sub_question = next(
-            item
-            for item in updated.plan.sub_questions
-            if item.sub_question_id == sub_question_id
-        )
-        payload = {
-            "task_id": task_id,
-            "sub_question_id": sub_question_id,
-            "semantic_round": semantic_round,
-            "max_semantic_rounds": updated.max_retrieval_rounds,
-            "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
-            "retrieval_attempt": retrieval_attempt,
-            "evidence": [item.model_dump(mode="json") for item in evidence],
-            "candidate_passages_found": bool(evidence),
-            "semantic_sufficiency": "pending_reflect",
-            "task_status": updated.status.value,
-            "sub_question_status": updated_sub_question.status.value,
-            "next_step": "run research_reflect after all pending sub-questions are retrieved",
-        }
-        self._record_trace(
-            task_id,
-            stage="retrieve",
-            operation="research_retrieve",
-            elapsed_ms=total_elapsed_ms,
-            sub_question_id=sub_question_id,
-            input_summary={
-                "query": query,
+        try:
+            state = self.states.load(task_id)
+            sub_question = self._find_sub_question(state, sub_question_id)
+            cached = self._cached_retrieval_payload(state, sub_question)
+            if (
+                cached is not None
+                and sub_question.retrieval_attempts[-1].query == query
+            ):
+                return cached
+            if sub_question.status == SubQuestionStatus.SUFFICIENT:
+                raise RuntimeError(
+                    f"evidence is already sufficient for {sub_question_id}"
+                )
+            if len(sub_question.retrieval_attempts) >= state.max_retrieval_rounds:
+                raise RuntimeError(
+                    f"maximum semantic retrieval rounds reached for {sub_question_id}"
+                )
+            if sub_question.retrieval_attempts and sub_question.next_query is None:
+                raise RuntimeError(
+                    f"run research_reflect before retrying {sub_question_id}"
+                )
+            if (
+                sub_question.retrieval_attempts
+                and sub_question.next_query is not None
+                and query != sub_question.next_query.strip()
+            ):
+                raise ValueError(
+                    f"retry query must match Reflect next_query: {sub_question.next_query}"
+                )
+
+            self.states.begin_retrieval(task_id, sub_question_id, query=query)
+            semantic_round = len(sub_question.retrieval_attempts) + 1
+            logger.info(
+                "research retrieval started task=%s sub_question=%s semantic_round=%d",
+                task_id,
+                sub_question_id,
+                semantic_round,
+            )
+            results, retrieval_attempt = self._retrieve_full_corpus(
+                query=query,
+                top_k=top_k,
+                year_from=year_from,
+                year_to=year_to,
+                sections=sections,
+            )
+            evidence = self._evidence_items(
+                sub_question_id=sub_question_id,
+                results=results,
+            )
+            total_elapsed_ms = round((perf_counter() - total_started_at) * 1000)
+            coverage_reason = (
+                "full-corpus candidate passages retrieved; semantic sufficiency awaits "
+                "research_reflect"
+                if evidence
+                else "no candidate passages were found in the eligible corpus chunks"
+            )
+            updated = self.states.add_evidence(
+                task_id,
+                sub_question_id,
+                evidence,
+                query=query,
+                paper_ids=None,
+                scope=RetrievalScope.FULL_CORPUS,
+                elapsed_ms=total_elapsed_ms,
+                coverage_reason=coverage_reason,
+            )
+            updated_sub_question = self._find_sub_question(updated, sub_question_id)
+            payload = {
+                "task_id": task_id,
+                "sub_question_id": sub_question_id,
                 "semantic_round": semantic_round,
-                "year_from": year_from,
-                "year_to": year_to,
-                "sections": sections or [],
-            },
-            output_summary={
+                "max_semantic_rounds": updated.max_retrieval_rounds,
                 "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
                 "retrieval_attempt": retrieval_attempt,
-                "chunk_ids": [item.chunk_id for item in evidence],
+                "evidence": [item.model_dump(mode="json") for item in evidence],
                 "candidate_passages_found": bool(evidence),
+                "semantic_sufficiency": "pending_reflect",
                 "task_status": updated.status.value,
-            },
-        )
-        return payload
+                "sub_question_status": updated_sub_question.status.value,
+                "execution_status": "completed",
+                "recovered": False,
+                "next_step": (
+                    "run research_reflect after all pending sub-questions are retrieved"
+                ),
+            }
+            self._record_trace(
+                task_id,
+                stage="retrieve",
+                operation="research_retrieve",
+                elapsed_ms=total_elapsed_ms,
+                sub_question_id=sub_question_id,
+                input_summary={
+                    "query": query,
+                    "semantic_round": semantic_round,
+                    "year_from": year_from,
+                    "year_to": year_to,
+                    "sections": sections or [],
+                },
+                output_summary={
+                    "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
+                    "retrieval_attempt": retrieval_attempt,
+                    "chunk_ids": [item.chunk_id for item in evidence],
+                    "candidate_passages_found": bool(evidence),
+                    "task_status": updated.status.value,
+                },
+            )
+            return payload
+        except Exception as exc:
+            try:
+                self.states.fail_retrieval(
+                    task_id,
+                    sub_question_id,
+                    query=query,
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+                self._record_trace(
+                    task_id,
+                    stage="retrieve",
+                    operation="research_retrieve",
+                    elapsed_ms=round((perf_counter() - total_started_at) * 1000),
+                    sub_question_id=sub_question_id,
+                    input_summary={"query": query},
+                    status="failed",
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+            except Exception:
+                logger.exception("failed to persist retrieval failure task=%s", task_id)
+            raise
+        finally:
+            execution_lock.release()
 
     def reflect(
         self,
@@ -343,8 +463,7 @@ class ResearchTools:
         unresolved_ids = [
             item.sub_question_id
             for item in updated.plan.sub_questions
-            if item.status == SubQuestionStatus.INSUFFICIENT
-            and item.next_query is None
+            if item.status == SubQuestionStatus.INSUFFICIENT and item.next_query is None
         ]
         payload = {
             "task_id": task_id,
@@ -400,9 +519,7 @@ class ResearchTools:
                 operation="get_neighbor_evidence",
                 elapsed_ms=round((perf_counter() - started_at) * 1000),
                 input_summary={"chunk_id": chunk_id, "window": window},
-                output_summary={
-                    "chunk_ids": [item["chunk_id"] for item in payload]
-                },
+                output_summary={"chunk_ids": [item["chunk_id"] for item in payload]},
             )
         return payload
 
@@ -419,15 +536,15 @@ class ResearchTools:
             raise ValueError("at least one answered sub-question is required")
         if len(answered_sub_question_ids) != len(set(answered_sub_question_ids)):
             raise ValueError("answered_sub_question_ids must be unique")
-        citation_keys = [
-            (item.sub_question_id, item.chunk_id) for item in citations
-        ]
+        citation_keys = [(item.sub_question_id, item.chunk_id) for item in citations]
         if len(citation_keys) != len(set(citation_keys)):
             raise ValueError("citation sub-question and chunk pairs must be unique")
 
         state = self.states.load(task_id)
         if state.status != ResearchTaskStatus.READY_TO_SYNTHESIZE:
-            raise RuntimeError("research_finalize requires reflected sufficient evidence")
+            raise RuntimeError(
+                "research_finalize requires reflected sufficient evidence"
+            )
         sub_questions = {
             item.sub_question_id: item for item in state.plan.sub_questions
         }
@@ -510,12 +627,12 @@ class ResearchTools:
             )
             cited_by_sub_question[evidence.sub_question_id] += 1
             if not locatable:
-                errors.append(
-                    f"citation locator is incomplete: {evidence.chunk_id}"
-                )
+                errors.append(f"citation locator is incomplete: {evidence.chunk_id}")
         for sub_question_id, citation_count in cited_by_sub_question.items():
             if citation_count == 0:
-                errors.append(f"answered sub-question has no citation: {sub_question_id}")
+                errors.append(
+                    f"answered sub-question has no citation: {sub_question_id}"
+                )
         if errors:
             raise ValueError("; ".join(errors))
 
@@ -549,9 +666,7 @@ class ResearchTools:
             elapsed_ms=round((perf_counter() - started_at) * 1000),
             input_summary={
                 "answered_sub_question_ids": answered_sub_question_ids,
-                "citations": [
-                    item.model_dump(mode="json") for item in citations
-                ],
+                "citations": [item.model_dump(mode="json") for item in citations],
             },
             output_summary={
                 "status": updated.status.value,
@@ -566,9 +681,26 @@ class ResearchTools:
         task_id: str,
         *,
         include_evidence_text: bool = False,
+        wait_seconds: int = 0,
     ) -> dict[str, Any]:
         started_at = perf_counter()
-        payload = self.states.load(task_id).model_dump(mode="json")
+        wait_seconds = max(0, min(wait_seconds, 30))
+        deadline = time.monotonic() + wait_seconds
+        while wait_seconds:
+            state = self._reconcile_interrupted_retrievals(task_id)
+            running = [
+                item
+                for item in state.plan.sub_questions
+                if item.retrieval_execution is not None
+                and item.retrieval_execution.status == RetrievalExecutionStatus.RUNNING
+                and self._retrieval_lock(task_id, item.sub_question_id).locked()
+            ]
+            if not running or time.monotonic() >= deadline:
+                break
+            time.sleep(0.2)
+        payload = self._reconcile_interrupted_retrievals(task_id).model_dump(
+            mode="json"
+        )
         if not include_evidence_text:
             for evidence in payload["evidence"].values():
                 evidence.pop("text", None)
@@ -577,7 +709,10 @@ class ResearchTools:
             stage="inspect",
             operation="research_status",
             elapsed_ms=round((perf_counter() - started_at) * 1000),
-            input_summary={"include_evidence_text": include_evidence_text},
+            input_summary={
+                "include_evidence_text": include_evidence_text,
+                "wait_seconds": wait_seconds,
+            },
             output_summary={
                 "status": payload["status"],
                 "evidence_count": len(payload["evidence"]),
@@ -656,9 +791,14 @@ def get_neighbor_evidence(
 def research_status(
     task_id: str,
     include_evidence_text: bool = False,
+    wait_seconds: int = 0,
 ) -> dict[str, Any]:
-    """Return research state; evidence text is omitted by default."""
-    return _tools().status(task_id, include_evidence_text=include_evidence_text)
+    """Return task state, optionally waiting briefly for an active retrieval."""
+    return _tools().status(
+        task_id,
+        include_evidence_text=include_evidence_text,
+        wait_seconds=wait_seconds,
+    )
 
 
 @mcp.tool()

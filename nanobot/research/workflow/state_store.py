@@ -17,9 +17,12 @@ from nanobot.research.models import (
     ResearchState,
     ResearchTaskStatus,
     RetrievalAttempt,
+    RetrievalExecution,
+    RetrievalExecutionStatus,
     RetrievalScope,
     SubQuestion,
     SubQuestionStatus,
+    utc_now,
 )
 
 _SAFE_TASK_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
@@ -64,6 +67,78 @@ class ResearchStateStore:
             raise FileNotFoundError(f"research task not found: {task_id}")
         with self._lock(task_id):
             return ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
+
+    def begin_retrieval(
+        self,
+        task_id: str,
+        sub_question_id: str,
+        *,
+        query: str,
+    ) -> ResearchState:
+        """Start or retry one technical execution without consuming a semantic round."""
+        with self._lock(task_id):
+            path = self._path(task_id)
+            if not path.exists():
+                raise FileNotFoundError(f"research task not found: {task_id}")
+            state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
+            sub_question = self._find_sub_question(state, sub_question_id)
+            semantic_round = len(sub_question.retrieval_attempts) + 1
+            previous = sub_question.retrieval_execution
+            technical_attempt = 1
+            if (
+                previous is not None
+                and previous.status
+                in {
+                    RetrievalExecutionStatus.RUNNING,
+                    RetrievalExecutionStatus.FAILED,
+                }
+                and previous.query == query
+                and previous.semantic_round == semantic_round
+            ):
+                if previous.technical_attempt >= 2:
+                    raise RuntimeError(
+                        f"technical retrieval retry already exhausted for {sub_question_id}"
+                    )
+                technical_attempt = previous.technical_attempt + 1
+            sub_question.retrieval_execution = RetrievalExecution(
+                query=query,
+                semantic_round=semantic_round,
+                technical_attempt=technical_attempt,
+                status=RetrievalExecutionStatus.RUNNING,
+            )
+            sub_question.status = SubQuestionStatus.SEARCHING
+            state.status = ResearchTaskStatus.RETRIEVING
+            self._write(path, state)
+            return state
+
+    def fail_retrieval(
+        self,
+        task_id: str,
+        sub_question_id: str,
+        *,
+        query: str,
+        error: str,
+    ) -> ResearchState:
+        """Persist a technical failure so the same search may retry once."""
+        with self._lock(task_id):
+            path = self._path(task_id)
+            if not path.exists():
+                raise FileNotFoundError(f"research task not found: {task_id}")
+            state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
+            sub_question = self._find_sub_question(state, sub_question_id)
+            execution = sub_question.retrieval_execution
+            if (
+                execution is None
+                or execution.query != query
+                or execution.status != RetrievalExecutionStatus.RUNNING
+            ):
+                return state
+            execution.status = RetrievalExecutionStatus.FAILED
+            execution.error = error[:1000]
+            execution.finished_at = utc_now()
+            sub_question.status = SubQuestionStatus.PENDING
+            self._write(path, state)
+            return state
 
     @staticmethod
     def _find_sub_question(state: ResearchState, sub_question_id: str) -> SubQuestion:
@@ -129,6 +204,24 @@ class ResearchStateStore:
                     sufficient=False,
                     coverage_reason=coverage_reason,
                 )
+            )
+            execution = sub_question.retrieval_execution
+            technical_attempt = (
+                execution.technical_attempt
+                if execution is not None and execution.query == query
+                else 1
+            )
+            sub_question.retrieval_execution = RetrievalExecution(
+                query=query,
+                semantic_round=len(sub_question.retrieval_attempts),
+                technical_attempt=technical_attempt,
+                status=RetrievalExecutionStatus.COMPLETED,
+                started_at=(
+                    execution.started_at
+                    if execution is not None and execution.query == query
+                    else utc_now()
+                ),
+                finished_at=utc_now(),
             )
             sub_question.next_query = None
             sub_question.status = (

@@ -1,4 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event, Timer
 
 import pytest
 
@@ -42,6 +44,36 @@ class _FakeRetrieval:
 
     def get_neighbors(self, chunk_id: str, **kwargs: object) -> list[EvidenceSearchResult]:
         return self.retrieve_evidence(chunk_id)
+
+
+class _BlockingRetrieval(_FakeRetrieval):
+    def __init__(self) -> None:
+        super().__init__()
+        self.started = Event()
+        self.release = Event()
+
+    def retrieve_evidence(
+        self, query: str, **kwargs: object
+    ) -> list[EvidenceSearchResult]:
+        self.started.set()
+        if not self.release.wait(timeout=5):
+            raise TimeoutError("test retrieval was not released")
+        return super().retrieve_evidence(query, **kwargs)
+
+
+class _FlakyRetrieval(_FakeRetrieval):
+    def __init__(self, failures: int) -> None:
+        super().__init__()
+        self.failures = failures
+        self.calls = 0
+
+    def retrieve_evidence(
+        self, query: str, **kwargs: object
+    ) -> list[EvidenceSearchResult]:
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise RuntimeError("temporary retrieval failure")
+        return super().retrieve_evidence(query, **kwargs)
 
 
 def _tools(tmp_path: Path, retrieval: _FakeRetrieval | None = None) -> ResearchTools:
@@ -100,6 +132,97 @@ def test_retrieval_searches_full_chunk_corpus_once(tmp_path: Path) -> None:
     assert retrieval.paper_calls == []
     assert status["retrieval_rounds"] == 1
     assert result["semantic_round"] == 1
+
+
+def test_duplicate_retrieval_does_not_start_while_original_is_running(
+    tmp_path: Path,
+) -> None:
+    retrieval = _BlockingRetrieval()
+    tools = _tools(tmp_path, retrieval)
+    task_id = _start(tools)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        original = executor.submit(
+            tools.research_retrieve,
+            task_id=task_id,
+            sub_question_id="SQ1",
+            query="evidence recall",
+        )
+        assert retrieval.started.wait(timeout=2)
+        duplicate = tools.research_retrieve(
+            task_id=task_id,
+            sub_question_id="SQ1",
+            query="evidence recall",
+        )
+        assert duplicate["execution_status"] == "running"
+        release_timer = Timer(0.1, retrieval.release.set)
+        release_timer.start()
+        waited_status = tools.status(task_id, wait_seconds=2)
+        release_timer.join(timeout=1)
+        completed = original.result(timeout=2)
+
+    recovered = tools.research_retrieve(
+        task_id=task_id,
+        sub_question_id="SQ1",
+        query="evidence recall",
+    )
+    assert completed["execution_status"] == "completed"
+    assert (
+        waited_status["plan"]["sub_questions"][0]["retrieval_execution"]["status"]
+        == "completed"
+    )
+    assert recovered["recovered"] is True
+    assert len(retrieval.evidence_calls) == 1
+
+
+def test_technical_failure_can_retry_once_without_consuming_semantic_round(
+    tmp_path: Path,
+) -> None:
+    retrieval = _FlakyRetrieval(failures=1)
+    tools = _tools(tmp_path, retrieval)
+    task_id = _start(tools)
+
+    with pytest.raises(RuntimeError, match="temporary retrieval failure"):
+        tools.research_retrieve(
+            task_id=task_id,
+            sub_question_id="SQ1",
+            query="evidence recall",
+        )
+    recovered = tools.research_retrieve(
+        task_id=task_id,
+        sub_question_id="SQ1",
+        query="evidence recall",
+    )
+    status = tools.status(task_id)
+
+    execution = status["plan"]["sub_questions"][0]["retrieval_execution"]
+    assert recovered["semantic_round"] == 1
+    assert status["retrieval_rounds"] == 1
+    assert execution["technical_attempt"] == 2
+    assert execution["status"] == "completed"
+
+
+def test_technical_failure_stops_after_one_retry(tmp_path: Path) -> None:
+    retrieval = _FlakyRetrieval(failures=3)
+    tools = _tools(tmp_path, retrieval)
+    task_id = _start(tools)
+
+    for _ in range(2):
+        with pytest.raises(RuntimeError, match="temporary retrieval failure"):
+            tools.research_retrieve(
+                task_id=task_id,
+                sub_question_id="SQ1",
+                query="evidence recall",
+            )
+    with pytest.raises(
+        RuntimeError, match="technical retrieval retry already exhausted"
+    ):
+        tools.research_retrieve(
+            task_id=task_id,
+            sub_question_id="SQ1",
+            query="evidence recall",
+        )
+    assert retrieval.calls == 2
 
 
 def test_reflect_sufficient_then_finalize_citations(tmp_path: Path) -> None:
