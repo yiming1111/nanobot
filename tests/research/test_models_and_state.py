@@ -70,6 +70,21 @@ def test_state_store_rejects_unsafe_task_id(tmp_path: Path) -> None:
         store.load("../escape")
 
 
+def test_state_store_finds_latest_task_for_session(tmp_path: Path) -> None:
+    store = ResearchStateStore(tmp_path / "states")
+    first = ResearchState(task_id="task-1", session_key="websocket:one", plan=_plan())
+    second = ResearchState(task_id="task-2", session_key="websocket:one", plan=_plan())
+    unrelated = ResearchState(task_id="task-3", session_key="websocket:two", plan=_plan())
+    store.create(first)
+    store.create(second)
+    store.create(unrelated)
+
+    store.save(first)
+
+    assert store.latest_for_session("websocket:one").task_id == "task-1"  # type: ignore[union-attr]
+    assert store.latest_for_session("websocket:missing") is None
+
+
 def test_semantic_judgment_cannot_fake_missing_citation() -> None:
     with pytest.raises(ValidationError, match="generated"):
         EvidenceJudgment(

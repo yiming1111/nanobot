@@ -70,7 +70,15 @@ class ResearchTools:
         task_type: str = "paper_research",
         constraints: dict[str, ConstraintValue] | None = None,
         session_key: str | None = None,
+        parent_task_id: str | None = None,
     ) -> dict[str, Any]:
+        parent: ResearchState | None = None
+        if parent_task_id is not None:
+            parent = self.states.load(parent_task_id)
+            if session_key and parent.session_key and parent.session_key != session_key:
+                raise ValueError("parent research task belongs to a different session")
+            if session_key is None:
+                session_key = parent.session_key
         questions = [value.strip() for value in sub_questions if value.strip()]
         if not questions:
             questions = [normalized_question.strip()]
@@ -87,6 +95,7 @@ class ResearchTools:
         )
         state = ResearchState(
             session_key=session_key,
+            parent_task_id=parent_task_id,
             status=ResearchTaskStatus.RETRIEVING,
             plan=plan,
             max_retrieval_rounds=self.config.max_retrieval_rounds,
@@ -94,6 +103,40 @@ class ResearchTools:
         )
         self.states.create(state)
         return state.model_dump(mode="json")
+
+    def resume(
+        self,
+        *,
+        session_key: str | None,
+        include_evidence_text: bool = False,
+    ) -> dict[str, Any]:
+        """Find the latest research task bound to the active nanobot session."""
+        if not session_key:
+            return {
+                "found": False,
+                "reason": "no active nanobot session key was supplied",
+                "next_step": "start a new research task",
+            }
+        state = self.states.latest_for_session(session_key)
+        if state is None:
+            return {
+                "found": False,
+                "session_key": session_key,
+                "reason": "this session has no research task yet",
+                "next_step": "start a new research task",
+            }
+        payload = state.model_dump(mode="json")
+        if not include_evidence_text:
+            for evidence in payload["evidence"].values():
+                evidence.pop("text", None)
+        return {
+            "found": True,
+            "task": payload,
+            "next_step": (
+                "reuse this task for a referential follow-up, or create a new linked "
+                "task with parent_task_id when new retrieval is required"
+            ),
+        }
 
     def search_papers(
         self,
@@ -827,6 +870,7 @@ def research_start(
     task_type: str = "paper_research",
     constraints: dict[str, ConstraintValue] | None = None,
     session_key: str | None = None,
+    parent_task_id: str | None = None,
 ) -> dict[str, Any]:
     """Create a typed research plan before searching a scientific-paper corpus."""
     return _tools().start(
@@ -836,6 +880,19 @@ def research_start(
         task_type=task_type,
         constraints=constraints,
         session_key=session_key,
+        parent_task_id=parent_task_id,
+    )
+
+
+@mcp.tool()
+def research_resume(
+    session_key: str | None = None,
+    include_evidence_text: bool = False,
+) -> dict[str, Any]:
+    """Resume the latest research task associated with the active conversation."""
+    return _tools().resume(
+        session_key=session_key,
+        include_evidence_text=include_evidence_text,
     )
 
 

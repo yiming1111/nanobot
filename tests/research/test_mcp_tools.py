@@ -94,6 +94,54 @@ def test_research_tools_create_plan_and_accumulate_evidence(tmp_path: Path) -> N
     assert status["retrieval_calls"] == 1
 
 
+def test_research_tools_resume_and_link_follow_up_to_session(tmp_path: Path) -> None:
+    tools = ResearchTools(
+        ResearchConfig(data_dir=tmp_path),
+        retrieval=_FakeRetrieval(),  # type: ignore[arg-type]
+    )
+    first = tools.start(
+        original_question="What improves recall?",
+        normalized_question="What improves recall?",
+        sub_questions=["What improves recall?"],
+        session_key="websocket:session-1",
+    )
+
+    resumed = tools.resume(session_key="websocket:session-1")
+    assert resumed["found"] is True
+    assert resumed["task"]["task_id"] == first["task_id"]
+
+    follow_up = tools.start(
+        original_question="What about cost?",
+        normalized_question="What is the cost?",
+        sub_questions=["What is the cost?"],
+        session_key="websocket:session-1",
+        parent_task_id=str(first["task_id"]),
+    )
+    assert follow_up["session_key"] == "websocket:session-1"
+    assert follow_up["parent_task_id"] == first["task_id"]
+    assert tools.resume(session_key="websocket:session-1")["task"]["task_id"] == follow_up["task_id"]
+
+
+def test_research_tools_reject_cross_session_parent(tmp_path: Path) -> None:
+    tools = ResearchTools(
+        ResearchConfig(data_dir=tmp_path),
+        retrieval=_FakeRetrieval(),  # type: ignore[arg-type]
+    )
+    first = tools.start(
+        original_question="Question",
+        normalized_question="Question",
+        sub_questions=["Question"],
+        session_key="websocket:session-1",
+    )
+
+    with pytest.raises(ValueError, match="different session"):
+        tools.start(
+            original_question="Follow-up",
+            normalized_question="Follow-up",
+            sub_questions=["Follow-up"],
+            session_key="websocket:session-2",
+            parent_task_id=str(first["task_id"]),
+        )
 def test_research_retrieve_stops_after_sufficient_candidate_evidence(tmp_path: Path) -> None:
     retrieval = _FakeRetrieval()
     tools = ResearchTools(

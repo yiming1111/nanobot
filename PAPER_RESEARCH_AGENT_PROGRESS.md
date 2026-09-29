@@ -82,9 +82,10 @@
 
 ### 阶段 4：FastMCP 检索工具【已完成】
 
-当前向 Agent 注册六个工具：
+当前向 Agent 注册七个工具：
 
 - `research_start`：创建结构化调研计划和任务状态。
+- `research_resume`：按当前 nanobot Session 找回最近一次研究任务，用于追问和中断恢复。
 - `research_retrieve`：在一次受控调用内顺序完成论文粗召回、候选论文内证据检索、有限范围扩大和一次全库兜底。
 - `get_neighbor_evidence`：读取证据前后段落，降低断章取义风险。
 - `research_status`：读取任务计划和当前证据状态。
@@ -120,7 +121,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - MCP 启动时提前构造检索服务并加载 FAISS 索引，避免首次工具调用才触发索引导入；BGE-M3 与 reranker 仍按需加载。模型缓存启用离线读取，避免每次重启重复访问 Hugging Face。
 - Skill 明确将引用格式与引用验证视为回答要求，不能拆成独立子问题；用户明确要求单一子问题时必须只创建一个。
 
-### 阶段 7：Claim 提取与引用验证【核心代码已完成，真实 WebUI 回归待验证】
+### 阶段 7：Claim 提取与引用验证【已完成核心代码与首次真实回归】
 
 已实现：
 
@@ -135,7 +136,20 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 状态文件持久化主张、逐对引用检查、验证轮数和缺口检索记录，旧状态文件通过默认字段保持兼容；
 - 更新 `paper-research` Skill，强制“先形成草稿 → 原子主张 → 独立语义复核 → 服务端结构校验 → 必要时一次修订/补检索 → 最终回答”的顺序。
 
-尚待真实 WebUI 回归：分别验证完全支持、部分支持、伪造 evidence ID、证据冲突和本地语料不足五类结果，并观察主 Agent 是否严格执行独立复核轮。
+首次真实 WebUI 回归已跑通 `research_start → research_retrieve → research_status → research_verify → final`，任务状态为 `completed`，两条 Claim 均为 `supported`，三个引用指标均为 1.0。后续仍需补测部分支持、证据冲突和本地语料不足，并进一步约束最终回答不得添加未进入 Claim–Evidence Matrix 的作者、年份等事实。
+
+### Session 与 ResearchState 绑定【已完成代码，待重启 WebUI 回归】
+
+- 复用 nanobot 已有 `RequestContext`，MCP 包装层可在服务显式启用后，将真实 `session_key` 注入声明了该参数的工具；默认关闭，其他 MCP 服务不会收到 Session 标识；
+- `paperResearch` 本机配置已开启 `passSessionContext`，Agent 不需要也不应该自行生成 Session key；
+- `ResearchState` 新增 `parent_task_id`，保留一次追问与前序研究任务的谱系关系；
+- 新增 `research_resume`，按当前 Session 返回最近更新的 ResearchState；证据正文默认省略，避免上下文膨胀；
+- 同一主题的追问若已有验证证据可直接复用；需要新检索时创建关联子任务，避免修改已经完成的审计记录；跨 Session 关联会被拒绝；
+- `paper-research` Skill 已加入恢复与追问规则。新主题仍创建独立研究任务。
+
+### 长期 Memory 接入【进行中】
+
+计划复用 nanobot 原生 Memory/Dream：对话中的稳定偏好继续由 Dream 提炼；论文工作流只允许将已经通过 Claim–Evidence Matrix 的结论及引用写入长期研究记忆，不保存草稿、候选证据或未验证回答。
 
 ### 阶段 8：Pipeline Trace 与评测【未开始】
 
@@ -174,7 +188,7 @@ tests/research/                            对应单元测试
 - nanobot 现有 Skill Loader 回归测试：26 项通过。
 - `nanobot.research` Python 编译检查通过。
 - `nanobot-research --help` 启动通过。
-- FastMCP 工具注册和 JSON Schema 生成通过；阶段 7 调整后确认注册 `research_start`、`research_retrieve`、`get_neighbor_evidence`、`research_status`、`research_verify`、`research_retrieve_claim_gap` 六个工具。`paperResearch` 已写入运行配置，重启 WebUI 后加载新工具清单。
+- FastMCP 工具注册和 JSON Schema 生成通过；Session 改造后注册 `research_start`、`research_resume`、`research_retrieve`、`get_neighbor_evidence`、`research_status`、`research_verify`、`research_retrieve_claim_gap` 七个工具。`paperResearch` 已在本机运行配置中开启 Session 上下文注入。
 - `nanobot-research status` 已验证质量门禁后的真实索引：15 篇论文、694 个 chunk、`dense_enabled=true`。
 - PDF 质量门禁已扫描 17 份真实文件：15 份正文可用，2 份因无可用正文被拒绝；完整 research 测试 13 项通过。持久化索引已按新质量门禁完成重建。
 - 真实检索已验证 BGE-M3、BM25、RRF 与 BGE Cross-Encoder Rerank 全链路可运行；首次查询返回的前三篇均与势博弈/边缘计算资源分配相关。
@@ -190,11 +204,12 @@ tests/research/                            对应单元测试
 - 启动预加载真实验证完成：FAISS 约 0.8 秒、BGE-M3 初始化约 23.6 秒、reranker 初始化约 7.3 秒，包含预热的 MCP runtime 准备总计约 34.6 秒。此前约 250 秒并非模型正常读取耗时，而是模型在工具调用生命周期内初始化时出现的异常等待；移到 MCP 启动阶段后该等待消失。
 - 预加载后的首次真实提问未再超时：论文粗召回约 1 秒，chunk 检索与精排约 56 秒，包含 LLM 规划和回答生成的整轮耗时约 79 秒；结果成功引用目标论文。阶段 6 的首次查询超时问题已关闭。
 - 阶段 7 新增模型、引用可定位性、语义判断聚合、子问题覆盖、验证轮数、伪造 evidence ID 和有边界缺口检索测试；完整 research 测试现为 19 项通过。
+- Session 改造新增 MCP Session 注入、显式值保护、按 Session 恢复最近任务、父子任务关联及跨 Session 隔离测试；当前相关测试共 24 项通过。
 - 本机 `nanobot-dev` 环境没有 pytest；测试通过复用本机已有 pytest 包执行，没有安装或修改依赖。测试出现的 `asyncio_mode` 警告来自该复用环境缺少 pytest-asyncio，不影响本次同步测试结果。
 
 ## 7. 下一步
 
-1. 重启 WebUI，等待 `research MCP runtime preparation completed` 和 `MCP server 'paperResearch': connected`，确认连接日志显示六个工具。
-2. 用已有简单问题做阶段 7 首次回归。正常调用顺序应为 `research_start → research_retrieve → 必要时 get_neighbor_evidence → research_status → research_verify`；只有必要主张验证失败时才出现 `research_retrieve_claim_gap → research_verify`。
-3. 分别测试完全支持、部分支持、伪造 evidence ID、证据冲突和语料不足，确认最终状态及回答行为与 Claim-Evidence Matrix 一致。
-4. 阶段 7 回归通过后，建立固定评测集和 Pipeline Trace，进入阶段 8；评测发现的问题再反馈到阶段 6、7 修正。
+1. 接入长期 Memory：稳定偏好交给 nanobot Dream；已验证研究结论通过受控入口写入原生 Memory 历史，并保留 task、claim 与 citation 定位信息。
+2. 重启 WebUI，确认连接日志显示七个工具；完成一次“初始问题 → 指代性追问”回归，验证 `ResearchState.session_key`、`research_resume` 与 `parent_task_id`。
+3. 补测部分支持、伪造 evidence ID、证据冲突和语料不足，确认最终状态及回答行为与 Claim-Evidence Matrix 一致。
+4. 建立固定评测集和 Pipeline Trace，进入阶段 8；评测发现的问题再反馈到阶段 6、7 修正。
