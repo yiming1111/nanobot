@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterator, cast
 from uuid import uuid4
 
+from filelock import FileLock
 from loguru import logger
 
 from nanobot.events import NO_EVENTS, ContextCompactionEvent, EventSink
@@ -80,6 +81,7 @@ class MemoryStore:
         self.soul_file = workspace / "SOUL.md"
         self.user_file = workspace / "USER.md"
         self._cursor_file = self.memory_dir / ".cursor"
+        self._history_lock = FileLock(str(self.history_file) + ".lock")
         self._dream_cursor_file = self.memory_dir / ".dream_cursor"
         self._corruption_logged = False  # rate-limit invalid cursor warning
         self._malformed_entry_logged = False  # rate-limit bad history shape warning
@@ -314,7 +316,7 @@ class MemoryStore:
         ts = datetime.now().strftime("%Y-%m-%d %H:%M")
         # Cursor allocation and the append must be atomic: concurrent writers
         # could otherwise read the same current cursor and emit duplicates.
-        with self._append_lock:
+        with self._append_lock, self._history_lock:
             cursor = self._next_cursor()
             record = {"cursor": cursor, "timestamp": ts, "content": content}
             if session_key:

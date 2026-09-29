@@ -341,7 +341,7 @@ def test_mcp_wrapper_injects_session_key_only_when_enabled_and_declared() -> Non
     )
 
 
-def test_mcp_wrapper_does_not_override_explicit_session_key() -> None:
+def test_mcp_wrapper_overrides_model_supplied_session_key() -> None:
     session = SimpleNamespace(
         call_tool=AsyncMock(return_value=SimpleNamespace(content=[_FakeTextContent("ok")])),
     )
@@ -367,7 +367,42 @@ def test_mcp_wrapper_does_not_override_explicit_session_key() -> None:
 
     session.call_tool.assert_awaited_once_with(
         "research_start",
-        arguments={"session_key": "explicit"},
+        arguments={"session_key": "websocket:current"},
+    )
+
+
+def test_mcp_wrapper_injects_trusted_workspace_path() -> None:
+    session = SimpleNamespace(
+        call_tool=AsyncMock(return_value=SimpleNamespace(content=[_FakeTextContent("ok")])),
+    )
+    tool_def = SimpleNamespace(
+        name="research_commit_memory",
+        description="commit memory",
+        inputSchema={
+            "type": "object",
+            "properties": {"workspace_path": {"type": "string"}},
+        },
+    )
+    wrapper = MCPToolWrapper(
+        session,
+        "paperResearch",
+        tool_def,
+        pass_workspace_context=True,
+    )
+    workspace = Path("trusted-workspace")
+
+    with request_context(
+        RequestContext(
+            channel="websocket",
+            chat_id="chat-1",
+            workspace=workspace,
+        )
+    ):
+        asyncio.run(wrapper.execute(workspace_path="model-supplied-path"))
+
+    session.call_tool.assert_awaited_once_with(
+        "research_commit_memory",
+        arguments={"workspace_path": str(workspace)},
     )
 
 

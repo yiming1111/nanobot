@@ -17,7 +17,7 @@ import httpx
 from loguru import logger
 
 from nanobot.agent.tools.base import Tool, ToolResult
-from nanobot.agent.tools.context import current_request_session_key, tool_log_content_allowed
+from nanobot.agent.tools.context import current_request_context, tool_log_content_allowed
 from nanobot.agent.tools.registry import ToolRegistry
 from nanobot.security.network import (
     PinnedDNSAsyncTransport,
@@ -606,6 +606,7 @@ class MCPToolWrapper(_MCPWrapperBase):
         tool_def: MCPToolDefinition,
         tool_timeout: int = 30,
         pass_session_context: bool = False,
+        pass_workspace_context: bool = False,
     ):
         self._set_mcp_connection(session, server_name)
         self._original_name = tool_def.name
@@ -615,6 +616,7 @@ class MCPToolWrapper(_MCPWrapperBase):
         self._parameters = _normalize_schema_for_openai(raw_schema)
         self._tool_timeout = tool_timeout
         self._pass_session_context = pass_session_context
+        self._pass_workspace_context = pass_workspace_context
 
     @property
     def name(self) -> str:
@@ -631,14 +633,21 @@ class MCPToolWrapper(_MCPWrapperBase):
     async def execute(self, **kwargs: Any) -> str:
         call_arguments = dict(kwargs)
         schema_properties = self._parameters.get("properties", {})
+        request_context = current_request_context()
         if (
             self._pass_session_context
             and "session_key" in schema_properties
-            and not call_arguments.get("session_key")
+            and request_context is not None
+            and request_context.session_key
         ):
-            session_key = current_request_session_key()
-            if session_key:
-                call_arguments["session_key"] = session_key
+            call_arguments["session_key"] = request_context.session_key
+        if (
+            self._pass_workspace_context
+            and "workspace_path" in schema_properties
+            and request_context is not None
+            and request_context.workspace is not None
+        ):
+            call_arguments["workspace_path"] = str(request_context.workspace)
         retried_transient = False
         refreshed_session = False
         while True:
@@ -1180,6 +1189,7 @@ async def connect_mcp_servers(
                     tool_def,
                     tool_timeout=cfg.tool_timeout,
                     pass_session_context=cfg.pass_session_context,
+                    pass_workspace_context=cfg.pass_workspace_context,
                 )
                 registry.register(wrapper)
                 logger.debug("MCP: registered tool '{}' from server '{}'", wrapper.name, name)

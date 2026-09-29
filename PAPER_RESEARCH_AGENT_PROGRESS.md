@@ -82,7 +82,7 @@
 
 ### 阶段 4：FastMCP 检索工具【已完成】
 
-当前向 Agent 注册七个工具：
+当前向 Agent 注册八个工具：
 
 - `research_start`：创建结构化调研计划和任务状态。
 - `research_resume`：按当前 nanobot Session 找回最近一次研究任务，用于追问和中断恢复。
@@ -91,6 +91,7 @@
 - `research_status`：读取任务计划和当前证据状态。
 - `research_verify`：保存原子主张和独立语义复核结果，生成 Claim-Evidence Matrix，并计算引用可定位性、正确性和完整性。
 - `research_retrieve_claim_gap`：只为验证失败且必要的主张执行一次有边界的缺口检索。
+- `research_commit_memory`：将通过验证的 Claim 与引用定位写入 nanobot 原生 Memory 历史，交由 Dream 做长期整理。
 
 论文级 `search_papers` 与 chunk 级 `retrieve_evidence` 仍作为内部服务存在，但不再分别暴露给 Agent，防止模型并发调用两个有先后依赖的步骤。
 
@@ -147,9 +148,16 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 同一主题的追问若已有验证证据可直接复用；需要新检索时创建关联子任务，避免修改已经完成的审计记录；跨 Session 关联会被拒绝；
 - `paper-research` Skill 已加入恢复与追问规则。新主题仍创建独立研究任务。
 
-### 长期 Memory 接入【进行中】
+### 长期 Memory 接入【已完成代码，待重启 WebUI 回归】
 
-计划复用 nanobot 原生 Memory/Dream：对话中的稳定偏好继续由 Dream 提炼；论文工作流只允许将已经通过 Claim–Evidence Matrix 的结论及引用写入长期研究记忆，不保存草稿、候选证据或未验证回答。
+- 复用 nanobot 原生 `MemoryStore → history.jsonl → Dream → USER.md/MEMORY.md` 链路，没有另建一套长期记忆数据库；
+- 对话中的稳定偏好仍由 Session 归档和 Dream 提炼，适合写入 `USER.md`；
+- 新增 `research_commit_memory`，只接受状态为 `completed` 或 `completed_with_gaps` 的任务，并且只写入 `supported` Claim；
+- 每条记忆保留 task ID、parent task ID、标准化问题、Claim ID、Claim 文本和论文标题、页码、chunk ID，不保存 PDF 原文、候选段落、草稿、冲突或证据不足主张；
+- 本机 `paperResearch` 配置开启可信 workspace 注入，路径由 nanobot `RequestContext` 覆盖模型参数；Session key 同样以运行时真实值覆盖模型输入，避免跨会话伪造；
+- 每个任务只提交一次，重复调用返回已有 Memory cursor，避免同一验证结果重复进入 Dream 队列；
+- `MemoryStore` 的 history 追加增加跨实例文件锁，使 Gateway 与 research MCP 进程共享同一递增 cursor，避免并发写入时产生重复序号；
+- `paper-research` Skill 已要求完成验证后、最终作答前提交已验证研究记忆；拒答任务不写入 Memory。
 
 ### 阶段 8：Pipeline Trace 与评测【未开始】
 
@@ -188,7 +196,7 @@ tests/research/                            对应单元测试
 - nanobot 现有 Skill Loader 回归测试：26 项通过。
 - `nanobot.research` Python 编译检查通过。
 - `nanobot-research --help` 启动通过。
-- FastMCP 工具注册和 JSON Schema 生成通过；Session 改造后注册 `research_start`、`research_resume`、`research_retrieve`、`get_neighbor_evidence`、`research_status`、`research_verify`、`research_retrieve_claim_gap` 七个工具。`paperResearch` 已在本机运行配置中开启 Session 上下文注入。
+- FastMCP 工具注册和 JSON Schema 生成通过；Session 与 Memory 改造后注册 `research_start`、`research_resume`、`research_retrieve`、`get_neighbor_evidence`、`research_status`、`research_verify`、`research_retrieve_claim_gap`、`research_commit_memory` 八个工具。`paperResearch` 已在本机运行配置中开启 Session 和 workspace 上下文注入。
 - `nanobot-research status` 已验证质量门禁后的真实索引：15 篇论文、694 个 chunk、`dense_enabled=true`。
 - PDF 质量门禁已扫描 17 份真实文件：15 份正文可用，2 份因无可用正文被拒绝；完整 research 测试 13 项通过。持久化索引已按新质量门禁完成重建。
 - 真实检索已验证 BGE-M3、BM25、RRF 与 BGE Cross-Encoder Rerank 全链路可运行；首次查询返回的前三篇均与势博弈/边缘计算资源分配相关。
@@ -205,11 +213,12 @@ tests/research/                            对应单元测试
 - 预加载后的首次真实提问未再超时：论文粗召回约 1 秒，chunk 检索与精排约 56 秒，包含 LLM 规划和回答生成的整轮耗时约 79 秒；结果成功引用目标论文。阶段 6 的首次查询超时问题已关闭。
 - 阶段 7 新增模型、引用可定位性、语义判断聚合、子问题覆盖、验证轮数、伪造 evidence ID 和有边界缺口检索测试；完整 research 测试现为 19 项通过。
 - Session 改造新增 MCP Session 注入、显式值保护、按 Session 恢复最近任务、父子任务关联及跨 Session 隔离测试；当前相关测试共 24 项通过。
+- Memory 改造新增可信 workspace 注入、仅终态验证任务可写、原生 history 记录格式、重复提交幂等和跨 `MemoryStore` 实例并发 cursor 测试；research、Skill Loader 及 Session/Memory 定向回归共 54 项通过。
 - 本机 `nanobot-dev` 环境没有 pytest；测试通过复用本机已有 pytest 包执行，没有安装或修改依赖。测试出现的 `asyncio_mode` 警告来自该复用环境缺少 pytest-asyncio，不影响本次同步测试结果。
 
 ## 7. 下一步
 
-1. 接入长期 Memory：稳定偏好交给 nanobot Dream；已验证研究结论通过受控入口写入原生 Memory 历史，并保留 task、claim 与 citation 定位信息。
-2. 重启 WebUI，确认连接日志显示七个工具；完成一次“初始问题 → 指代性追问”回归，验证 `ResearchState.session_key`、`research_resume` 与 `parent_task_id`。
+1. 重启 WebUI，确认连接日志显示八个工具；完成一次“初始问题 → 写入已验证研究记忆 → 指代性追问”回归，验证 `session_key`、`research_resume`、`parent_task_id` 与 `memory_cursor`。
+2. 手动运行一次 Dream 或等待定时任务，确认稳定偏好进入 `USER.md`、可复用的已验证研究结论进入 `memory/MEMORY.md`，一次性过程信息被丢弃。
 3. 补测部分支持、伪造 evidence ID、证据冲突和语料不足，确认最终状态及回答行为与 Claim-Evidence Matrix 一致。
 4. 建立固定评测集和 Pipeline Trace，进入阶段 8；评测发现的问题再反馈到阶段 6、7 修正。

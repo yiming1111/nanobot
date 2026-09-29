@@ -184,6 +184,29 @@ class ResearchStateStore:
             os.replace(temporary, path)
             return state
 
+    def record_memory_commit(
+        self,
+        task_id: str,
+        *,
+        cursors: list[int],
+        workspace_path: str,
+    ) -> ResearchState:
+        """Record the native-memory journal cursors written for a verified task."""
+        with self._lock(task_id):
+            path = self._path(task_id)
+            if not path.exists():
+                raise FileNotFoundError(f"research task not found: {task_id}")
+            state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
+            state.metadata["memory_commit"] = {
+                "cursors": cursors,
+                "workspace_path": workspace_path,
+            }
+            state.touch()
+            temporary = path.with_suffix(".json.tmp")
+            temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
+            os.replace(temporary, path)
+            return state
+
     def add_gap_evidence(
         self,
         task_id: str,
