@@ -221,7 +221,6 @@ class CitationCheck(ResearchModel):
 class ResearchState(ResearchModel):
     task_id: str = Field(default_factory=lambda: uuid4().hex)
     session_key: str | None = None
-    parent_task_id: str | None = None
     status: ResearchTaskStatus = ResearchTaskStatus.PLANNING
     plan: ResearchPlan
     evidence: dict[str, EvidenceItem] = Field(default_factory=dict)

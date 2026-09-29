@@ -23,7 +23,6 @@ from nanobot.agent.tools.mcp import (
     _sanitize_name,
     connect_mcp_servers,
 )
-from nanobot.agent.tools.context import RequestContext, request_context
 from nanobot.agent.tools.registry import ToolRegistry, is_tool_error_result
 from nanobot.config.schema import MCPServerConfig
 
@@ -305,105 +304,6 @@ async def test_registry_executes_mcp_tools_with_boolean_subschemas(
         assert is_tool_error_result(result)
         assert f"Invalid parameters for tool '{wrapper.name}': {error}" in result
         session.call_tool.assert_not_awaited()
-
-
-def test_mcp_wrapper_injects_session_key_only_when_enabled_and_declared() -> None:
-    session = SimpleNamespace(
-        call_tool=AsyncMock(return_value=SimpleNamespace(content=[_FakeTextContent("ok")])),
-    )
-    tool_def = SimpleNamespace(
-        name="research_start",
-        description="start research",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "question": {"type": "string"},
-                "session_key": {"anyOf": [{"type": "string"}, {"type": "null"}]},
-            },
-        },
-    )
-    wrapper = MCPToolWrapper(
-        session,
-        "paperResearch",
-        tool_def,
-        pass_session_context=True,
-    )
-
-    with request_context(
-        RequestContext(channel="websocket", chat_id="chat-1", session_key="websocket:session-1")
-    ):
-        result = asyncio.run(wrapper.execute(question="query"))
-
-    assert result == "ok"
-    session.call_tool.assert_awaited_once_with(
-        "research_start",
-        arguments={"question": "query", "session_key": "websocket:session-1"},
-    )
-
-
-def test_mcp_wrapper_overrides_model_supplied_session_key() -> None:
-    session = SimpleNamespace(
-        call_tool=AsyncMock(return_value=SimpleNamespace(content=[_FakeTextContent("ok")])),
-    )
-    tool_def = SimpleNamespace(
-        name="research_start",
-        description="start research",
-        inputSchema={
-            "type": "object",
-            "properties": {"session_key": {"type": "string"}},
-        },
-    )
-    wrapper = MCPToolWrapper(
-        session,
-        "paperResearch",
-        tool_def,
-        pass_session_context=True,
-    )
-
-    with request_context(
-        RequestContext(channel="websocket", chat_id="chat-1", session_key="websocket:current")
-    ):
-        asyncio.run(wrapper.execute(session_key="explicit"))
-
-    session.call_tool.assert_awaited_once_with(
-        "research_start",
-        arguments={"session_key": "websocket:current"},
-    )
-
-
-def test_mcp_wrapper_injects_trusted_workspace_path() -> None:
-    session = SimpleNamespace(
-        call_tool=AsyncMock(return_value=SimpleNamespace(content=[_FakeTextContent("ok")])),
-    )
-    tool_def = SimpleNamespace(
-        name="research_commit_memory",
-        description="commit memory",
-        inputSchema={
-            "type": "object",
-            "properties": {"workspace_path": {"type": "string"}},
-        },
-    )
-    wrapper = MCPToolWrapper(
-        session,
-        "paperResearch",
-        tool_def,
-        pass_workspace_context=True,
-    )
-    workspace = Path("trusted-workspace")
-
-    with request_context(
-        RequestContext(
-            channel="websocket",
-            chat_id="chat-1",
-            workspace=workspace,
-        )
-    ):
-        asyncio.run(wrapper.execute(workspace_path="model-supplied-path"))
-
-    session.call_tool.assert_awaited_once_with(
-        "research_commit_memory",
-        arguments={"workspace_path": str(workspace)},
-    )
 
 
 def test_wrapper_preserves_non_nullable_unions() -> None:

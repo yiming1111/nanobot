@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 from functools import lru_cache
-from pathlib import Path
 from time import perf_counter
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from nanobot.agent.memory import MemoryStore
 from nanobot.research.config import ResearchConfig
 from nanobot.research.models import (
     CitationCheck,
@@ -73,15 +70,7 @@ class ResearchTools:
         task_type: str = "paper_research",
         constraints: dict[str, ConstraintValue] | None = None,
         session_key: str | None = None,
-        parent_task_id: str | None = None,
     ) -> dict[str, Any]:
-        parent: ResearchState | None = None
-        if parent_task_id is not None:
-            parent = self.states.load(parent_task_id)
-            if session_key and parent.session_key and parent.session_key != session_key:
-                raise ValueError("parent research task belongs to a different session")
-            if session_key is None:
-                session_key = parent.session_key
         questions = [value.strip() for value in sub_questions if value.strip()]
         if not questions:
             questions = [normalized_question.strip()]
@@ -98,7 +87,6 @@ class ResearchTools:
         )
         state = ResearchState(
             session_key=session_key,
-            parent_task_id=parent_task_id,
             status=ResearchTaskStatus.RETRIEVING,
             plan=plan,
             max_retrieval_rounds=self.config.max_retrieval_rounds,
@@ -106,40 +94,6 @@ class ResearchTools:
         )
         self.states.create(state)
         return state.model_dump(mode="json")
-
-    def resume(
-        self,
-        *,
-        session_key: str | None,
-        include_evidence_text: bool = False,
-    ) -> dict[str, Any]:
-        """Find the latest research task bound to the active nanobot session."""
-        if not session_key:
-            return {
-                "found": False,
-                "reason": "no active nanobot session key was supplied",
-                "next_step": "start a new research task",
-            }
-        state = self.states.latest_for_session(session_key)
-        if state is None:
-            return {
-                "found": False,
-                "session_key": session_key,
-                "reason": "this session has no research task yet",
-                "next_step": "start a new research task",
-            }
-        payload = state.model_dump(mode="json")
-        if not include_evidence_text:
-            for evidence in payload["evidence"].values():
-                evidence.pop("text", None)
-        return {
-            "found": True,
-            "task": payload,
-            "next_step": (
-                "reuse this task for a referential follow-up, or create a new linked "
-                "task with parent_task_id when new retrieval is required"
-            ),
-        }
 
     def search_papers(
         self,
@@ -859,87 +813,6 @@ class ResearchTools:
                 evidence.pop("text", None)
         return payload
 
-    def commit_verified_memory(
-        self,
-        *,
-        task_id: str,
-        workspace_path: str | None,
-        session_key: str | None,
-    ) -> dict[str, Any]:
-        """Append verified claims to nanobot's native history for Dream consolidation."""
-        if not workspace_path:
-            raise ValueError("the active nanobot workspace is required")
-        state = self.states.load(task_id)
-        if state.session_key and session_key and state.session_key != session_key:
-            raise ValueError("research task belongs to a different session")
-        if state.status not in {
-            ResearchTaskStatus.COMPLETED,
-            ResearchTaskStatus.COMPLETED_WITH_GAPS,
-        }:
-            raise RuntimeError("only terminal verified research can enter long-term memory")
-
-        prior_commit = state.metadata.get("memory_commit")
-        if isinstance(prior_commit, dict):
-            return {
-                "task_id": task_id,
-                "committed": False,
-                "already_committed": True,
-                "memory_cursors": list(prior_commit.get("cursors", [])),
-            }
-
-        supported_claims = [
-            claim for claim in state.claims.values()
-            if claim.status == ClaimStatus.SUPPORTED
-        ]
-        if not supported_claims:
-            raise RuntimeError("the task has no supported claims to remember")
-
-        workspace = Path(workspace_path).expanduser().resolve()
-        memory = MemoryStore(workspace)
-        cursors: list[int] = []
-        for claim in supported_claims:
-            citations = []
-            for evidence_id in claim.supporting_evidence_ids:
-                evidence = state.evidence.get(evidence_id)
-                if evidence is None:
-                    continue
-                citations.append({
-                    "title": evidence.title,
-                    "page_start": evidence.page_start,
-                    "page_end": evidence.page_end,
-                    "chunk_id": evidence.chunk_id,
-                })
-            record = {
-                "kind": "verified_research_claim",
-                "task_id": state.task_id,
-                "parent_task_id": state.parent_task_id,
-                "question": state.plan.normalized_question,
-                "claim_id": claim.claim_id,
-                "claim": claim.text,
-                "citations": citations,
-            }
-            cursors.append(
-                memory.append_history(
-                    "[durable] [VERIFIED_RESEARCH] "
-                    + json.dumps(record, ensure_ascii=False, separators=(",", ":")),
-                    max_chars=1800,
-                    session_key=session_key or state.session_key,
-                )
-            )
-        self.states.record_memory_commit(
-            task_id,
-            cursors=cursors,
-            workspace_path=str(workspace),
-        )
-        return {
-            "task_id": task_id,
-            "committed": True,
-            "already_committed": False,
-            "supported_claim_count": len(supported_claims),
-            "memory_cursors": cursors,
-            "next_step": "Dream may consolidate these verified claims into long-term memory",
-        }
-
 
 @lru_cache(maxsize=1)
 def _tools() -> ResearchTools:
@@ -954,7 +827,6 @@ def research_start(
     task_type: str = "paper_research",
     constraints: dict[str, ConstraintValue] | None = None,
     session_key: str | None = None,
-    parent_task_id: str | None = None,
 ) -> dict[str, Any]:
     """Create a typed research plan before searching a scientific-paper corpus."""
     return _tools().start(
@@ -964,19 +836,6 @@ def research_start(
         task_type=task_type,
         constraints=constraints,
         session_key=session_key,
-        parent_task_id=parent_task_id,
-    )
-
-
-@mcp.tool()
-def research_resume(
-    session_key: str | None = None,
-    include_evidence_text: bool = False,
-) -> dict[str, Any]:
-    """Resume the latest research task associated with the active conversation."""
-    return _tools().resume(
-        session_key=session_key,
-        include_evidence_text=include_evidence_text,
     )
 
 
@@ -1046,20 +905,6 @@ def research_retrieve_claim_gap(
         claim_id=claim_id,
         query=query,
         top_k=top_k,
-    )
-
-
-@mcp.tool()
-def research_commit_memory(
-    task_id: str,
-    workspace_path: str | None = None,
-    session_key: str | None = None,
-) -> dict[str, Any]:
-    """Store only verified supported claims in nanobot's native memory history."""
-    return _tools().commit_verified_memory(
-        task_id=task_id,
-        workspace_path=workspace_path,
-        session_key=session_key,
     )
 
 

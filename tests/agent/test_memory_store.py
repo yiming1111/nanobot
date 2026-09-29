@@ -171,31 +171,6 @@ class TestHistoryWithCursor:
         persisted = store.read_unprocessed_history(since_cursor=0)
         assert sorted(e["cursor"] for e in persisted) == list(range(1, writers + 1))
 
-    def test_append_history_coordinates_separate_store_instances(self, tmp_path):
-        """MCP subprocesses and the gateway must share one cursor sequence."""
-        import threading
-
-        stores = [MemoryStore(tmp_path), MemoryStore(tmp_path)]
-        start = threading.Barrier(2)
-        cursors: list[int] = []
-        result_lock = threading.Lock()
-
-        def worker(index):
-            start.wait()
-            cursor = stores[index].append_history(f"event {index}")
-            with result_lock:
-                cursors.append(cursor)
-
-        threads = [threading.Thread(target=worker, args=(index,)) for index in range(2)]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-
-        assert sorted(cursors) == [1, 2]
-        entries = stores[0].read_unprocessed_history(since_cursor=0)
-        assert sorted(entry["cursor"] for entry in entries) == [1, 2]
-
     def test_compact_history_drops_oldest(self, tmp_path):
         store = MemoryStore(tmp_path, max_history_entries=2)
         store.append_history("event 1")

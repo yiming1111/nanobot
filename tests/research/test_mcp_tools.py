@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import pytest
@@ -95,54 +94,6 @@ def test_research_tools_create_plan_and_accumulate_evidence(tmp_path: Path) -> N
     assert status["retrieval_calls"] == 1
 
 
-def test_research_tools_resume_and_link_follow_up_to_session(tmp_path: Path) -> None:
-    tools = ResearchTools(
-        ResearchConfig(data_dir=tmp_path),
-        retrieval=_FakeRetrieval(),  # type: ignore[arg-type]
-    )
-    first = tools.start(
-        original_question="What improves recall?",
-        normalized_question="What improves recall?",
-        sub_questions=["What improves recall?"],
-        session_key="websocket:session-1",
-    )
-
-    resumed = tools.resume(session_key="websocket:session-1")
-    assert resumed["found"] is True
-    assert resumed["task"]["task_id"] == first["task_id"]
-
-    follow_up = tools.start(
-        original_question="What about cost?",
-        normalized_question="What is the cost?",
-        sub_questions=["What is the cost?"],
-        session_key="websocket:session-1",
-        parent_task_id=str(first["task_id"]),
-    )
-    assert follow_up["session_key"] == "websocket:session-1"
-    assert follow_up["parent_task_id"] == first["task_id"]
-    assert tools.resume(session_key="websocket:session-1")["task"]["task_id"] == follow_up["task_id"]
-
-
-def test_research_tools_reject_cross_session_parent(tmp_path: Path) -> None:
-    tools = ResearchTools(
-        ResearchConfig(data_dir=tmp_path),
-        retrieval=_FakeRetrieval(),  # type: ignore[arg-type]
-    )
-    first = tools.start(
-        original_question="Question",
-        normalized_question="Question",
-        sub_questions=["Question"],
-        session_key="websocket:session-1",
-    )
-
-    with pytest.raises(ValueError, match="different session"):
-        tools.start(
-            original_question="Follow-up",
-            normalized_question="Follow-up",
-            sub_questions=["Follow-up"],
-            session_key="websocket:session-2",
-            parent_task_id=str(first["task_id"]),
-        )
 def test_research_retrieve_stops_after_sufficient_candidate_evidence(tmp_path: Path) -> None:
     retrieval = _FakeRetrieval()
     tools = ResearchTools(
@@ -268,92 +219,6 @@ def test_verify_claims_builds_supported_claim_evidence_matrix(tmp_path: Path) ->
         "page_end": 4,
         "chunk_id": "P1-C0000",
     }
-
-
-def test_commit_verified_memory_uses_native_history_and_is_idempotent(tmp_path: Path) -> None:
-    tools = ResearchTools(
-        ResearchConfig(data_dir=tmp_path / "research"),
-        retrieval=_FakeRetrieval(),  # type: ignore[arg-type]
-    )
-    started = tools.start(
-        original_question="What improves recall?",
-        normalized_question="What improves recall?",
-        sub_questions=["What improves recall?"],
-        session_key="websocket:session-1",
-    )
-    task_id = str(started["task_id"])
-    retrieved = tools.research_retrieve(
-        task_id=task_id,
-        sub_question_id="SQ1",
-        query="evidence recall",
-    )
-    evidence_id = retrieved["evidence"][0]["evidence_id"]
-    tools.verify_claims(
-        task_id=task_id,
-        claims=[
-            ClaimDraft(
-                claim_id="C1",
-                sub_question_id="SQ1",
-                text="The method improves evidence recall.",
-                cited_evidence_ids=[evidence_id],
-            )
-        ],
-        judgments=[
-            EvidenceJudgment(
-                claim_id="C1",
-                evidence_id=evidence_id,
-                verdict=CitationVerdict.SUPPORTED,
-                rationale="The passage directly supports the claim.",
-            )
-        ],
-    )
-    workspace = tmp_path / "workspace"
-
-    first = tools.commit_verified_memory(
-        task_id=task_id,
-        workspace_path=str(workspace),
-        session_key="websocket:session-1",
-    )
-    second = tools.commit_verified_memory(
-        task_id=task_id,
-        workspace_path=str(workspace),
-        session_key="websocket:session-1",
-    )
-
-    records = [
-        json.loads(line)
-        for line in (workspace / "memory" / "history.jsonl").read_text(
-            encoding="utf-8"
-        ).splitlines()
-    ]
-    assert first["committed"] is True
-    assert second["already_committed"] is True
-    assert len(records) == 1
-    assert records[0]["session_key"] == "websocket:session-1"
-    assert "[VERIFIED_RESEARCH]" in records[0]["content"]
-    assert '"claim_id":"C1"' in records[0]["content"]
-    assert '"chunk_id":"P1-C0000"' in records[0]["content"]
-    assert "evidence_text" not in records[0]["content"]
-
-
-def test_commit_verified_memory_rejects_unverified_task(tmp_path: Path) -> None:
-    tools = ResearchTools(
-        ResearchConfig(data_dir=tmp_path / "research"),
-        retrieval=_FakeRetrieval(),  # type: ignore[arg-type]
-    )
-    started = tools.start(
-        original_question="Question",
-        normalized_question="Question",
-        sub_questions=["Question"],
-        session_key="websocket:session-1",
-    )
-
-    with pytest.raises(RuntimeError, match="terminal verified"):
-        tools.commit_verified_memory(
-            task_id=str(started["task_id"]),
-            workspace_path=str(tmp_path / "workspace"),
-            session_key="websocket:session-1",
-        )
 
 
 def test_missing_citation_can_trigger_one_bounded_gap_search(tmp_path: Path) -> None:

@@ -63,23 +63,6 @@ class ResearchStateStore:
         with self._lock(task_id):
             return ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
 
-    def latest_for_session(self, session_key: str) -> ResearchState | None:
-        """Return the most recently updated research task for one nanobot session."""
-        normalized_key = session_key.strip()
-        if not normalized_key:
-            raise ValueError("session key must not be empty")
-        latest: ResearchState | None = None
-        for path in self.root.glob("*.json"):
-            try:
-                state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                continue
-            if state.session_key != normalized_key:
-                continue
-            if latest is None or state.updated_at > latest.updated_at:
-                latest = state
-        return latest
-
     def add_evidence(
         self,
         task_id: str,
@@ -178,29 +161,6 @@ class ResearchStateStore:
             state.citation_checks = citation_checks
             state.verification_rounds += 1
             state.status = status
-            state.touch()
-            temporary = path.with_suffix(".json.tmp")
-            temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
-            os.replace(temporary, path)
-            return state
-
-    def record_memory_commit(
-        self,
-        task_id: str,
-        *,
-        cursors: list[int],
-        workspace_path: str,
-    ) -> ResearchState:
-        """Record the native-memory journal cursors written for a verified task."""
-        with self._lock(task_id):
-            path = self._path(task_id)
-            if not path.exists():
-                raise FileNotFoundError(f"research task not found: {task_id}")
-            state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
-            state.metadata["memory_commit"] = {
-                "cursors": cursors,
-                "workspace_path": workspace_path,
-            }
             state.touch()
             temporary = path.with_suffix(".json.tmp")
             temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
