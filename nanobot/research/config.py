@@ -35,15 +35,10 @@ class ResearchConfig(BaseSettings):
     rerank_candidates: int = Field(default=12, ge=1, le=200)
     default_top_k: int = Field(default=4, ge=1, le=50)
     rrf_k: int = Field(default=60, ge=1, le=1000)
-    max_retrieval_rounds: int = Field(default=3, ge=1, le=10)
-    max_verification_rounds: int = Field(default=2, ge=1, le=5)
-    max_gap_retrievals: int = Field(default=2, ge=0, le=10)
+    # One initial semantic search plus one Reflect-triggered retry.
+    max_retrieval_rounds: int = Field(default=2, ge=1, le=2)
     initial_paper_candidates: int = Field(default=5, ge=1, le=50)
     expanded_paper_candidates: int = Field(default=10, ge=1, le=100)
-    # Cross-encoder outputs are ranking scores, not calibrated probabilities.
-    # A positive default threshold can therefore reject useful passages and
-    # trigger unnecessary expansion rounds. Semantic support is checked later.
-    min_evidence_rerank_score: float = Field(default=0.0, ge=0.0, le=1.0)
 
     @property
     def corpus_file(self) -> Path:

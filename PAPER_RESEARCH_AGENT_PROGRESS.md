@@ -86,10 +86,10 @@
 
 - `research_start`：创建结构化调研计划和任务状态。
 - `research_retrieve`：在一次受控调用内顺序完成论文粗召回、候选论文内证据检索、有限范围扩大和一次全库兜底。
+- `research_reflect`：判断各证据需求是否已被当前候选证据直接覆盖，并在首次不足时给出一个聚焦补检索 Query。
 - `get_neighbor_evidence`：读取证据前后段落，降低断章取义风险。
 - `research_status`：读取任务计划和当前证据状态。
-- `research_verify`：保存原子主张和独立语义复核结果，生成 Claim-Evidence Matrix，并计算引用可定位性、正确性和完整性。
-- `research_retrieve_claim_gap`：只为验证失败且必要的主张执行一次有边界的缺口检索。
+- `research_finalize`：在回答生成后确定性检查 evidence ID、子问题归属及论文标题、页码和 chunk ID。
 
 论文级 `search_papers` 与 chunk 级 `retrieve_evidence` 仍作为内部服务存在，但不再分别暴露给 Agent，防止模型并发调用两个有先后依赖的步骤。
 
@@ -110,9 +110,9 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 新增 `research_retrieve` 服务端编排工具，强制 `search_papers → retrieve_evidence` 顺序执行；
 - 将论文级检索定义为高召回粗筛：保留多个候选论文，不将单次结果作为不可恢复的硬过滤；
 - `paper_ids` 存在时，先限定候选论文的 chunk，再执行候选截断与重排，避免“论文已命中但证据为空”；
-- 候选论文内证据不足时，按“扩大候选论文范围 → 使用一个可选的替代表述 → 一次全库 chunk 兜底”的顺序恢复召回；
-- 阶段 6 的检索级门禁只判断是否召回候选证据；Rerank 分数用于排序和观测，不再把未经校准的绝对分数当作相关概率。语义支持/反对关系留给阶段 7；
-- 每个子问题最多三轮检索；已运行的子问题禁止重复执行完整流程，超时后应通过 `research_status` 查看状态；
+- 候选论文内没有返回任何 chunk 时，按“扩大候选论文范围 → 一次全库 chunk 兜底”的顺序恢复召回；这些属于一次检索调用内的技术性恢复，不再计为多轮语义检索；
+- 检索阶段只负责返回候选证据，Rerank 分数用于排序和观测，不再把“返回了一个 chunk”误判为“证据已经足够回答问题”；
+- 每个子问题最多执行两轮语义检索：首次检索，以及一次由 Reflect 明确触发的聚焦补检索；第三次语义检索由服务端拒绝；
 - 记录候选论文、每轮范围、Query、证据 ID、充分性原因和耗时；
 - Rerank 候选从 30 降至 12，默认返回证据从 8 降至 4；`research_status` 默认省略证据正文，避免上下文重复膨胀；
 - 本地模型在同一 MCP 进程中只初始化一次并加锁复用；论文级粗召回仅执行 BM25、BGE-M3 与 RRF，不再使用 Cross-Encoder 对长论文表示重排；运行配置使用本地 Hugging Face 缓存，工具超时调整为 240 秒。
@@ -120,29 +120,24 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - MCP 启动时提前构造检索服务并加载 FAISS 索引，避免首次工具调用才触发索引导入；BGE-M3 与 reranker 仍按需加载。模型缓存启用离线读取，避免每次重启重复访问 Hugging Face。
 - Skill 明确将引用格式与引用验证视为回答要求，不能拆成独立子问题；用户明确要求单一子问题时必须只创建一个。
 
-### 阶段 7：Claim 提取与引用验证【已完成】
+### 阶段 7：证据充分性 Reflect 与有界二次检索【已完成】
 
 已实现：
 
-- 新增 `ClaimDraft` 与 `EvidenceJudgment` Pydantic 输入模型，将回答草稿拆成独立、可核验、可追踪到子问题的原子主张；
-- 新增独立语义复核轮：主 Agent 只能依据“主张 + 被引用段落”判断 `supported`、`partially_supported`、`unsupported`、`contradicted` 或 `not_enough_information`。BGE Reranker 仅负责相关性排序，不被错误当作蕴含判断模型；
-- 新增 `research_verify`，对引用 ID 是否属于当前任务、是否属于对应子问题、标题/页码/chunk ID 是否可定位进行确定性检查，并聚合生成 Claim-Evidence Matrix；
-- Claim 状态支持 `supported`、`partially_supported`、`conflicting`、`contradicted` 和 `insufficient`，矩阵为每条主张返回保留、缩小表述、报告冲突、补检索或删除等动作；
-- 分别计算 Claim Support Rate、Citation Correctness 和 Citation Completeness，避免把“有引用”和“引用确实支持主张”混成同一指标；
-- 增加子问题覆盖门禁：即使现有主张全部通过，只要仍有子问题没有对应主张，任务也不能被标记为完整完成；
-- 新增 `research_retrieve_claim_gap`：只允许在验证阶段调用；每条失败主张最多补检索一次，整项任务默认最多两次；优先在原候选论文中检索，无结果时执行一次全库兜底；
-- 默认最多执行两轮验证。首轮失败后可缩小表述、删除主张或做一次缺口检索；第二轮后进入 `completed`、`completed_with_gaps` 或 `refused`，防止无限反思与检索；
-- 状态文件持久化主张、逐对引用检查、验证轮数和缺口检索记录，旧状态文件通过默认字段保持兼容；
-- 更新 `paper-research` Skill，强制“先形成草稿 → 原子主张 → 独立语义复核 → 服务端结构校验 → 必要时一次修订/补检索 → 最终回答”的顺序。
-
-真实 WebUI 回归已验证完全支持、同一 Session 内追问和本地语料不足场景；伪造 evidence ID、部分支持、冲突聚合与子问题覆盖由服务端单元测试覆盖。主 Agent 能按独立复核轮收窄表述，并在缺少充分证据时拒绝用户要求的过度结论。
+- 将 Reflect 定义为 Rerank 后、Generate 前的证据充分性门禁；它只判断现有证据是否直接覆盖每个证据需求，不再把 Claim 拆分和多状态聚合作为主流程；
+- 新增 `research_reflect`，每个待检查子问题只返回“充分/不充分”、所依据的证据 ID、原因，以及首次不足时使用的一个聚焦 `next_query`；
+- 对首次 Reflect 不充分的子问题允许一次补检索；第二次仍不充分就停止，全部子问题不足时进入 `refused`，部分充分时只允许回答有证据的部分；
+- 将候选论文扩大和全库兜底定义为检索器内部的空结果恢复，不消耗 Reflect 触发的语义重试次数；
+- Generate 后只运行 `research_finalize` 的确定性引用检查：验证 evidence ID 属于当前任务、属于已回答子问题，并具有论文标题、页码和 chunk ID；
+- 最终状态收敛为 `completed`、`completed_with_gaps` 或 `refused`。旧 Claim 字段只为读取历史 ResearchState 保留，不再由新任务写入或作为评测指标；
+- 更新 `paper-research` Skill，主流程收敛为“检索 → Reflect → 可选一次补检索 → Generate/Abstain → 引用定位检查”。
 
 ### 阶段 8：Pipeline Trace 与评测【第一版已完成，答案级评测待扩展】
 
 已实现：
 
-- 新增按 `task_id` 持久化的 `PipelineTrace`，记录 Plan、Retrieve、邻接证据、Status、Gap Retrieval 和 Verify 的输入摘要、输出摘要、证据 ID、决策与耗时；Trace 不复制证据正文，避免再次制造超长工具历史；
-- Trace 写入失败不阻断论文问答主流程，并提供 `nanobot-research trace <task_id>` 汇总工具调用次数、阶段耗时、证据 ID、错误和最近一次引用验证指标；
+- 新增按 `task_id` 持久化的 `PipelineTrace`，记录 Plan、Retrieve、邻接证据、Reflect、Status 和 Finalize 的输入摘要、输出摘要、证据 ID、决策与耗时；Trace 不复制证据正文，避免再次制造超长工具历史；
+- Trace 写入失败不阻断论文问答主流程，并提供 `nanobot-research trace <task_id>` 汇总工具调用次数、阶段耗时、证据 ID、错误、最近一次 Reflect 与最终引用检查结果；
 - 新增 JSONL 固定检索评测集、`nanobot-research eval` 命令与统一 JSON 报告，计算 Paper Recall@K、Paper MRR、Evidence Recall@K、Evidence Paper Recall@K 和检索延迟；
 - 第一版真实基线包含 4 个已人工确认目标论文与目标 chunk 的问题，覆盖 MEC 广义纳什均衡、动态势博弈、车联网卸载和区块链资源定价；
 - 首次基线结果：Paper Recall@10 = 1.0、Paper MRR = 1.0、Evidence Paper Recall@8 = 1.0、Evidence Recall@8 = 0.875；论文级召回平均约 646 ms，CPU 证据精排平均约 45.3 s；
@@ -150,7 +145,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 
 仍需扩展：
 
-- 为部分支持、冲突、语料不足和多轮约束保持建立人工标注的答案级评测集，统计 Groundedness、拒答准确率和多轮约束保持率；
+- 建立可回答/应拒答的证据边界集，统计拒答决策准确率、过度回答率和误拒答率；另建立跨论文比较与多轮约束集；
 - 将 Dense、Sparse、RRF、Rerank 的内部耗时进一步拆分。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
 
 ### 阶段 9：WebUI 增强【暂不实施】
@@ -183,11 +178,11 @@ tests/research/                            对应单元测试
 
 ## 6. 当前验证记录
 
-- 科研模块单元测试：19 项通过。
+- 科研模块流程测试：20 项通过，其中 14 项非 MCP 测试、6 项 MCP 工具流程测试。
 - nanobot 现有 Skill Loader 回归测试：26 项通过。
 - `nanobot.research` Python 编译检查通过。
 - `nanobot-research --help` 启动通过。
-- FastMCP 工具注册和 JSON Schema 生成通过；阶段 7 调整后确认注册 `research_start`、`research_retrieve`、`get_neighbor_evidence`、`research_status`、`research_verify`、`research_retrieve_claim_gap` 六个工具。`paperResearch` 已写入运行配置，重启 WebUI 后加载新工具清单。
+- FastMCP 工具注册和 JSON Schema 生成通过；当前注册 `research_start`、`research_retrieve`、`research_reflect`、`get_neighbor_evidence`、`research_status`、`research_finalize` 六个工具。`paperResearch` 已写入运行配置，重启 WebUI 后加载新工具清单。
 - `nanobot-research status` 已验证质量门禁后的真实索引：15 篇论文、694 个 chunk、`dense_enabled=true`。
 - PDF 质量门禁已扫描 17 份真实文件：15 份正文可用，2 份因无可用正文被拒绝；完整 research 测试 13 项通过。持久化索引已按新质量门禁完成重建。
 - 真实检索已验证 BGE-M3、BM25、RRF 与 BGE Cross-Encoder Rerank 全链路可运行；首次查询返回的前三篇均与势博弈/边缘计算资源分配相关。
@@ -202,15 +197,16 @@ tests/research/                            对应单元测试
 - 已将初始化责任从首次查询移到 MCP 启动阶段：`paperResearch` 在注册工具前加载 FAISS、BGE-M3、reranker，并分别执行一次短文本编码与重排预热；只有全部完成后才对 Agent 显示为已连接。科研模块测试现为 14 项通过。
 - 启动预加载真实验证完成：FAISS 约 0.8 秒、BGE-M3 初始化约 23.6 秒、reranker 初始化约 7.3 秒，包含预热的 MCP runtime 准备总计约 34.6 秒。此前约 250 秒并非模型正常读取耗时，而是模型在工具调用生命周期内初始化时出现的异常等待；移到 MCP 启动阶段后该等待消失。
 - 预加载后的首次真实提问未再超时：论文粗召回约 1 秒，chunk 检索与精排约 56 秒，包含 LLM 规划和回答生成的整轮耗时约 79 秒；结果成功引用目标论文。阶段 6 的首次查询超时问题已关闭。
-- 阶段 7 新增模型、引用可定位性、语义判断聚合、子问题覆盖、验证轮数、伪造 evidence ID 和有边界缺口检索测试；完整 research 测试现为 19 项通过。
+- 阶段 7 的旧版 Claim Matrix 曾完成 19 项测试；当前实现已由后文记录的 Reflect 流程替代。
 - 本机 `nanobot-dev` 环境没有 pytest；测试通过复用本机已有 pytest 包执行，没有安装或修改依赖。测试出现的 `asyncio_mode` 警告来自该复用环境缺少 pytest-asyncio，不影响本次同步测试结果。
-- 阶段 7 首次真实 WebUI 回归通过：两轮问题使用同一 nanobot Session；第二轮“刚才那篇论文”被正确还原为完整论文标题，两轮均按 `research_start → research_retrieve → research_verify` 完成且没有超时。两个独立 ResearchState 均为 `completed`，对应 Claim 均为 `supported`。
+- 阶段 7 旧版流程的首次真实 WebUI 回归通过：两轮问题使用同一 nanobot Session；第二轮“刚才那篇论文”被正确还原为完整论文标题，并确认会话上下文可以支持追问。该旧版工具链现已由 Reflect 流程替代。
 - Windows 的通用版 FAISS wheel 仅包含 `_swigfaiss.pyd` 时，现会在导入前自动选择 `FAISS_OPT_LEVEL=generic`，避免先探测不存在的 `swigfaiss_avx2` 并打印误导性的 `ModuleNotFoundError`。真实 FAISS 导入与向量查询通过，检索测试 4 项通过。
 - 阶段 8 新增 Trace Store 与固定检索集评测器单元测试，新增测试 2 项通过；使用 nanobot-dev 原生环境完成 ResearchTools Trace 冒烟测试，确认 `research_start → research_retrieve → get_neighbor_evidence → research_status` 按顺序落盘。
 - 4 项真实固定集基线已运行成功：Paper Recall@10 与 MRR 均为 1.0，Evidence Recall@8 为 0.875，证据精排平均约 45.3 秒。报告由统一 JSON 评测命令生成。
+- Agentic RAG 流程完成收敛：删除新任务中的 Claim Matrix 与五状态语义聚合，MCP 工具调整为 `research_start`、`research_retrieve`、`research_reflect`、`get_neighbor_evidence`、`research_status`、`research_finalize`。14 项非 MCP research 测试及 6 项 MCP 工具流程测试通过；13 个历史 ResearchState 均能继续读取。
 
 ## 7. 下一步
 
-1. 扩充答案级人工标注集，覆盖部分支持、冲突、语料不足和多轮约束保持；不要用待测模型自己的判断直接充当金标准。
-2. 拆分 Dense、Sparse、RRF 与 Rerank 的内部耗时，并优先分析当前约 45 秒的 CPU 精排耗时。
-3. 用阶段 8 基线定位并改进车联网样例遗漏的目标 chunk，改动后重复运行同一固定集，比较召回与延迟是否退化。
+1. 重启 WebUI，真实验证“首次检索 → Reflect → 可选一次补检索 → Generate/Abstain → Finalize”及部分子问题不足场景。
+2. 建立可回答/应拒答的证据边界集、跨论文比较集和多轮约束集，固定拒答准确率、引用正确率与 Pipeline Success Rate 的计算规则。
+3. 对比“全库 chunk 检索”和“论文粗筛后 chunk 检索”，再决定论文级粗筛是否保留为默认路径；同时拆分 Dense、Sparse、RRF 与 Rerank 的内部耗时。

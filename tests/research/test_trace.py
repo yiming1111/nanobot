@@ -30,6 +30,7 @@ def test_trace_store_persists_ordered_summaries_without_evidence_text(
     assert summary["total_recorded_ms"] == 12
     assert summary["stage_latency_ms"] == {"plan": 3, "retrieve": 9}
     assert summary["evidence_ids"] == ["E-1", "E-2"]
-    assert summary["latest_verification"] is None
+    assert summary["latest_reflection"] is None
+    assert summary["latest_finalization"] is None
     assert "evidence text" not in str(summary)
     assert [item["sequence"] for item in summary["events"]] == [1, 2]

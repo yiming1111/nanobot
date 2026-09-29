@@ -9,14 +9,15 @@ from pathlib import Path
 from filelock import FileLock
 
 from nanobot.research.models import (
-    CitationCheck,
-    ClaimStatus,
-    ClaimState,
+    CitationLocatorCheck,
+    EvidenceAssessment,
     EvidenceItem,
+    EvidenceReflection,
     ResearchState,
     ResearchTaskStatus,
     RetrievalAttempt,
     RetrievalScope,
+    SubQuestion,
     SubQuestionStatus,
 )
 
@@ -36,24 +37,24 @@ class ResearchStateStore:
     def _lock(self, task_id: str) -> FileLock:
         return FileLock(str(self._path(task_id)) + ".lock")
 
-    def save(self, state: ResearchState) -> None:
+    @staticmethod
+    def _write(path: Path, state: ResearchState) -> None:
         state.touch()
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
+        os.replace(temporary, path)
+
+    def save(self, state: ResearchState) -> None:
         path = self._path(state.task_id)
-        payload = state.model_dump_json(indent=2)
         with self._lock(state.task_id):
-            temporary = path.with_suffix(".json.tmp")
-            temporary.write_text(payload, encoding="utf-8")
-            os.replace(temporary, path)
+            self._write(path, state)
 
     def create(self, state: ResearchState) -> ResearchState:
         path = self._path(state.task_id)
         with self._lock(state.task_id):
             if path.exists():
                 raise FileExistsError(f"research task already exists: {state.task_id}")
-            state.touch()
-            temporary = path.with_suffix(".json.tmp")
-            temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
-            os.replace(temporary, path)
+            self._write(path, state)
         return state
 
     def load(self, task_id: str) -> ResearchState:
@@ -62,6 +63,20 @@ class ResearchStateStore:
             raise FileNotFoundError(f"research task not found: {task_id}")
         with self._lock(task_id):
             return ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _find_sub_question(state: ResearchState, sub_question_id: str) -> SubQuestion:
+        sub_question = next(
+            (
+                item
+                for item in state.plan.sub_questions
+                if item.sub_question_id == sub_question_id
+            ),
+            None,
+        )
+        if sub_question is None:
+            raise ValueError(f"unknown sub-question: {sub_question_id}")
+        return sub_question
 
     def add_evidence(
         self,
@@ -73,29 +88,25 @@ class ResearchStateStore:
         paper_ids: list[str] | None = None,
         scope: RetrievalScope = RetrievalScope.CANDIDATE_PAPERS,
         elapsed_ms: int = 0,
-        sufficient: bool = False,
         coverage_reason: str = "",
     ) -> ResearchState:
+        """Persist one semantic retrieval round after internal scope fallback."""
         with self._lock(task_id):
             path = self._path(task_id)
             if not path.exists():
                 raise FileNotFoundError(f"research task not found: {task_id}")
             state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
-            sub_question = next(
-                (
-                    item
-                    for item in state.plan.sub_questions
-                    if item.sub_question_id == sub_question_id
-                ),
-                None,
-            )
-            if sub_question is None:
-                raise ValueError(f"unknown sub-question: {sub_question_id}")
+            sub_question = self._find_sub_question(state, sub_question_id)
             if len(sub_question.retrieval_attempts) >= state.max_retrieval_rounds:
                 raise RuntimeError(
-                    f"maximum retrieval rounds reached for {sub_question_id}: "
+                    f"maximum semantic retrieval rounds reached for {sub_question_id}: "
                     f"{state.max_retrieval_rounds}"
                 )
+            if sub_question.retrieval_attempts and sub_question.next_query is None:
+                raise RuntimeError(
+                    f"run research_reflect before retrying {sub_question_id}"
+                )
+
             if query not in sub_question.queries:
                 sub_question.queries.append(query)
             for paper_id in paper_ids or []:
@@ -113,129 +124,161 @@ class ResearchStateStore:
                     paper_ids=paper_ids or [],
                     evidence_ids=[item.evidence_id for item in evidence],
                     elapsed_ms=elapsed_ms,
-                    sufficient=sufficient,
+                    sufficient=False,
                     coverage_reason=coverage_reason,
                 )
             )
-            if sufficient:
-                sub_question.status = SubQuestionStatus.SUFFICIENT
-            elif len(sub_question.retrieval_attempts) >= state.max_retrieval_rounds:
-                sub_question.status = SubQuestionStatus.INSUFFICIENT
-            elif sub_question.evidence_ids:
-                sub_question.status = SubQuestionStatus.EVIDENCE_FOUND
-            else:
-                sub_question.status = SubQuestionStatus.INSUFFICIENT
+            sub_question.next_query = None
+            sub_question.status = (
+                SubQuestionStatus.EVIDENCE_FOUND
+                if evidence
+                else SubQuestionStatus.INSUFFICIENT
+            )
             state.retrieval_calls += 1
             state.retrieval_rounds += 1
-            if all(
-                item.status == SubQuestionStatus.SUFFICIENT
-                or len(item.retrieval_attempts) >= state.max_retrieval_rounds
+
+            pending_ids = {
+                item.sub_question_id
                 for item in state.plan.sub_questions
-            ):
-                state.status = ResearchTaskStatus.READY_TO_SYNTHESIZE
-            state.touch()
-            temporary = path.with_suffix(".json.tmp")
-            temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
-            os.replace(temporary, path)
+                if item.status != SubQuestionStatus.SUFFICIENT
+                and len(item.retrieval_attempts) == len(item.reflections)
+                and len(item.retrieval_attempts) < state.max_retrieval_rounds
+            }
+            state.status = (
+                ResearchTaskStatus.RETRIEVING
+                if pending_ids
+                else ResearchTaskStatus.REFLECTING
+            )
+            self._write(path, state)
             return state
 
-    def record_verification(
+    def record_reflections(
         self,
         task_id: str,
-        *,
-        claims: list[ClaimState],
-        citation_checks: list[CitationCheck],
-        status: ResearchTaskStatus,
+        assessments: list[EvidenceAssessment],
     ) -> ResearchState:
-        """Persist one complete claim-verification round atomically."""
+        """Persist one Reflect decision for every currently unreviewed evidence need."""
         with self._lock(task_id):
             path = self._path(task_id)
             if not path.exists():
                 raise FileNotFoundError(f"research task not found: {task_id}")
             state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
-            if state.verification_rounds >= state.max_verification_rounds:
-                raise RuntimeError(
-                    f"maximum verification rounds reached: {state.max_verification_rounds}"
+            if state.status != ResearchTaskStatus.REFLECTING:
+                raise RuntimeError("research_reflect is only available after retrieval")
+            assessment_ids = [item.sub_question_id for item in assessments]
+            if len(assessment_ids) != len(set(assessment_ids)):
+                raise ValueError("sub_question_id values must be unique")
+
+            eligible = {
+                item.sub_question_id: item
+                for item in state.plan.sub_questions
+                if len(item.retrieval_attempts) > len(item.reflections)
+            }
+            if set(assessment_ids) != set(eligible):
+                raise ValueError(
+                    "assessments must cover every unreviewed sub-question exactly once: "
+                    f"{sorted(eligible)}"
                 )
-            state.claims = {item.claim_id: item for item in claims}
-            state.citation_checks = citation_checks
-            state.verification_rounds += 1
-            state.status = status
-            state.touch()
-            temporary = path.with_suffix(".json.tmp")
-            temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
-            os.replace(temporary, path)
+
+            for assessment in assessments:
+                sub_question = eligible[assessment.sub_question_id]
+                unknown_evidence = set(assessment.evidence_ids) - set(
+                    sub_question.evidence_ids
+                )
+                if unknown_evidence:
+                    raise ValueError(
+                        "assessment references evidence outside its sub-question: "
+                        f"{sorted(unknown_evidence)}"
+                    )
+                can_retry = (
+                    len(sub_question.retrieval_attempts) < state.max_retrieval_rounds
+                )
+                if not assessment.sufficient and can_retry and not assessment.next_query:
+                    raise ValueError(
+                        f"next_query is required to retry {assessment.sub_question_id}"
+                    )
+                reflection = EvidenceReflection(
+                    round_index=len(sub_question.reflections) + 1,
+                    **assessment.model_dump(),
+                )
+                sub_question.reflections.append(reflection)
+                latest_attempt = sub_question.retrieval_attempts[-1]
+                latest_attempt.sufficient = assessment.sufficient
+                latest_attempt.coverage_reason = assessment.reason
+                if assessment.sufficient:
+                    sub_question.status = SubQuestionStatus.SUFFICIENT
+                    sub_question.next_query = None
+                else:
+                    sub_question.status = SubQuestionStatus.INSUFFICIENT
+                    sub_question.next_query = (
+                        assessment.next_query.strip()
+                        if can_retry and assessment.next_query is not None
+                        else None
+                    )
+
+            retry_ids = [
+                item.sub_question_id
+                for item in state.plan.sub_questions
+                if item.status == SubQuestionStatus.INSUFFICIENT
+                and item.next_query is not None
+            ]
+            terminal = all(
+                item.status == SubQuestionStatus.SUFFICIENT
+                or (
+                    item.status == SubQuestionStatus.INSUFFICIENT
+                    and len(item.retrieval_attempts) >= state.max_retrieval_rounds
+                    and len(item.reflections) == len(item.retrieval_attempts)
+                )
+                for item in state.plan.sub_questions
+            )
+            if retry_ids:
+                state.status = ResearchTaskStatus.RETRIEVING
+            elif terminal:
+                state.status = (
+                    ResearchTaskStatus.READY_TO_SYNTHESIZE
+                    if any(
+                        item.status == SubQuestionStatus.SUFFICIENT
+                        for item in state.plan.sub_questions
+                    )
+                    else ResearchTaskStatus.REFUSED
+                )
+            else:
+                state.status = ResearchTaskStatus.REFLECTING
+            self._write(path, state)
             return state
 
-    def add_gap_evidence(
+    def finalize(
         self,
         task_id: str,
-        sub_question_id: str,
-        claim_id: str,
-        evidence: list[EvidenceItem],
         *,
-        query: str,
-        scope: RetrievalScope,
-        paper_ids: list[str] | None,
-        elapsed_ms: int,
-        max_gap_retrievals: int,
+        answered_sub_question_ids: list[str],
+        cited_evidence_ids: list[str],
+        checks: list[CitationLocatorCheck],
     ) -> ResearchState:
-        """Add evidence from one bounded post-verification gap search."""
+        """Record deterministic citation validation after answer generation."""
         with self._lock(task_id):
             path = self._path(task_id)
             if not path.exists():
                 raise FileNotFoundError(f"research task not found: {task_id}")
             state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
-            if state.status != ResearchTaskStatus.VERIFYING:
-                raise RuntimeError("gap retrieval is only available while verifying claims")
-            claim = state.claims.get(claim_id)
-            if claim is None:
-                raise ValueError(f"unknown claim: {claim_id}")
-            if claim.sub_question_id != sub_question_id:
-                raise ValueError("claim does not belong to the supplied sub-question")
-            if claim.status == ClaimStatus.SUPPORTED:
-                raise RuntimeError("a supported claim does not need gap retrieval")
-
-            history = list(state.metadata.get("gap_retrieval_attempts", []))
-            if any(item.get("claim_id") == claim_id for item in history):
-                raise RuntimeError(f"gap retrieval already ran for claim: {claim_id}")
-            if len(history) >= max_gap_retrievals:
-                raise RuntimeError(
-                    f"maximum task gap retrievals reached: {max_gap_retrievals}"
-                )
-
-            sub_question = next(
-                (
-                    item
-                    for item in state.plan.sub_questions
-                    if item.sub_question_id == sub_question_id
-                ),
-                None,
+            if state.status != ResearchTaskStatus.READY_TO_SYNTHESIZE:
+                raise RuntimeError("research_finalize requires reflected sufficient evidence")
+            state.citation_locator_checks = checks
+            answered = set(answered_sub_question_ids)
+            unresolved = [
+                item.sub_question_id
+                for item in state.plan.sub_questions
+                if item.sub_question_id not in answered
+            ]
+            state.metadata["finalization"] = {
+                "answered_sub_question_ids": answered_sub_question_ids,
+                "cited_evidence_ids": cited_evidence_ids,
+                "unresolved_sub_question_ids": unresolved,
+            }
+            state.status = (
+                ResearchTaskStatus.COMPLETED
+                if not unresolved
+                else ResearchTaskStatus.COMPLETED_WITH_GAPS
             )
-            if sub_question is None:
-                raise ValueError(f"unknown sub-question: {sub_question_id}")
-            if query not in sub_question.queries:
-                sub_question.queries.append(query)
-            for item in evidence:
-                state.evidence[item.evidence_id] = item
-                if item.evidence_id not in sub_question.evidence_ids:
-                    sub_question.evidence_ids.append(item.evidence_id)
-            history.append(
-                {
-                    "claim_id": claim_id,
-                    "sub_question_id": sub_question_id,
-                    "query": query,
-                    "scope": scope.value,
-                    "paper_ids": paper_ids or [],
-                    "evidence_ids": [item.evidence_id for item in evidence],
-                    "elapsed_ms": elapsed_ms,
-                }
-            )
-            state.metadata["gap_retrieval_attempts"] = history
-            state.retrieval_calls += 1
-            state.status = ResearchTaskStatus.VERIFYING
-            state.touch()
-            temporary = path.with_suffix(".json.tmp")
-            temporary.write_text(state.model_dump_json(indent=2), encoding="utf-8")
-            os.replace(temporary, path)
+            self._write(path, state)
             return state

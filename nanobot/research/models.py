@@ -34,6 +34,7 @@ class SubQuestionStatus(StrEnum):
 class ResearchTaskStatus(StrEnum):
     PLANNING = "planning"
     RETRIEVING = "retrieving"
+    REFLECTING = "reflecting"
     READY_TO_SYNTHESIZE = "ready_to_synthesize"
     VERIFYING = "verifying"
     COMPLETED = "completed"
@@ -119,6 +120,30 @@ class RetrievalAttempt(ResearchModel):
     coverage_reason: str = ""
 
 
+class EvidenceAssessment(ResearchModel):
+    """Reflect's semantic sufficiency decision for one evidence need."""
+
+    sub_question_id: str = Field(min_length=1)
+    sufficient: bool
+    evidence_ids: list[str] = Field(default_factory=list)
+    reason: str = Field(min_length=1)
+    next_query: str | None = None
+
+    @model_validator(mode="after")
+    def valid_assessment(self) -> "EvidenceAssessment":
+        if len(self.evidence_ids) != len(set(self.evidence_ids)):
+            raise ValueError("evidence_ids must be unique within an assessment")
+        if self.sufficient and not self.evidence_ids:
+            raise ValueError("a sufficient assessment must cite evidence")
+        if self.next_query is not None and not self.next_query.strip():
+            raise ValueError("next_query must contain non-whitespace characters")
+        return self
+
+
+class EvidenceReflection(EvidenceAssessment):
+    round_index: int = Field(ge=1)
+
+
 class SubQuestion(ResearchModel):
     sub_question_id: str
     question: str = Field(min_length=1)
@@ -129,6 +154,7 @@ class SubQuestion(ResearchModel):
     next_query: str | None = None
     candidate_paper_ids: list[str] = Field(default_factory=list)
     retrieval_attempts: list[RetrievalAttempt] = Field(default_factory=list)
+    reflections: list[EvidenceReflection] = Field(default_factory=list)
 
 
 class ResearchPlan(ResearchModel):
@@ -218,6 +244,19 @@ class CitationCheck(ResearchModel):
     revision: str | None = None
 
 
+class CitationLocatorCheck(ResearchModel):
+    """Deterministic validation for a citation used in the final answer."""
+
+    evidence_id: str
+    sub_question_id: str | None = None
+    locatable: bool = False
+    reason: str = ""
+    title: str | None = None
+    page_start: int | None = None
+    page_end: int | None = None
+    chunk_id: str | None = None
+
+
 class ResearchState(ResearchModel):
     task_id: str = Field(default_factory=lambda: uuid4().hex)
     session_key: str | None = None
@@ -226,9 +265,11 @@ class ResearchState(ResearchModel):
     evidence: dict[str, EvidenceItem] = Field(default_factory=dict)
     claims: dict[str, ClaimState] = Field(default_factory=dict)
     citation_checks: list[CitationCheck] = Field(default_factory=list)
+    citation_locator_checks: list[CitationLocatorCheck] = Field(default_factory=list)
     retrieval_rounds: int = Field(default=0, ge=0)
     retrieval_calls: int = Field(default=0, ge=0)
-    max_retrieval_rounds: int = Field(default=3, ge=1)
+    # Older persisted tasks may contain 3; new tasks are capped by ResearchConfig at 2.
+    max_retrieval_rounds: int = Field(default=2, ge=1)
     verification_rounds: int = Field(default=0, ge=0)
     max_verification_rounds: int = Field(default=2, ge=1)
     created_at: datetime = Field(default_factory=utc_now)

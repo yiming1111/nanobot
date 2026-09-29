@@ -106,7 +106,8 @@ class PipelineTraceStore:
         stage_latency_ms: dict[str, int] = {}
         evidence_ids: set[str] = set()
         errors: list[dict[str, str | None]] = []
-        latest_verification: dict[str, Any] | None = None
+        latest_reflection: dict[str, Any] | None = None
+        latest_finalization: dict[str, Any] | None = None
         for event in trace.events:
             stage_latency_ms[event.stage] = (
                 stage_latency_ms.get(event.stage, 0) + event.elapsed_ms
@@ -116,18 +117,10 @@ class PipelineTraceStore:
                 evidence_ids.update(str(value) for value in raw_ids)
             if event.status == "failed":
                 errors.append({"operation": event.operation, "error": event.error})
-            if event.operation == "research_verify":
-                latest_verification = {
-                    key: event.output_summary.get(key)
-                    for key in (
-                        "status",
-                        "verification_round",
-                        "claim_support_rate",
-                        "citation_completeness",
-                        "citation_correctness",
-                        "uncovered_sub_question_ids",
-                    )
-                }
+            if event.operation == "research_reflect":
+                latest_reflection = dict(event.output_summary)
+            if event.operation == "research_finalize":
+                latest_finalization = dict(event.output_summary)
         return {
             "task_id": task_id,
             "event_count": len(trace.events),
@@ -139,7 +132,8 @@ class PipelineTraceStore:
             "total_recorded_ms": sum(event.elapsed_ms for event in trace.events),
             "stage_latency_ms": stage_latency_ms,
             "evidence_ids": sorted(evidence_ids),
-            "latest_verification": latest_verification,
+            "latest_reflection": latest_reflection,
+            "latest_finalization": latest_finalization,
             "errors": errors,
             "events": [event.model_dump(mode="json") for event in trace.events],
         }

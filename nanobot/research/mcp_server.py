@@ -1,4 +1,4 @@
-"""FastMCP surface for nanobot's scientific-paper research tools."""
+"""FastMCP surface for nanobot's scientific-paper Agentic RAG tools."""
 
 from __future__ import annotations
 
@@ -12,13 +12,9 @@ from mcp.server.fastmcp import FastMCP
 
 from nanobot.research.config import ResearchConfig
 from nanobot.research.models import (
-    CitationCheck,
-    CitationVerdict,
-    ClaimDraft,
-    ClaimState,
-    ClaimStatus,
+    CitationLocatorCheck,
     ConstraintValue,
-    EvidenceJudgment,
+    EvidenceAssessment,
     EvidenceItem,
     EvidenceRelation,
     EvidenceSearchResult,
@@ -27,6 +23,7 @@ from nanobot.research.models import (
     ResearchTaskStatus,
     RetrievalScope,
     SubQuestion,
+    SubQuestionStatus,
 )
 from nanobot.research.observability.trace import PipelineTraceStore
 from nanobot.research.retrieval.service import HybridRetrievalService
@@ -59,7 +56,6 @@ class ResearchTools:
         operation: str,
         elapsed_ms: int = 0,
         sub_question_id: str | None = None,
-        claim_id: str | None = None,
         input_summary: dict[str, Any] | None = None,
         output_summary: dict[str, Any] | None = None,
     ) -> None:
@@ -70,7 +66,6 @@ class ResearchTools:
                 operation=operation,
                 elapsed_ms=elapsed_ms,
                 sub_question_id=sub_question_id,
-                claim_id=claim_id,
                 input_summary=input_summary,
                 output_summary=output_summary,
             )
@@ -119,7 +114,6 @@ class ResearchTools:
             status=ResearchTaskStatus.RETRIEVING,
             plan=plan,
             max_retrieval_rounds=self.config.max_retrieval_rounds,
-            max_verification_rounds=self.config.max_verification_rounds,
         )
         self.states.create(state)
         payload = state.model_dump(mode="json")
@@ -141,80 +135,6 @@ class ResearchTools:
             },
         )
         return payload
-
-    def search_papers(
-        self,
-        query: str,
-        *,
-        top_k: int | None = None,
-        year_from: int | None = None,
-        year_to: int | None = None,
-    ) -> list[dict[str, Any]]:
-        return [
-            item.model_dump(mode="json")
-            for item in self.retrieval.search_papers(
-                query,
-                top_k=top_k,
-                year_from=year_from,
-                year_to=year_to,
-            )
-        ]
-
-    def retrieve_evidence(
-        self,
-        *,
-        task_id: str,
-        sub_question_id: str,
-        query: str,
-        top_k: int | None = None,
-        paper_ids: list[str] | None = None,
-        sections: list[str] | None = None,
-        scope: RetrievalScope = RetrievalScope.CANDIDATE_PAPERS,
-    ) -> dict[str, Any]:
-        started_at = perf_counter()
-        results = self.retrieval.retrieve_evidence(
-            query,
-            top_k=top_k,
-            paper_ids=paper_ids,
-            sections=sections,
-        )
-        sufficient, coverage_reason = self._assess_evidence(results)
-        evidence = self._evidence_items(
-            task_id=task_id,
-            sub_question_id=sub_question_id,
-            results=results,
-        )
-        elapsed_ms = round((perf_counter() - started_at) * 1000)
-        state = self.states.add_evidence(
-            task_id,
-            sub_question_id,
-            evidence,
-            query=query,
-            paper_ids=paper_ids,
-            scope=scope,
-            elapsed_ms=elapsed_ms,
-            sufficient=sufficient,
-            coverage_reason=coverage_reason,
-        )
-        return {
-            "task_id": task_id,
-            "sub_question_id": sub_question_id,
-            "query": query,
-            "scope": scope.value,
-            "paper_ids": paper_ids or [],
-            "evidence": [item.model_dump(mode="json") for item in evidence],
-            "coverage": {
-                "sufficient": sufficient,
-                "reason": coverage_reason,
-                "basis": "retrieval_score",
-            },
-            "elapsed_ms": elapsed_ms,
-            "sub_question_status": next(
-                item.status.value
-                for item in state.plan.sub_questions
-                if item.sub_question_id == sub_question_id
-            ),
-        }
 
     def _evidence_items(
         self,
@@ -248,25 +168,29 @@ class ResearchTools:
             )
         return evidence
 
-    def _assess_evidence(
+    def _retrieve_scope(
         self,
-        results: list[EvidenceSearchResult],
-    ) -> tuple[bool, str]:
-        if not results:
-            return False, "no evidence passages were retrieved"
-        rerank_scores = [
-            item.rerank_score for item in results if item.rerank_score is not None
-        ]
-        if rerank_scores and max(rerank_scores) < self.config.min_evidence_rerank_score:
-            return (
-                False,
-                "the highest rerank score is below the configured retrieval threshold",
-            )
-        return (
-            True,
-            "at least one candidate passage was retrieved; semantic support "
-            "must be verified before synthesis",
+        *,
+        query: str,
+        paper_ids: list[str] | None,
+        scope: RetrievalScope,
+        top_k: int | None,
+        sections: list[str] | None,
+    ) -> tuple[list[EvidenceSearchResult], dict[str, Any]]:
+        started_at = perf_counter()
+        results = self.retrieval.retrieve_evidence(
+            query,
+            top_k=top_k,
+            paper_ids=paper_ids,
+            sections=sections,
         )
+        elapsed_ms = round((perf_counter() - started_at) * 1000)
+        return results, {
+            "scope": scope.value,
+            "paper_ids": paper_ids or [],
+            "chunk_ids": [item.chunk_id for item in results],
+            "elapsed_ms": elapsed_ms,
+        }
 
     def research_retrieve(
         self,
@@ -274,20 +198,16 @@ class ResearchTools:
         task_id: str,
         sub_question_id: str,
         query: str,
-        alternative_query: str | None = None,
         top_k: int | None = None,
         year_from: int | None = None,
         year_to: int | None = None,
         sections: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Run bounded paper-first retrieval for one sub-question."""
+        """Run one semantic search with internal candidate-scope recovery."""
         total_started_at = perf_counter()
         query = query.strip()
         if not query:
             raise ValueError("query must not be empty")
-        alternative_query = (
-            alternative_query.strip() if alternative_query and alternative_query.strip() else None
-        )
         state = self.states.load(task_id)
         sub_question = next(
             (
@@ -299,15 +219,31 @@ class ResearchTools:
         )
         if sub_question is None:
             raise ValueError(f"unknown sub-question: {sub_question_id}")
-        if sub_question.retrieval_attempts:
+        if sub_question.status == SubQuestionStatus.SUFFICIENT:
+            raise RuntimeError(f"evidence is already sufficient for {sub_question_id}")
+        if len(sub_question.retrieval_attempts) >= state.max_retrieval_rounds:
             raise RuntimeError(
-                f"retrieval already ran for {sub_question_id}; inspect research_status instead"
+                f"maximum semantic retrieval rounds reached for {sub_question_id}"
+            )
+        if sub_question.retrieval_attempts and sub_question.next_query is None:
+            raise RuntimeError(
+                f"run research_reflect before retrying {sub_question_id}"
+            )
+        if (
+            sub_question.retrieval_attempts
+            and sub_question.next_query is not None
+            and query != sub_question.next_query.strip()
+        ):
+            raise ValueError(
+                f"retry query must match Reflect next_query: {sub_question.next_query}"
             )
 
+        semantic_round = len(sub_question.retrieval_attempts) + 1
         logger.info(
-            "research retrieval started task=%s sub_question=%s",
+            "research retrieval started task=%s sub_question=%s semantic_round=%d",
             task_id,
             sub_question_id,
+            semantic_round,
         )
         paper_search_started = perf_counter()
         candidate_papers = self.retrieval.search_papers(
@@ -317,121 +253,108 @@ class ResearchTools:
             year_to=year_to,
         )
         paper_search_ms = round((perf_counter() - paper_search_started) * 1000)
-        logger.info(
-            "paper recall completed task=%s sub_question=%s candidates=%d elapsed_ms=%d",
-            task_id,
-            sub_question_id,
-            len(candidate_papers),
-            paper_search_ms,
-        )
         initial_ids = [
             item.paper_id
             for item in candidate_papers[: self.config.initial_paper_candidates]
         ]
         expanded_ids = [item.paper_id for item in candidate_papers]
-        attempts: list[dict[str, Any]] = []
 
-        first = self._run_attempt(
-            task_id=task_id,
-            sub_question_id=sub_question_id,
-            query=query,
-            paper_ids=initial_ids,
-            scope=RetrievalScope.CANDIDATE_PAPERS,
-            top_k=top_k,
-            sections=sections,
-        )
-        attempts.append(first)
-        self._log_attempt(task_id, sub_question_id, first)
-
-        if (
-            not first["coverage"]["sufficient"]
-            and len(attempts) < state.max_retrieval_rounds
-            and len(expanded_ids) > len(initial_ids)
-        ):
-            second = self._run_attempt(
-                task_id=task_id,
-                sub_question_id=sub_question_id,
-                query=alternative_query or query,
+        technical_attempts: list[dict[str, Any]] = []
+        results: list[EvidenceSearchResult] = []
+        final_scope = RetrievalScope.GLOBAL_FALLBACK
+        final_paper_ids: list[str] | None = None
+        if initial_ids:
+            results, attempt = self._retrieve_scope(
+                query=query,
+                paper_ids=initial_ids,
+                scope=RetrievalScope.CANDIDATE_PAPERS,
+                top_k=top_k,
+                sections=sections,
+            )
+            technical_attempts.append(attempt)
+            final_scope = RetrievalScope.CANDIDATE_PAPERS
+            final_paper_ids = initial_ids
+        if not results and len(expanded_ids) > len(initial_ids):
+            results, attempt = self._retrieve_scope(
+                query=query,
                 paper_ids=expanded_ids,
                 scope=RetrievalScope.EXPANDED_CANDIDATES,
                 top_k=top_k,
                 sections=sections,
             )
-            attempts.append(second)
-            self._log_attempt(task_id, sub_question_id, second)
-
-        if (
-            not attempts[-1]["coverage"]["sufficient"]
-            and len(attempts) < state.max_retrieval_rounds
-        ):
-            fallback = self._run_attempt(
-                task_id=task_id,
-                sub_question_id=sub_question_id,
-                query=alternative_query or query,
+            technical_attempts.append(attempt)
+            final_scope = RetrievalScope.EXPANDED_CANDIDATES
+            final_paper_ids = expanded_ids
+        if not results:
+            results, attempt = self._retrieve_scope(
+                query=query,
                 paper_ids=None,
                 scope=RetrievalScope.GLOBAL_FALLBACK,
                 top_k=top_k,
                 sections=sections,
             )
-            attempts.append(fallback)
-            self._log_attempt(task_id, sub_question_id, fallback)
+            technical_attempts.append(attempt)
+            final_scope = RetrievalScope.GLOBAL_FALLBACK
+            final_paper_ids = None
 
-        attempt_summaries: list[dict[str, Any]] = []
-        for attempt in attempts:
-            attempt_summaries.append(
-                {
-                    "query": attempt["query"],
-                    "scope": attempt["scope"],
-                    "paper_ids": attempt["paper_ids"],
-                    "evidence_ids": [
-                        item["evidence_id"] for item in attempt["evidence"]
-                    ],
-                    "coverage": attempt["coverage"],
-                    "elapsed_ms": attempt["elapsed_ms"],
-                }
-            )
-        final_state = self.states.load(task_id)
-        final_sub_question = next(
+        evidence = self._evidence_items(
+            task_id=task_id,
+            sub_question_id=sub_question_id,
+            results=results,
+        )
+        total_elapsed_ms = round((perf_counter() - total_started_at) * 1000)
+        coverage_reason = (
+            "candidate passages retrieved; semantic sufficiency awaits research_reflect"
+            if evidence
+            else "no candidate passages were found after full-corpus fallback"
+        )
+        updated = self.states.add_evidence(
+            task_id,
+            sub_question_id,
+            evidence,
+            query=query,
+            paper_ids=final_paper_ids,
+            scope=final_scope,
+            elapsed_ms=total_elapsed_ms,
+            coverage_reason=coverage_reason,
+        )
+        updated_sub_question = next(
             item
-            for item in final_state.plan.sub_questions
+            for item in updated.plan.sub_questions
             if item.sub_question_id == sub_question_id
         )
         payload = {
             "task_id": task_id,
             "sub_question_id": sub_question_id,
+            "semantic_round": semantic_round,
+            "max_semantic_rounds": updated.max_retrieval_rounds,
             "candidate_papers": [
                 {
                     "paper_id": item.paper_id,
                     "title": item.title,
                     "year": item.year,
                     "fused_score": item.fused_score,
-                    "rerank_score": item.rerank_score,
                 }
                 for item in candidate_papers
             ],
             "paper_search_ms": paper_search_ms,
-            "attempts": attempt_summaries,
-            "evidence": attempts[-1]["evidence"],
-            "coverage": attempts[-1]["coverage"],
-            "sub_question_status": final_sub_question.status.value,
-            "stopped_after_rounds": len(attempts),
+            "technical_attempts": technical_attempts,
+            "evidence": [item.model_dump(mode="json") for item in evidence],
+            "candidate_passages_found": bool(evidence),
+            "semantic_sufficiency": "pending_reflect",
+            "task_status": updated.status.value,
+            "sub_question_status": updated_sub_question.status.value,
+            "next_step": "run research_reflect after all pending sub-questions are retrieved",
         }
-        evidence_ids = list(
-            dict.fromkeys(
-                evidence_id
-                for attempt in attempt_summaries
-                for evidence_id in attempt["evidence_ids"]
-            )
-        )
         self._record_trace(
             task_id,
             stage="retrieve",
             operation="research_retrieve",
-            elapsed_ms=round((perf_counter() - total_started_at) * 1000),
+            elapsed_ms=total_elapsed_ms,
             sub_question_id=sub_question_id,
             input_summary={
                 "query": query,
-                "has_alternative_query": alternative_query is not None,
+                "semantic_round": semantic_round,
                 "year_from": year_from,
                 "year_to": year_to,
                 "sections": sections or [],
@@ -439,84 +362,82 @@ class ResearchTools:
             output_summary={
                 "candidate_paper_ids": [item.paper_id for item in candidate_papers],
                 "paper_search_ms": paper_search_ms,
-                "attempts": attempt_summaries,
-                "evidence_ids": evidence_ids,
-                "coverage_sufficient": attempts[-1]["coverage"]["sufficient"],
-                "sub_question_status": final_sub_question.status.value,
+                "technical_attempts": technical_attempts,
+                "evidence_ids": [item.evidence_id for item in evidence],
+                "candidate_passages_found": bool(evidence),
+                "task_status": updated.status.value,
             },
         )
         return payload
 
-    @staticmethod
-    def _log_attempt(
-        task_id: str,
-        sub_question_id: str,
-        attempt: dict[str, Any],
-    ) -> None:
-        logger.info(
-            "evidence retrieval completed task=%s sub_question=%s scope=%s "
-            "evidence=%d sufficient=%s elapsed_ms=%d",
-            task_id,
-            sub_question_id,
-            attempt["scope"],
-            len(attempt["evidence"]),
-            attempt["coverage"]["sufficient"],
-            attempt["elapsed_ms"],
-        )
-
-    def _run_attempt(
+    def reflect(
         self,
         *,
         task_id: str,
-        sub_question_id: str,
-        query: str,
-        paper_ids: list[str] | None,
-        scope: RetrievalScope,
-        top_k: int | None,
-        sections: list[str] | None,
+        assessments: list[EvidenceAssessment],
     ) -> dict[str, Any]:
-        if paper_ids == []:
-            started_at = perf_counter()
-            sufficient, coverage_reason = self._assess_evidence([])
-            state = self.states.add_evidence(
-                task_id,
-                sub_question_id,
-                [],
-                query=query,
-                paper_ids=[],
-                scope=scope,
-                elapsed_ms=round((perf_counter() - started_at) * 1000),
-                sufficient=sufficient,
-                coverage_reason=coverage_reason,
-            )
-            return {
-                "task_id": task_id,
-                "sub_question_id": sub_question_id,
-                "query": query,
-                "scope": scope.value,
-                "paper_ids": [],
-                "evidence": [],
-                "coverage": {
-                    "sufficient": False,
-                    "reason": coverage_reason,
-                    "basis": "retrieval_score",
-                },
-                "elapsed_ms": 0,
-                "sub_question_status": next(
-                    item.status.value
-                    for item in state.plan.sub_questions
-                    if item.sub_question_id == sub_question_id
+        """Decide whether retrieved evidence covers each outstanding evidence need."""
+        started_at = perf_counter()
+        if not assessments:
+            raise ValueError("at least one evidence assessment is required")
+        updated = self.states.record_reflections(task_id, assessments)
+        retry_sub_questions = [
+            {
+                "sub_question_id": item.sub_question_id,
+                "next_query": item.next_query,
+                "remaining_semantic_rounds": (
+                    updated.max_retrieval_rounds - len(item.retrieval_attempts)
                 ),
             }
-        return self.retrieve_evidence(
-            task_id=task_id,
-            sub_question_id=sub_question_id,
-            query=query,
-            top_k=top_k,
-            paper_ids=paper_ids,
-            sections=sections,
-            scope=scope,
+            for item in updated.plan.sub_questions
+            if item.status == SubQuestionStatus.INSUFFICIENT
+            and item.next_query is not None
+        ]
+        sufficient_ids = [
+            item.sub_question_id
+            for item in updated.plan.sub_questions
+            if item.status == SubQuestionStatus.SUFFICIENT
+        ]
+        unresolved_ids = [
+            item.sub_question_id
+            for item in updated.plan.sub_questions
+            if item.status == SubQuestionStatus.INSUFFICIENT
+            and item.next_query is None
+        ]
+        payload = {
+            "task_id": task_id,
+            "status": updated.status.value,
+            "sufficient_sub_question_ids": sufficient_ids,
+            "retry_sub_questions": retry_sub_questions,
+            "unresolved_sub_question_ids": unresolved_ids,
+            "can_generate": updated.status == ResearchTaskStatus.READY_TO_SYNTHESIZE,
+            "must_abstain": updated.status == ResearchTaskStatus.REFUSED,
+            "next_step": (
+                "run one focused retrieval for each retry_sub_question"
+                if retry_sub_questions
+                else "generate only from sufficient evidence"
+                if updated.status == ResearchTaskStatus.READY_TO_SYNTHESIZE
+                else "abstain because the corpus lacks sufficient evidence"
+            ),
+        }
+        self._record_trace(
+            task_id,
+            stage="reflect",
+            operation="research_reflect",
+            elapsed_ms=round((perf_counter() - started_at) * 1000),
+            input_summary={
+                "assessments": [item.model_dump(mode="json") for item in assessments]
+            },
+            output_summary={
+                "status": updated.status.value,
+                "sufficient_sub_question_ids": sufficient_ids,
+                "retry_sub_question_ids": [
+                    item["sub_question_id"] for item in retry_sub_questions
+                ],
+                "unresolved_sub_question_ids": unresolved_ids,
+            },
         )
+        return payload
 
     def neighbors(
         self,
@@ -543,395 +464,132 @@ class ResearchTools:
             )
         return payload
 
-    def verify_claims(
+    def finalize(
         self,
         *,
         task_id: str,
-        claims: list[ClaimDraft],
-        judgments: list[EvidenceJudgment],
+        answered_sub_question_ids: list[str],
+        cited_evidence_ids: list[str],
     ) -> dict[str, Any]:
-        """Build a claim-evidence matrix from a separate semantic review pass."""
+        """Validate citation locators after generating an evidence-grounded answer."""
         started_at = perf_counter()
-        if not claims:
-            raise ValueError("at least one claim is required")
-        claim_ids = [item.claim_id for item in claims]
-        if len(claim_ids) != len(set(claim_ids)):
-            raise ValueError("claim_id values must be unique")
+        if not answered_sub_question_ids:
+            raise ValueError("at least one answered sub-question is required")
+        if len(answered_sub_question_ids) != len(set(answered_sub_question_ids)):
+            raise ValueError("answered_sub_question_ids must be unique")
+        if len(cited_evidence_ids) != len(set(cited_evidence_ids)):
+            raise ValueError("cited_evidence_ids must be unique")
 
         state = self.states.load(task_id)
-        if state.status not in {
-            ResearchTaskStatus.READY_TO_SYNTHESIZE,
-            ResearchTaskStatus.VERIFYING,
-        }:
-            raise RuntimeError(
-                "claims can only be verified after retrieval and before final completion"
-            )
-        sub_question_ids = {
-            item.sub_question_id for item in state.plan.sub_questions
+        if state.status != ResearchTaskStatus.READY_TO_SYNTHESIZE:
+            raise RuntimeError("research_finalize requires reflected sufficient evidence")
+        sub_questions = {
+            item.sub_question_id: item for item in state.plan.sub_questions
         }
-        for claim in claims:
-            if claim.sub_question_id not in sub_question_ids:
-                raise ValueError(
-                    f"unknown sub-question for claim {claim.claim_id}: "
-                    f"{claim.sub_question_id}"
-                )
-
-        judgment_by_pair: dict[tuple[str, str], EvidenceJudgment] = {}
-        cited_pairs = {
-            (claim.claim_id, evidence_id)
-            for claim in claims
-            for evidence_id in claim.cited_evidence_ids
-        }
-        for judgment in judgments:
-            pair = (judgment.claim_id, judgment.evidence_id)
-            if pair in judgment_by_pair:
-                raise ValueError(
-                    "duplicate semantic judgment for "
-                    f"claim={judgment.claim_id}, evidence={judgment.evidence_id}"
-                )
-            if pair not in cited_pairs:
-                raise ValueError(
-                    "semantic judgment must reference evidence cited by its claim: "
-                    f"claim={judgment.claim_id}, evidence={judgment.evidence_id}"
-                )
-            judgment_by_pair[pair] = judgment
-
-        claim_states: list[ClaimState] = []
-        citation_checks: list[CitationCheck] = []
-        matrix: list[dict[str, Any]] = []
-        for claim in claims:
-            checks: list[CitationCheck] = []
-            if not claim.cited_evidence_ids:
-                checks.append(
-                    CitationCheck(
-                        claim_id=claim.claim_id,
-                        verdict=CitationVerdict.MISSING_CITATION,
-                        rationale="the claim has no cited evidence",
-                    )
-                )
-            for evidence_id in claim.cited_evidence_ids:
-                evidence = state.evidence.get(evidence_id)
-                judgment = judgment_by_pair.get((claim.claim_id, evidence_id))
-                if evidence is None:
-                    check = CitationCheck(
-                        claim_id=claim.claim_id,
-                        evidence_id=evidence_id,
-                        locatable=False,
-                        verdict=CitationVerdict.UNSUPPORTED,
-                        rationale="the cited evidence ID is not present in this task",
-                    )
-                elif evidence.sub_question_id != claim.sub_question_id:
-                    check = CitationCheck(
-                        claim_id=claim.claim_id,
-                        evidence_id=evidence_id,
-                        locatable=True,
-                        verdict=CitationVerdict.UNSUPPORTED,
-                        rationale=(
-                            "the citation belongs to a different evidence need: "
-                            f"{evidence.sub_question_id}"
-                        ),
-                    )
-                elif judgment is None:
-                    check = CitationCheck(
-                        claim_id=claim.claim_id,
-                        evidence_id=evidence_id,
-                        locatable=True,
-                        verdict=CitationVerdict.NOT_ENOUGH_INFORMATION,
-                        rationale=(
-                            "no independent semantic judgment was supplied for this "
-                            "claim-evidence pair"
-                        ),
-                    )
-                else:
-                    locatable = bool(
-                        evidence.title
-                        and evidence.chunk_id
-                        and evidence.page_start >= 1
-                        and evidence.page_end >= evidence.page_start
-                    )
-                    verdict = judgment.verdict
-                    rationale = judgment.rationale
-                    if not locatable and verdict == CitationVerdict.SUPPORTED:
-                        verdict = CitationVerdict.UNSUPPORTED
-                        rationale = (
-                            "semantic support was asserted, but the source locator is "
-                            "incomplete"
-                        )
-                    check = CitationCheck(
-                        claim_id=claim.claim_id,
-                        evidence_id=evidence_id,
-                        locatable=locatable,
-                        verdict=verdict,
-                        rationale=rationale,
-                        revision=judgment.revision,
-                    )
-                checks.append(check)
-
-            verdicts = [item.verdict for item in checks]
-            has_support = CitationVerdict.SUPPORTED in verdicts
-            has_partial = CitationVerdict.PARTIALLY_SUPPORTED in verdicts
-            has_contradiction = CitationVerdict.CONTRADICTED in verdicts
-            if verdicts and all(
-                item.verdict == CitationVerdict.SUPPORTED and item.locatable
-                for item in checks
-            ):
-                claim_status = ClaimStatus.SUPPORTED
-            elif has_contradiction and (has_support or has_partial):
-                claim_status = ClaimStatus.CONFLICTING
-            elif has_contradiction:
-                claim_status = ClaimStatus.CONTRADICTED
-            elif has_support or has_partial:
-                claim_status = ClaimStatus.PARTIALLY_SUPPORTED
-            else:
-                claim_status = ClaimStatus.INSUFFICIENT
-
-            revision = next(
-                (item.revision for item in checks if item.revision),
-                None,
+        unknown_sub_questions = set(answered_sub_question_ids) - set(sub_questions)
+        if unknown_sub_questions:
+            raise ValueError(
+                f"unknown answered sub-questions: {sorted(unknown_sub_questions)}"
             )
-            claim_state = ClaimState(
-                claim_id=claim.claim_id,
-                sub_question_id=claim.sub_question_id,
-                text=claim.text,
-                cited_evidence_ids=claim.cited_evidence_ids,
-                supporting_evidence_ids=[
-                    item.evidence_id
-                    for item in checks
-                    if item.evidence_id
-                    and item.verdict
-                    in {
-                        CitationVerdict.SUPPORTED,
-                        CitationVerdict.PARTIALLY_SUPPORTED,
-                    }
-                ],
-                contradicting_evidence_ids=[
-                    item.evidence_id
-                    for item in checks
-                    if item.evidence_id
-                    and item.verdict == CitationVerdict.CONTRADICTED
-                ],
-                status=claim_status,
-                revision=revision,
-            )
-            claim_states.append(claim_state)
-            citation_checks.extend(checks)
-            matrix.append(
-                {
-                    "claim_id": claim.claim_id,
-                    "sub_question_id": claim.sub_question_id,
-                    "claim": claim.text,
-                    "status": claim_status.value,
-                    "recommended_action": self._claim_action(claim_status, revision),
-                    "checks": [
-                        self._citation_check_payload(item, state) for item in checks
-                    ],
-                }
-            )
-
-        all_claims_supported = all(
-            item.status == ClaimStatus.SUPPORTED for item in claim_states
-        )
-        covered_sub_question_ids = {
-            item.sub_question_id for item in claim_states if item.sub_question_id
-        }
-        uncovered_sub_question_ids = sorted(
-            sub_question_ids - covered_sub_question_ids
-        )
-        all_evidence_needs_covered = not uncovered_sub_question_ids
-        ready_for_final = all_claims_supported and all_evidence_needs_covered
-        supported_count = sum(
-            item.status == ClaimStatus.SUPPORTED for item in claim_states
-        )
-        claims_with_locatable_citation = {
-            item.claim_id
-            for item in citation_checks
-            if item.evidence_id is not None and item.locatable
-        }
-        cited_checks = [
-            item for item in citation_checks if item.evidence_id is not None
+        insufficient = [
+            sub_question_id
+            for sub_question_id in answered_sub_question_ids
+            if sub_questions[sub_question_id].status != SubQuestionStatus.SUFFICIENT
         ]
-        supported_citations = sum(
-            item.verdict == CitationVerdict.SUPPORTED for item in cited_checks
-        )
-        next_round = state.verification_rounds + 1
-        if ready_for_final:
-            final_status = ResearchTaskStatus.COMPLETED
-        elif next_round >= state.max_verification_rounds:
-            final_status = (
-                ResearchTaskStatus.COMPLETED_WITH_GAPS
-                if supported_count
-                else ResearchTaskStatus.REFUSED
+        if insufficient:
+            raise ValueError(
+                f"cannot answer sub-questions with insufficient evidence: {insufficient}"
             )
-        else:
-            final_status = ResearchTaskStatus.VERIFYING
 
-        updated = self.states.record_verification(
+        checks: list[CitationLocatorCheck] = []
+        errors: list[str] = []
+        cited_by_sub_question: dict[str, int] = {
+            value: 0 for value in answered_sub_question_ids
+        }
+        for evidence_id in cited_evidence_ids:
+            evidence = state.evidence.get(evidence_id)
+            if evidence is None:
+                checks.append(
+                    CitationLocatorCheck(
+                        evidence_id=evidence_id,
+                        reason="evidence ID is not present in this research task",
+                    )
+                )
+                errors.append(f"unknown evidence ID: {evidence_id}")
+                continue
+            locatable = bool(
+                evidence.title
+                and evidence.chunk_id
+                and evidence.page_start >= 1
+                and evidence.page_end >= evidence.page_start
+            )
+            checks.append(
+                CitationLocatorCheck(
+                    evidence_id=evidence_id,
+                    sub_question_id=evidence.sub_question_id,
+                    locatable=locatable,
+                    reason=(
+                        "citation locator is complete"
+                        if locatable
+                        else "citation locator is incomplete"
+                    ),
+                    title=evidence.title,
+                    page_start=evidence.page_start,
+                    page_end=evidence.page_end,
+                    chunk_id=evidence.chunk_id,
+                )
+            )
+            if evidence.sub_question_id not in cited_by_sub_question:
+                errors.append(
+                    "citation belongs to an unanswered sub-question: "
+                    f"{evidence.sub_question_id}"
+                )
+            else:
+                cited_by_sub_question[evidence.sub_question_id] += 1
+            if not locatable:
+                errors.append(f"citation locator is incomplete: {evidence_id}")
+        for sub_question_id, citation_count in cited_by_sub_question.items():
+            if citation_count == 0:
+                errors.append(f"answered sub-question has no citation: {sub_question_id}")
+        if errors:
+            raise ValueError("; ".join(errors))
+
+        updated = self.states.finalize(
             task_id,
-            claims=claim_states,
-            citation_checks=citation_checks,
-            status=final_status,
+            answered_sub_question_ids=answered_sub_question_ids,
+            cited_evidence_ids=cited_evidence_ids,
+            checks=checks,
+        )
+        unresolved = list(
+            updated.metadata.get("finalization", {}).get(
+                "unresolved_sub_question_ids", []
+            )
         )
         payload = {
             "task_id": task_id,
             "status": updated.status.value,
-            "verification_round": updated.verification_rounds,
-            "remaining_verification_rounds": (
-                updated.max_verification_rounds - updated.verification_rounds
+            "citations_valid": True,
+            "citation_checks": [item.model_dump(mode="json") for item in checks],
+            "unresolved_sub_question_ids": unresolved,
+            "next_step": (
+                "return the grounded answer and state unresolved evidence gaps"
+                if unresolved
+                else "return the grounded answer"
             ),
-            "all_claims_supported": all_claims_supported,
-            "all_evidence_needs_covered": all_evidence_needs_covered,
-            "uncovered_sub_question_ids": uncovered_sub_question_ids,
-            "can_answer_with_supported_claims": supported_count > 0,
-            "claim_support_rate": supported_count / len(claim_states),
-            "citation_completeness": (
-                len(claims_with_locatable_citation) / len(claim_states)
-            ),
-            "citation_correctness": (
-                supported_citations / len(cited_checks) if cited_checks else 0.0
-            ),
-            "claim_evidence_matrix": matrix,
         }
         self._record_trace(
             task_id,
-            stage="verify",
-            operation="research_verify",
+            stage="finalize",
+            operation="research_finalize",
             elapsed_ms=round((perf_counter() - started_at) * 1000),
             input_summary={
-                "claim_ids": [item.claim_id for item in claims],
-                "judgment_count": len(judgments),
+                "answered_sub_question_ids": answered_sub_question_ids,
+                "cited_evidence_ids": cited_evidence_ids,
             },
             output_summary={
                 "status": updated.status.value,
-                "verification_round": updated.verification_rounds,
-                "claim_statuses": {
-                    item.claim_id: item.status.value for item in claim_states
-                },
-                "claim_support_rate": payload["claim_support_rate"],
-                "citation_completeness": payload["citation_completeness"],
-                "citation_correctness": payload["citation_correctness"],
-                "uncovered_sub_question_ids": uncovered_sub_question_ids,
-            },
-        )
-        return payload
-
-    @staticmethod
-    def _citation_check_payload(
-        check: CitationCheck,
-        state: ResearchState,
-    ) -> dict[str, Any]:
-        payload = check.model_dump(mode="json")
-        evidence = state.evidence.get(check.evidence_id or "")
-        payload["locator"] = (
-            {
-                "title": evidence.title,
-                "page_start": evidence.page_start,
-                "page_end": evidence.page_end,
-                "chunk_id": evidence.chunk_id,
-            }
-            if evidence is not None
-            else None
-        )
-        return payload
-
-    @staticmethod
-    def _claim_action(status: ClaimStatus, revision: str | None) -> str:
-        if status == ClaimStatus.SUPPORTED:
-            return "keep"
-        if status == ClaimStatus.PARTIALLY_SUPPORTED:
-            return "use_revision" if revision else "narrow_or_retrieve"
-        if status == ClaimStatus.CONFLICTING:
-            return "report_conflict_or_retrieve"
-        if status == ClaimStatus.CONTRADICTED:
-            return "remove_or_reverse"
-        return "retrieve_or_remove"
-
-    def retrieve_claim_gap(
-        self,
-        *,
-        task_id: str,
-        claim_id: str,
-        query: str,
-        top_k: int | None = None,
-    ) -> dict[str, Any]:
-        """Run one bounded evidence search for a claim that failed verification."""
-        total_started_at = perf_counter()
-        query = query.strip()
-        if not query:
-            raise ValueError("query must not be empty")
-        state = self.states.load(task_id)
-        if state.status != ResearchTaskStatus.VERIFYING:
-            raise RuntimeError("gap retrieval is only available while verifying claims")
-        claim = state.claims.get(claim_id)
-        if claim is None:
-            raise ValueError(f"unknown claim: {claim_id}")
-        if claim.sub_question_id is None:
-            raise ValueError("claim is not attached to a sub-question")
-        if claim.status == ClaimStatus.SUPPORTED:
-            raise RuntimeError("a supported claim does not need gap retrieval")
-        gap_history = list(state.metadata.get("gap_retrieval_attempts", []))
-        if any(item.get("claim_id") == claim_id for item in gap_history):
-            raise RuntimeError(f"gap retrieval already ran for claim: {claim_id}")
-        if len(gap_history) >= self.config.max_gap_retrievals:
-            raise RuntimeError(
-                f"maximum task gap retrievals reached: {self.config.max_gap_retrievals}"
-            )
-        sub_question = next(
-            item
-            for item in state.plan.sub_questions
-            if item.sub_question_id == claim.sub_question_id
-        )
-        candidate_ids = sub_question.candidate_paper_ids
-        started_at = perf_counter()
-        scope = (
-            RetrievalScope.CANDIDATE_PAPERS
-            if candidate_ids
-            else RetrievalScope.GLOBAL_FALLBACK
-        )
-        results = self.retrieval.retrieve_evidence(
-            query,
-            top_k=top_k,
-            paper_ids=candidate_ids or None,
-        )
-        if not results and candidate_ids:
-            scope = RetrievalScope.GLOBAL_FALLBACK
-            results = self.retrieval.retrieve_evidence(query, top_k=top_k)
-        evidence = self._evidence_items(
-            task_id=task_id,
-            sub_question_id=claim.sub_question_id,
-            results=results,
-        )
-        elapsed_ms = round((perf_counter() - started_at) * 1000)
-        self.states.add_gap_evidence(
-            task_id,
-            claim.sub_question_id,
-            claim_id,
-            evidence,
-            query=query,
-            scope=scope,
-            paper_ids=candidate_ids if scope == RetrievalScope.CANDIDATE_PAPERS else None,
-            elapsed_ms=elapsed_ms,
-            max_gap_retrievals=self.config.max_gap_retrievals,
-        )
-        payload = {
-            "task_id": task_id,
-            "claim_id": claim_id,
-            "query": query,
-            "scope": scope.value,
-            "evidence": [item.model_dump(mode="json") for item in evidence],
-            "elapsed_ms": elapsed_ms,
-            "next_step": "revise the claim or run the final verification round",
-        }
-        self._record_trace(
-            task_id,
-            stage="retrieve",
-            operation="research_retrieve_claim_gap",
-            elapsed_ms=round((perf_counter() - total_started_at) * 1000),
-            sub_question_id=claim.sub_question_id,
-            claim_id=claim_id,
-            input_summary={"query": query},
-            output_summary={
-                "scope": scope.value,
-                "evidence_ids": [item.evidence_id for item in evidence],
+                "citations_valid": True,
+                "unresolved_sub_question_ids": unresolved,
             },
         )
         return payload
@@ -956,7 +614,6 @@ class ResearchTools:
             output_summary={
                 "status": payload["status"],
                 "evidence_count": len(payload["evidence"]),
-                "claim_count": len(payload["claims"]),
             },
         )
         return payload
@@ -976,7 +633,7 @@ def research_start(
     constraints: dict[str, ConstraintValue] | None = None,
     session_key: str | None = None,
 ) -> dict[str, Any]:
-    """Create a typed research plan before searching a scientific-paper corpus."""
+    """Create an evidence-needs plan before searching the local paper corpus."""
     return _tools().start(
         original_question=original_question,
         normalized_question=normalized_question,
@@ -992,23 +649,30 @@ def research_retrieve(
     task_id: str,
     sub_question_id: str,
     query: str,
-    alternative_query: str | None = None,
     top_k: int | None = None,
     year_from: int | None = None,
     year_to: int | None = None,
     sections: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Run bounded paper-first evidence retrieval for one research sub-question."""
+    """Run one semantic retrieval round with automatic empty-result fallback."""
     return _tools().research_retrieve(
         task_id=task_id,
         sub_question_id=sub_question_id,
         query=query,
-        alternative_query=alternative_query,
         top_k=top_k,
         year_from=year_from,
         year_to=year_to,
         sections=sections,
     )
+
+
+@mcp.tool()
+def research_reflect(
+    task_id: str,
+    assessments: list[EvidenceAssessment],
+) -> dict[str, Any]:
+    """Judge whether retrieved passages sufficiently cover each evidence need."""
+    return _tools().reflect(task_id=task_id, assessments=assessments)
 
 
 @mcp.tool()
@@ -1026,44 +690,25 @@ def research_status(
     task_id: str,
     include_evidence_text: bool = False,
 ) -> dict[str, Any]:
-    """Return research state; evidence text is omitted by default to bound context size."""
+    """Return research state; evidence text is omitted by default."""
     return _tools().status(task_id, include_evidence_text=include_evidence_text)
 
 
 @mcp.tool()
-def research_verify(
+def research_finalize(
     task_id: str,
-    claims: list[ClaimDraft],
-    judgments: list[EvidenceJudgment],
+    answered_sub_question_ids: list[str],
+    cited_evidence_ids: list[str],
 ) -> dict[str, Any]:
-    """Validate a claim-evidence matrix after an independent semantic review pass."""
-    return _tools().verify_claims(
+    """Validate final citation IDs and locators after grounded generation."""
+    return _tools().finalize(
         task_id=task_id,
-        claims=claims,
-        judgments=judgments,
-    )
-
-
-@mcp.tool()
-def research_retrieve_claim_gap(
-    task_id: str,
-    claim_id: str,
-    query: str,
-    top_k: int | None = None,
-) -> dict[str, Any]:
-    """Search once for evidence missing from a claim that failed verification."""
-    return _tools().retrieve_claim_gap(
-        task_id=task_id,
-        claim_id=claim_id,
-        query=query,
-        top_k=top_k,
+        answered_sub_question_ids=answered_sub_question_ids,
+        cited_evidence_ids=cited_evidence_ids,
     )
 
 
 def main() -> None:
-    # Complete expensive local initialization before advertising MCP tools.
-    # The gateway waits for MCP initialization, so users cannot start a research
-    # call that would otherwise pay the model-loading cost and hit tool timeout.
     logger.info("research MCP runtime preparation started")
     started_at = perf_counter()
     tools = _tools()
