@@ -5,6 +5,7 @@ import pytest
 from nanobot.research.config import ResearchConfig
 from nanobot.research.mcp_server import ResearchTools
 from nanobot.research.models import (
+    CitationReference,
     EvidenceAssessment,
     EvidenceSearchResult,
     PaperSearchResult,
@@ -109,7 +110,8 @@ def test_reflect_sufficient_then_finalize_citations(tmp_path: Path) -> None:
         sub_question_id="SQ1",
         query="evidence recall",
     )
-    evidence_id = retrieved["evidence"][0]["evidence_id"]
+    chunk_id = retrieved["evidence"][0]["chunk_id"]
+    assert "evidence_id" not in retrieved["evidence"][0]
 
     reflected = tools.reflect(
         task_id=task_id,
@@ -117,7 +119,7 @@ def test_reflect_sufficient_then_finalize_citations(tmp_path: Path) -> None:
             EvidenceAssessment(
                 sub_question_id="SQ1",
                 sufficient=True,
-                evidence_ids=[evidence_id],
+                supporting_chunk_ids=[chunk_id],
                 reason="The passage directly answers the question.",
             )
         ],
@@ -125,7 +127,7 @@ def test_reflect_sufficient_then_finalize_citations(tmp_path: Path) -> None:
     finalized = tools.finalize(
         task_id=task_id,
         answered_sub_question_ids=["SQ1"],
-        cited_evidence_ids=[evidence_id],
+        citations=[CitationReference(sub_question_id="SQ1", chunk_id=chunk_id)],
     )
 
     assert reflected["can_generate"] is True
@@ -196,14 +198,14 @@ def test_partial_sub_question_coverage_completes_with_gaps(tmp_path: Path) -> No
         sub_question_id="SQ2",
         query="cost",
     )
-    evidence_id = first["evidence"][0]["evidence_id"]
+    chunk_id = first["evidence"][0]["chunk_id"]
     tools.reflect(
         task_id=task_id,
         assessments=[
             EvidenceAssessment(
                 sub_question_id="SQ1",
                 sufficient=True,
-                evidence_ids=[evidence_id],
+                supporting_chunk_ids=[chunk_id],
                 reason="Accuracy is directly supported.",
             ),
             EvidenceAssessment(
@@ -232,7 +234,7 @@ def test_partial_sub_question_coverage_completes_with_gaps(tmp_path: Path) -> No
     finalized = tools.finalize(
         task_id=task_id,
         answered_sub_question_ids=["SQ1"],
-        cited_evidence_ids=[evidence_id],
+        citations=[CitationReference(sub_question_id="SQ1", chunk_id=chunk_id)],
     )
 
     assert reflected["can_generate"] is True
@@ -249,28 +251,33 @@ def test_finalize_rejects_unknown_or_missing_citations(tmp_path: Path) -> None:
         sub_question_id="SQ1",
         query="evidence recall",
     )
-    evidence_id = retrieved["evidence"][0]["evidence_id"]
+    chunk_id = retrieved["evidence"][0]["chunk_id"]
     tools.reflect(
         task_id=task_id,
         assessments=[
             EvidenceAssessment(
                 sub_question_id="SQ1",
                 sufficient=True,
-                evidence_ids=[evidence_id],
+                supporting_chunk_ids=[chunk_id],
                 reason="The evidence is sufficient.",
             )
         ],
     )
 
-    with pytest.raises(ValueError, match="unknown evidence ID"):
+    with pytest.raises(ValueError, match="not approved by Reflect"):
         tools.finalize(
             task_id=task_id,
             answered_sub_question_ids=["SQ1"],
-            cited_evidence_ids=["E-does-not-exist"],
+            citations=[
+                CitationReference(
+                    sub_question_id="SQ1",
+                    chunk_id="P1-C-does-not-exist",
+                )
+            ],
         )
     with pytest.raises(ValueError, match="has no citation"):
         tools.finalize(
             task_id=task_id,
             answered_sub_question_ids=["SQ1"],
-            cited_evidence_ids=[],
+            citations=[],
         )

@@ -104,7 +104,7 @@ class PipelineTraceStore:
     def summary(self, task_id: str) -> dict[str, Any]:
         trace = self.load(task_id)
         stage_latency_ms: dict[str, int] = {}
-        evidence_ids: set[str] = set()
+        chunk_ids: set[str] = set()
         errors: list[dict[str, str | None]] = []
         latest_reflection: dict[str, Any] | None = None
         latest_finalization: dict[str, Any] | None = None
@@ -112,9 +112,9 @@ class PipelineTraceStore:
             stage_latency_ms[event.stage] = (
                 stage_latency_ms.get(event.stage, 0) + event.elapsed_ms
             )
-            raw_ids = event.output_summary.get("evidence_ids", [])
+            raw_ids = event.output_summary.get("chunk_ids", [])
             if isinstance(raw_ids, list):
-                evidence_ids.update(str(value) for value in raw_ids)
+                chunk_ids.update(str(value) for value in raw_ids)
             if event.status == "failed":
                 errors.append({"operation": event.operation, "error": event.error})
             if event.operation == "research_reflect":
@@ -131,7 +131,7 @@ class PipelineTraceStore:
             ),
             "total_recorded_ms": sum(event.elapsed_ms for event in trace.events),
             "stage_latency_ms": stage_latency_ms,
-            "evidence_ids": sorted(evidence_ids),
+            "chunk_ids": sorted(chunk_ids),
             "latest_reflection": latest_reflection,
             "latest_finalization": latest_finalization,
             "errors": errors,

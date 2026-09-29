@@ -32,7 +32,8 @@
       ├─ 证据充分：进入回答草稿生成
       ├─ 首轮不足：根据证据缺口生成一个定向 Query，再执行一次全库检索
       └─ 第二轮仍不足：拒答或只回答已有充分证据的部分
-  → 确定性检查 evidence ID、子问题归属、论文标题、页码和 chunk ID
+  → 确定性检查引用 chunk 是否经过对应子问题的 Reflect 确认
+  → 向读者展示论文标题和页码
   → 输出最终回答
   → 保存会话记忆、结构化调研状态和 Pipeline Trace
 ```
@@ -86,7 +87,7 @@
 - `research_reflect`：判断各证据需求是否已被当前候选证据直接覆盖，并在首次不足时给出一个聚焦补检索 Query。
 - `get_neighbor_evidence`：读取证据前后段落，降低断章取义风险。
 - `research_status`：读取任务计划和当前证据状态。
-- `research_finalize`：在回答生成后确定性检查 evidence ID、子问题归属及论文标题、页码和 chunk ID。
+- `research_finalize`：在回答生成后检查引用 chunk 是否经过对应子问题的 Reflect 确认，并补全论文标题和页码。
 
 论文级 `search_papers` 仍作为评测和后续对比实验能力保留，不参与当前主检索路径；Agent 只调用统一的全库 chunk 检索工具。
 
@@ -98,7 +99,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 对比较、多跳和长指令问题进行证据需求拆解。
 - 要求每个子问题使用独立 Query 检索。
 - 要求在证据可能不完整时读取邻接 chunk。
-- 当前阶段要求回答只能使用已检索证据，并按论文、页码和 chunk ID 引用。
+- 当前阶段要求回答只能使用已检索且通过 Reflect 的证据，并向读者按论文标题和页码引用。
 
 ### 阶段 6：全库 chunk 检索编排【已完成】
 
@@ -123,7 +124,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 新增 `research_reflect`，每个待检查子问题只返回“充分/不充分”、所依据的证据 ID、原因，以及首次不足时使用的一个聚焦 `next_query`；
 - 对首次 Reflect 不充分的子问题允许一次补检索；第二次仍不充分就停止，全部子问题不足时进入 `refused`，部分充分时只允许回答有证据的部分；
 - 两轮检索均使用全库 chunk；第二轮只替换为 Reflect 针对证据缺口生成的聚焦 Query；
-- Generate 后只运行 `research_finalize` 的确定性引用检查：验证 evidence ID 属于当前任务、属于已回答子问题，并具有论文标题、页码和 chunk ID；
+- Generate 后只运行 `research_finalize` 的确定性引用检查：验证内部 chunk ID 属于当前任务、经过对应子问题的 Reflect 确认，并具有论文标题和页码；
 - 最终状态收敛为 `completed`、`completed_with_gaps` 或 `refused`。旧 Claim 字段只为读取历史 ResearchState 保留，不再由新任务写入或作为评测指标；
 - 更新 `paper-research` Skill，主流程收敛为“检索 → Reflect → 可选一次补检索 → Generate/Abstain → 引用定位检查”。
 
@@ -132,7 +133,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 已实现：
 
 - 新增按 `task_id` 持久化的 `PipelineTrace`，记录 Plan、Retrieve、邻接证据、Reflect、Status 和 Finalize 的输入摘要、输出摘要、证据 ID、决策与耗时；Trace 不复制证据正文，避免再次制造超长工具历史；
-- Trace 写入失败不阻断论文问答主流程，并提供 `nanobot-research trace <task_id>` 汇总工具调用次数、阶段耗时、证据 ID、错误、最近一次 Reflect 与最终引用检查结果；
+- Trace 写入失败不阻断论文问答主流程，并提供 `nanobot-research trace <task_id>` 汇总工具调用次数、阶段耗时、chunk ID、错误、最近一次 Reflect 与最终引用检查结果；
 - 新增 JSONL 固定检索评测集、`nanobot-research eval` 命令与统一 JSON 报告，计算 Paper Recall@K、Paper MRR、Evidence Recall@K、Evidence Paper Recall@K 和检索延迟；
 - 第一版真实基线包含 4 个已人工确认目标论文与目标 chunk 的问题，覆盖 MEC 广义纳什均衡、动态势博弈、车联网卸载和区块链资源定价；
 - 首次基线结果：Paper Recall@10 = 1.0、Paper MRR = 1.0、Evidence Paper Recall@8 = 1.0、Evidence Recall@8 = 0.875；论文级召回平均约 646 ms，CPU 证据精排平均约 45.3 s；
@@ -173,7 +174,7 @@ tests/research/                            对应单元测试
 
 ## 6. 当前验证记录
 
-- 科研模块流程测试：21 项通过，其中 15 项非 MCP 测试、6 项 MCP 工具流程测试。
+- 科研模块流程测试：22 项通过，其中 16 项非 MCP 测试、6 项 MCP 工具流程测试。
 - nanobot 现有 Skill Loader 回归测试：26 项通过。
 - `nanobot.research` Python 编译检查通过。
 - `nanobot-research --help` 启动通过。
@@ -200,6 +201,7 @@ tests/research/                            对应单元测试
 - 4 项真实固定集基线已运行成功：Paper Recall@10 与 MRR 均为 1.0，Evidence Recall@8 为 0.875，证据精排平均约 45.3 秒。报告由统一 JSON 评测命令生成。
 - Agentic RAG 流程完成收敛：删除新任务中的 Claim Matrix 与五状态语义聚合，MCP 工具调整为 `research_start`、`research_retrieve`、`research_reflect`、`get_neighbor_evidence`、`research_status`、`research_finalize`。14 项非 MCP research 测试及 6 项 MCP 工具流程测试通过；13 个历史 ResearchState 均能继续读取。
 - 主检索路径由论文 Top-N 粗筛后检索改为全库 chunk 混合检索；年份和章节约束直接作用于 chunk 候选集。新增全库单次调用与年份过滤测试，当前共 15 项非 MCP 测试及 6 项 MCP 流程测试通过。论文级索引保留用于检索评测和后续对比实验。
+- 新任务不再生成或提交 evidence ID。Reflect 直接记录每个子问题采用的多个 supporting chunk ID；Finalize 接收“子问题 ID + chunk ID”并验证该 chunk 已通过 Reflect。chunk ID 只用于内部追踪，读者侧引用只显示论文标题和页码；旧 evidence ID 字段仅用于读取历史状态。当前共 16 项非 MCP 测试及 6 项 MCP 工具流程测试通过。
 
 ## 7. 下一步
 

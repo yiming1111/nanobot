@@ -20,7 +20,7 @@ def test_trace_store_persists_ordered_summaries_without_evidence_text(
         stage="retrieve",
         operation="research_retrieve",
         elapsed_ms=9,
-        output_summary={"evidence_ids": ["E-1", "E-2"]},
+        output_summary={"chunk_ids": ["P1-C1", "P1-C2"]},
     )
 
     summary = store.summary("task-1")
@@ -29,7 +29,7 @@ def test_trace_store_persists_ordered_summaries_without_evidence_text(
     assert summary["tool_call_count"] == 2
     assert summary["total_recorded_ms"] == 12
     assert summary["stage_latency_ms"] == {"plan": 3, "retrieve": 9}
-    assert summary["evidence_ids"] == ["E-1", "E-2"]
+    assert summary["chunk_ids"] == ["P1-C1", "P1-C2"]
     assert summary["latest_reflection"] is None
     assert summary["latest_finalization"] is None
     assert "evidence text" not in str(summary)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import logging
 from functools import lru_cache
 from time import perf_counter
@@ -13,6 +12,7 @@ from mcp.server.fastmcp import FastMCP
 from nanobot.research.config import ResearchConfig
 from nanobot.research.models import (
     CitationLocatorCheck,
+    CitationReference,
     ConstraintValue,
     EvidenceAssessment,
     EvidenceItem,
@@ -139,18 +139,13 @@ class ResearchTools:
     def _evidence_items(
         self,
         *,
-        task_id: str,
         sub_question_id: str,
         results: list[EvidenceSearchResult],
     ) -> list[EvidenceItem]:
         evidence: list[EvidenceItem] = []
         for result in results:
-            digest = hashlib.sha256(
-                f"{task_id}\0{sub_question_id}\0{result.chunk_id}".encode("utf-8")
-            ).hexdigest()[:16]
             evidence.append(
                 EvidenceItem(
-                    evidence_id=f"E-{digest}",
                     sub_question_id=sub_question_id,
                     paper_id=result.paper_id,
                     chunk_id=result.chunk_id,
@@ -255,7 +250,6 @@ class ResearchTools:
         )
 
         evidence = self._evidence_items(
-            task_id=task_id,
             sub_question_id=sub_question_id,
             results=results,
         )
@@ -311,7 +305,7 @@ class ResearchTools:
             output_summary={
                 "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
                 "retrieval_attempt": retrieval_attempt,
-                "evidence_ids": [item.evidence_id for item in evidence],
+                "chunk_ids": [item.chunk_id for item in evidence],
                 "candidate_passages_found": bool(evidence),
                 "task_status": updated.status.value,
             },
@@ -417,7 +411,7 @@ class ResearchTools:
         *,
         task_id: str,
         answered_sub_question_ids: list[str],
-        cited_evidence_ids: list[str],
+        citations: list[CitationReference],
     ) -> dict[str, Any]:
         """Validate citation locators after generating an evidence-grounded answer."""
         started_at = perf_counter()
@@ -425,8 +419,11 @@ class ResearchTools:
             raise ValueError("at least one answered sub-question is required")
         if len(answered_sub_question_ids) != len(set(answered_sub_question_ids)):
             raise ValueError("answered_sub_question_ids must be unique")
-        if len(cited_evidence_ids) != len(set(cited_evidence_ids)):
-            raise ValueError("cited_evidence_ids must be unique")
+        citation_keys = [
+            (item.sub_question_id, item.chunk_id) for item in citations
+        ]
+        if len(citation_keys) != len(set(citation_keys)):
+            raise ValueError("citation sub-question and chunk pairs must be unique")
 
         state = self.states.load(task_id)
         if state.status != ResearchTaskStatus.READY_TO_SYNTHESIZE:
@@ -454,16 +451,41 @@ class ResearchTools:
         cited_by_sub_question: dict[str, int] = {
             value: 0 for value in answered_sub_question_ids
         }
-        for evidence_id in cited_evidence_ids:
-            evidence = state.evidence.get(evidence_id)
+        for citation in citations:
+            if citation.sub_question_id not in cited_by_sub_question:
+                errors.append(
+                    "citation belongs to an unanswered sub-question: "
+                    f"{citation.sub_question_id}"
+                )
+                continue
+            sub_question = sub_questions[citation.sub_question_id]
+            if citation.chunk_id not in sub_question.supporting_chunk_ids:
+                errors.append(
+                    "citation chunk was not approved by Reflect for sub-question "
+                    f"{citation.sub_question_id}: {citation.chunk_id}"
+                )
+                continue
+            evidence = next(
+                (
+                    item
+                    for item in state.evidence.values()
+                    if item.sub_question_id == citation.sub_question_id
+                    and item.chunk_id == citation.chunk_id
+                ),
+                None,
+            )
             if evidence is None:
                 checks.append(
                     CitationLocatorCheck(
-                        evidence_id=evidence_id,
-                        reason="evidence ID is not present in this research task",
+                        sub_question_id=citation.sub_question_id,
+                        chunk_id=citation.chunk_id,
+                        reason="chunk is not present in this research task",
                     )
                 )
-                errors.append(f"unknown evidence ID: {evidence_id}")
+                errors.append(
+                    "unknown chunk for sub-question "
+                    f"{citation.sub_question_id}: {citation.chunk_id}"
+                )
                 continue
             locatable = bool(
                 evidence.title
@@ -473,7 +495,6 @@ class ResearchTools:
             )
             checks.append(
                 CitationLocatorCheck(
-                    evidence_id=evidence_id,
                     sub_question_id=evidence.sub_question_id,
                     locatable=locatable,
                     reason=(
@@ -487,15 +508,11 @@ class ResearchTools:
                     chunk_id=evidence.chunk_id,
                 )
             )
-            if evidence.sub_question_id not in cited_by_sub_question:
-                errors.append(
-                    "citation belongs to an unanswered sub-question: "
-                    f"{evidence.sub_question_id}"
-                )
-            else:
-                cited_by_sub_question[evidence.sub_question_id] += 1
+            cited_by_sub_question[evidence.sub_question_id] += 1
             if not locatable:
-                errors.append(f"citation locator is incomplete: {evidence_id}")
+                errors.append(
+                    f"citation locator is incomplete: {evidence.chunk_id}"
+                )
         for sub_question_id, citation_count in cited_by_sub_question.items():
             if citation_count == 0:
                 errors.append(f"answered sub-question has no citation: {sub_question_id}")
@@ -505,7 +522,7 @@ class ResearchTools:
         updated = self.states.finalize(
             task_id,
             answered_sub_question_ids=answered_sub_question_ids,
-            cited_evidence_ids=cited_evidence_ids,
+            citations=citations,
             checks=checks,
         )
         unresolved = list(
@@ -532,7 +549,9 @@ class ResearchTools:
             elapsed_ms=round((perf_counter() - started_at) * 1000),
             input_summary={
                 "answered_sub_question_ids": answered_sub_question_ids,
-                "cited_evidence_ids": cited_evidence_ids,
+                "citations": [
+                    item.model_dump(mode="json") for item in citations
+                ],
             },
             output_summary={
                 "status": updated.status.value,
@@ -646,13 +665,13 @@ def research_status(
 def research_finalize(
     task_id: str,
     answered_sub_question_ids: list[str],
-    cited_evidence_ids: list[str],
+    citations: list[CitationReference],
 ) -> dict[str, Any]:
-    """Validate final citation IDs and locators after grounded generation."""
+    """Validate reflected chunk citations and their reader-facing locators."""
     return _tools().finalize(
         task_id=task_id,
         answered_sub_question_ids=answered_sub_question_ids,
-        cited_evidence_ids=cited_evidence_ids,
+        citations=citations,
     )
 
 

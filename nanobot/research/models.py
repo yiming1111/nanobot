@@ -116,7 +116,8 @@ class RetrievalAttempt(ResearchModel):
     query: str = Field(min_length=1)
     scope: RetrievalScope
     paper_ids: list[str] = Field(default_factory=list)
-    evidence_ids: list[str] = Field(default_factory=list)
+    chunk_ids: list[str] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list, exclude=True)
     elapsed_ms: int = Field(default=0, ge=0)
     sufficient: bool = False
     coverage_reason: str = ""
@@ -127,23 +128,40 @@ class EvidenceAssessment(ResearchModel):
 
     sub_question_id: str = Field(min_length=1)
     sufficient: bool
-    evidence_ids: list[str] = Field(default_factory=list)
+    supporting_chunk_ids: list[str] = Field(default_factory=list)
     reason: str = Field(min_length=1)
     next_query: str | None = None
 
     @model_validator(mode="after")
     def valid_assessment(self) -> "EvidenceAssessment":
-        if len(self.evidence_ids) != len(set(self.evidence_ids)):
-            raise ValueError("evidence_ids must be unique within an assessment")
-        if self.sufficient and not self.evidence_ids:
-            raise ValueError("a sufficient assessment must cite evidence")
+        if len(self.supporting_chunk_ids) != len(set(self.supporting_chunk_ids)):
+            raise ValueError("supporting_chunk_ids must be unique within an assessment")
+        if self.sufficient and not self.supporting_chunk_ids:
+            raise ValueError("a sufficient assessment must identify supporting chunks")
         if self.next_query is not None and not self.next_query.strip():
             raise ValueError("next_query must contain non-whitespace characters")
         return self
 
 
-class EvidenceReflection(EvidenceAssessment):
+class EvidenceReflection(ResearchModel):
+    sub_question_id: str = Field(min_length=1)
+    sufficient: bool
+    supporting_chunk_ids: list[str] = Field(default_factory=list)
+    reason: str = Field(min_length=1)
+    next_query: str | None = None
     round_index: int = Field(ge=1)
+    # Read-only compatibility for states written before chunk IDs became canonical.
+    evidence_ids: list[str] = Field(default_factory=list, exclude=True)
+
+    @model_validator(mode="after")
+    def valid_reflection(self) -> "EvidenceReflection":
+        if len(self.supporting_chunk_ids) != len(set(self.supporting_chunk_ids)):
+            raise ValueError("supporting_chunk_ids must be unique within a reflection")
+        if self.sufficient and not self.supporting_chunk_ids and not self.evidence_ids:
+            raise ValueError("a sufficient reflection must identify supporting chunks")
+        if self.next_query is not None and not self.next_query.strip():
+            raise ValueError("next_query must contain non-whitespace characters")
+        return self
 
 
 class SubQuestion(ResearchModel):
@@ -152,7 +170,9 @@ class SubQuestion(ResearchModel):
     evidence_type: str = "general"
     status: SubQuestionStatus = SubQuestionStatus.PENDING
     queries: list[str] = Field(default_factory=list)
-    evidence_ids: list[str] = Field(default_factory=list)
+    chunk_ids: list[str] = Field(default_factory=list)
+    supporting_chunk_ids: list[str] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list, exclude=True)
     next_query: str | None = None
     candidate_paper_ids: list[str] = Field(default_factory=list)
     retrieval_attempts: list[RetrievalAttempt] = Field(default_factory=list)
@@ -176,7 +196,8 @@ class ResearchPlan(ResearchModel):
 
 
 class EvidenceItem(ResearchModel):
-    evidence_id: str
+    # Read-only compatibility for states written before chunk IDs became canonical.
+    evidence_id: str | None = Field(default=None, exclude=True)
     sub_question_id: str
     paper_id: str
     chunk_id: str
@@ -249,7 +270,7 @@ class CitationCheck(ResearchModel):
 class CitationLocatorCheck(ResearchModel):
     """Deterministic validation for a citation used in the final answer."""
 
-    evidence_id: str
+    evidence_id: str | None = Field(default=None, exclude=True)
     sub_question_id: str | None = None
     locatable: bool = False
     reason: str = ""
@@ -257,6 +278,13 @@ class CitationLocatorCheck(ResearchModel):
     page_start: int | None = None
     page_end: int | None = None
     chunk_id: str | None = None
+
+
+class CitationReference(ResearchModel):
+    """One internally validated citation used by an answered evidence need."""
+
+    sub_question_id: str = Field(min_length=1)
+    chunk_id: str = Field(min_length=1)
 
 
 class ResearchState(ResearchModel):

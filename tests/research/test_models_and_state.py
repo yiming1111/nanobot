@@ -25,17 +25,19 @@ def _plan() -> ResearchPlan:
     )
 
 
-def _evidence() -> EvidenceItem:
+def _evidence(
+    chunk_id: str = "P1-C0001",
+    text: str = "A improves recall on the benchmark.",
+) -> EvidenceItem:
     return EvidenceItem(
-        evidence_id="E-1",
         sub_question_id="SQ1",
         paper_id="P1",
-        chunk_id="P1-C0001",
+        chunk_id=chunk_id,
         title="Paper One",
         section="Experiments",
         page_start=3,
         page_end=3,
-        text="A improves recall on the benchmark.",
+        text=text,
     )
 
 
@@ -64,7 +66,10 @@ def test_state_store_retrieves_then_reflects_sufficient_evidence(tmp_path: Path)
     retrieved = store.add_evidence(
         "task-1",
         "SQ1",
-        [_evidence()],
+        [
+            _evidence(),
+            _evidence("P1-C0002", "A also reduces the error rate."),
+        ],
         query="A recall",
     )
     reflected = store.record_reflections(
@@ -73,7 +78,7 @@ def test_state_store_retrieves_then_reflects_sufficient_evidence(tmp_path: Path)
             EvidenceAssessment(
                 sub_question_id="SQ1",
                 sufficient=True,
-                evidence_ids=["E-1"],
+                supporting_chunk_ids=["P1-C0001", "P1-C0002"],
                 reason="The passage directly answers the evidence need.",
             )
         ],
@@ -82,6 +87,10 @@ def test_state_store_retrieves_then_reflects_sufficient_evidence(tmp_path: Path)
     assert retrieved.status == ResearchTaskStatus.REFLECTING
     assert reflected.status == ResearchTaskStatus.READY_TO_SYNTHESIZE
     assert reflected.plan.sub_questions[0].status == SubQuestionStatus.SUFFICIENT
+    assert reflected.plan.sub_questions[0].supporting_chunk_ids == [
+        "P1-C0001",
+        "P1-C0002",
+    ]
     assert reflected.plan.sub_questions[0].retrieval_attempts[0].sufficient is True
 
 
@@ -129,3 +138,58 @@ def test_state_store_rejects_unsafe_task_id(tmp_path: Path) -> None:
     store = ResearchStateStore(tmp_path / "states")
     with pytest.raises(ValueError, match="invalid research task id"):
         store.load("../escape")
+
+
+def test_legacy_evidence_id_state_can_still_load() -> None:
+    legacy = ResearchState.model_validate(
+        {
+            "task_id": "legacy-task",
+            "status": "completed",
+            "plan": {
+                "original_question": "Legacy question",
+                "normalized_question": "Legacy question",
+                "sub_questions": [
+                    {
+                        "sub_question_id": "SQ1",
+                        "question": "Legacy question",
+                        "status": "sufficient",
+                        "evidence_ids": ["E-legacy"],
+                        "retrieval_attempts": [
+                            {
+                                "round_index": 1,
+                                "query": "legacy query",
+                                "scope": "candidate_papers",
+                                "evidence_ids": ["E-legacy"],
+                                "sufficient": True,
+                            }
+                        ],
+                        "reflections": [
+                            {
+                                "round_index": 1,
+                                "sub_question_id": "SQ1",
+                                "sufficient": True,
+                                "evidence_ids": ["E-legacy"],
+                                "reason": "Legacy evidence was accepted.",
+                            }
+                        ],
+                    }
+                ],
+            },
+            "evidence": {
+                "E-legacy": {
+                    "evidence_id": "E-legacy",
+                    "sub_question_id": "SQ1",
+                    "paper_id": "P1",
+                    "chunk_id": "P1-C0001",
+                    "title": "Legacy Paper",
+                    "section": "Results",
+                    "page_start": 3,
+                    "page_end": 3,
+                    "text": "Legacy evidence text.",
+                }
+            },
+        }
+    )
+
+    assert legacy.plan.sub_questions[0].evidence_ids == ["E-legacy"]
+    assert legacy.evidence["E-legacy"].chunk_id == "P1-C0001"

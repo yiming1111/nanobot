@@ -10,6 +10,7 @@ from filelock import FileLock
 
 from nanobot.research.models import (
     CitationLocatorCheck,
+    CitationReference,
     EvidenceAssessment,
     EvidenceItem,
     EvidenceReflection,
@@ -113,16 +114,17 @@ class ResearchStateStore:
                 if paper_id not in sub_question.candidate_paper_ids:
                     sub_question.candidate_paper_ids.append(paper_id)
             for item in evidence:
-                state.evidence[item.evidence_id] = item
-                if item.evidence_id not in sub_question.evidence_ids:
-                    sub_question.evidence_ids.append(item.evidence_id)
+                state_key = f"{sub_question_id}:{item.chunk_id}"
+                state.evidence[state_key] = item
+                if item.chunk_id not in sub_question.chunk_ids:
+                    sub_question.chunk_ids.append(item.chunk_id)
             sub_question.retrieval_attempts.append(
                 RetrievalAttempt(
                     round_index=len(sub_question.retrieval_attempts) + 1,
                     query=query,
                     scope=scope,
                     paper_ids=paper_ids or [],
-                    evidence_ids=[item.evidence_id for item in evidence],
+                    chunk_ids=[item.chunk_id for item in evidence],
                     elapsed_ms=elapsed_ms,
                     sufficient=False,
                     coverage_reason=coverage_reason,
@@ -182,13 +184,13 @@ class ResearchStateStore:
 
             for assessment in assessments:
                 sub_question = eligible[assessment.sub_question_id]
-                unknown_evidence = set(assessment.evidence_ids) - set(
-                    sub_question.evidence_ids
+                unknown_chunks = set(assessment.supporting_chunk_ids) - set(
+                    sub_question.chunk_ids
                 )
-                if unknown_evidence:
+                if unknown_chunks:
                     raise ValueError(
-                        "assessment references evidence outside its sub-question: "
-                        f"{sorted(unknown_evidence)}"
+                        "assessment references chunks outside its sub-question: "
+                        f"{sorted(unknown_chunks)}"
                     )
                 can_retry = (
                     len(sub_question.retrieval_attempts) < state.max_retrieval_rounds
@@ -207,9 +209,13 @@ class ResearchStateStore:
                 latest_attempt.coverage_reason = assessment.reason
                 if assessment.sufficient:
                     sub_question.status = SubQuestionStatus.SUFFICIENT
+                    sub_question.supporting_chunk_ids = list(
+                        assessment.supporting_chunk_ids
+                    )
                     sub_question.next_query = None
                 else:
                     sub_question.status = SubQuestionStatus.INSUFFICIENT
+                    sub_question.supporting_chunk_ids = []
                     sub_question.next_query = (
                         assessment.next_query.strip()
                         if can_retry and assessment.next_query is not None
@@ -252,7 +258,7 @@ class ResearchStateStore:
         task_id: str,
         *,
         answered_sub_question_ids: list[str],
-        cited_evidence_ids: list[str],
+        citations: list[CitationReference],
         checks: list[CitationLocatorCheck],
     ) -> ResearchState:
         """Record deterministic citation validation after answer generation."""
@@ -272,7 +278,7 @@ class ResearchStateStore:
             ]
             state.metadata["finalization"] = {
                 "answered_sub_question_ids": answered_sub_question_ids,
-                "cited_evidence_ids": cited_evidence_ids,
+                "citations": [item.model_dump(mode="json") for item in citations],
                 "unresolved_sub_question_ids": unresolved,
             }
             state.status = (
