@@ -120,7 +120,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - MCP 启动时提前构造检索服务并加载 FAISS 索引，避免首次工具调用才触发索引导入；BGE-M3 与 reranker 仍按需加载。模型缓存启用离线读取，避免每次重启重复访问 Hugging Face。
 - Skill 明确将引用格式与引用验证视为回答要求，不能拆成独立子问题；用户明确要求单一子问题时必须只创建一个。
 
-### 阶段 7：Claim 提取与引用验证【核心代码已完成，首次真实 WebUI 回归通过】
+### 阶段 7：Claim 提取与引用验证【已完成】
 
 已实现：
 
@@ -135,13 +135,23 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 状态文件持久化主张、逐对引用检查、验证轮数和缺口检索记录，旧状态文件通过默认字段保持兼容；
 - 更新 `paper-research` Skill，强制“先形成草稿 → 原子主张 → 独立语义复核 → 服务端结构校验 → 必要时一次修订/补检索 → 最终回答”的顺序。
 
-首次真实 WebUI 回归已验证完全支持场景与同一 Session 内的追问。尚待验证部分支持、伪造 evidence ID、证据冲突和本地语料不足四类结果，并观察主 Agent 是否严格执行独立复核轮。
+真实 WebUI 回归已验证完全支持、同一 Session 内追问和本地语料不足场景；伪造 evidence ID、部分支持、冲突聚合与子问题覆盖由服务端单元测试覆盖。主 Agent 能按独立复核轮收窄表述，并在缺少充分证据时拒绝用户要求的过度结论。
 
-### 阶段 8：Pipeline Trace 与评测【未开始】
+### 阶段 8：Pipeline Trace 与评测【第一版已完成，答案级评测待扩展】
 
-计划记录 NLU/Plan、Dense、Sparse、RRF、Rerank、Reflect、Generate、Verify 和 Memory 的输入摘要、输出摘要、工具调用、耗时、Token、证据 ID 和决策。
+已实现：
 
-计划评测 Recall@K、MRR、Evidence Recall、Sub-question Coverage、Citation Correctness、Citation Completeness、Groundedness、拒答准确率、多轮约束保持率、工具调用次数和延迟。
+- 新增按 `task_id` 持久化的 `PipelineTrace`，记录 Plan、Retrieve、邻接证据、Status、Gap Retrieval 和 Verify 的输入摘要、输出摘要、证据 ID、决策与耗时；Trace 不复制证据正文，避免再次制造超长工具历史；
+- Trace 写入失败不阻断论文问答主流程，并提供 `nanobot-research trace <task_id>` 汇总工具调用次数、阶段耗时、证据 ID、错误和最近一次引用验证指标；
+- 新增 JSONL 固定检索评测集、`nanobot-research eval` 命令与统一 JSON 报告，计算 Paper Recall@K、Paper MRR、Evidence Recall@K、Evidence Paper Recall@K 和检索延迟；
+- 第一版真实基线包含 4 个已人工确认目标论文与目标 chunk 的问题，覆盖 MEC 广义纳什均衡、动态势博弈、车联网卸载和区块链资源定价；
+- 首次基线结果：Paper Recall@10 = 1.0、Paper MRR = 1.0、Evidence Paper Recall@8 = 1.0、Evidence Recall@8 = 0.875；论文级召回平均约 646 ms，CPU 证据精排平均约 45.3 s；
+- 车联网样例只召回 2 个标注 chunk 中的 1 个，形成一个可复现的后续改进点；该结果也验证了论文命中率与具体证据命中率必须分开统计。
+
+仍需扩展：
+
+- 为部分支持、冲突、语料不足和多轮约束保持建立人工标注的答案级评测集，统计 Groundedness、拒答准确率和多轮约束保持率；
+- 将 Dense、Sparse、RRF、Rerank 的内部耗时进一步拆分。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
 
 ### 阶段 9：WebUI 增强【暂不实施】
 
@@ -161,10 +171,13 @@ nanobot/research/retrieval/sparse.py       BM25
 nanobot/research/retrieval/fusion.py       RRF
 nanobot/research/retrieval/reranker.py     Cross-Encoder Rerank
 nanobot/research/retrieval/service.py      混合检索服务
+nanobot/research/observability/trace.py    结构化 Pipeline Trace
+nanobot/research/evaluation.py             固定检索集评测器
 nanobot/research/workflow/state_store.py   调研状态持久化
 nanobot/research/mcp_server.py             FastMCP 工具
 nanobot/research/cli.py                    索引 CLI
 nanobot/skills/paper-research/SKILL.md     Agent 调研流程
+benchmarks/paper_research/retrieval.jsonl  固定检索评测集
 tests/research/                            对应单元测试
 ```
 
@@ -193,8 +206,11 @@ tests/research/                            对应单元测试
 - 本机 `nanobot-dev` 环境没有 pytest；测试通过复用本机已有 pytest 包执行，没有安装或修改依赖。测试出现的 `asyncio_mode` 警告来自该复用环境缺少 pytest-asyncio，不影响本次同步测试结果。
 - 阶段 7 首次真实 WebUI 回归通过：两轮问题使用同一 nanobot Session；第二轮“刚才那篇论文”被正确还原为完整论文标题，两轮均按 `research_start → research_retrieve → research_verify` 完成且没有超时。两个独立 ResearchState 均为 `completed`，对应 Claim 均为 `supported`。
 - Windows 的通用版 FAISS wheel 仅包含 `_swigfaiss.pyd` 时，现会在导入前自动选择 `FAISS_OPT_LEVEL=generic`，避免先探测不存在的 `swigfaiss_avx2` 并打印误导性的 `ModuleNotFoundError`。真实 FAISS 导入与向量查询通过，检索测试 4 项通过。
+- 阶段 8 新增 Trace Store 与固定检索集评测器单元测试，新增测试 2 项通过；使用 nanobot-dev 原生环境完成 ResearchTools Trace 冒烟测试，确认 `research_start → research_retrieve → get_neighbor_evidence → research_status` 按顺序落盘。
+- 4 项真实固定集基线已运行成功：Paper Recall@10 与 MRR 均为 1.0，Evidence Recall@8 为 0.875，证据精排平均约 45.3 秒。报告由统一 JSON 评测命令生成。
 
 ## 7. 下一步
 
-1. 继续测试阶段 7 的部分支持、伪造 evidence ID、证据冲突和语料不足场景，确认最终状态及回答行为与 Claim-Evidence Matrix 一致。
-2. 阶段 7 剩余回归通过后，建立固定评测集和 Pipeline Trace，进入阶段 8；评测发现的问题再反馈到阶段 6、7 修正。
+1. 扩充答案级人工标注集，覆盖部分支持、冲突、语料不足和多轮约束保持；不要用待测模型自己的判断直接充当金标准。
+2. 拆分 Dense、Sparse、RRF 与 Rerank 的内部耗时，并优先分析当前约 45 秒的 CPU 精排耗时。
+3. 用阶段 8 基线定位并改进车联网样例遗漏的目标 chunk，改动后重复运行同一固定集，比较召回与延迟是否退化。

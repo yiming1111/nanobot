@@ -28,6 +28,7 @@ from nanobot.research.models import (
     RetrievalScope,
     SubQuestion,
 )
+from nanobot.research.observability.trace import PipelineTraceStore
 from nanobot.research.retrieval.service import HybridRetrievalService
 from nanobot.research.workflow.state_store import ResearchStateStore
 
@@ -47,7 +48,34 @@ class ResearchTools:
         config.ensure_directories()
         self.config = config
         self.states = ResearchStateStore(config.states_dir)
+        self.traces = PipelineTraceStore(config.traces_dir)
         self._retrieval = retrieval
+
+    def _record_trace(
+        self,
+        task_id: str,
+        *,
+        stage: str,
+        operation: str,
+        elapsed_ms: int = 0,
+        sub_question_id: str | None = None,
+        claim_id: str | None = None,
+        input_summary: dict[str, Any] | None = None,
+        output_summary: dict[str, Any] | None = None,
+    ) -> None:
+        try:
+            self.traces.append(
+                task_id,
+                stage=stage,
+                operation=operation,
+                elapsed_ms=elapsed_ms,
+                sub_question_id=sub_question_id,
+                claim_id=claim_id,
+                input_summary=input_summary,
+                output_summary=output_summary,
+            )
+        except Exception:
+            logger.exception("failed to record research trace task=%s", task_id)
 
     @property
     def retrieval(self) -> HybridRetrievalService:
@@ -71,6 +99,7 @@ class ResearchTools:
         constraints: dict[str, ConstraintValue] | None = None,
         session_key: str | None = None,
     ) -> dict[str, Any]:
+        started_at = perf_counter()
         questions = [value.strip() for value in sub_questions if value.strip()]
         if not questions:
             questions = [normalized_question.strip()]
@@ -93,7 +122,25 @@ class ResearchTools:
             max_verification_rounds=self.config.max_verification_rounds,
         )
         self.states.create(state)
-        return state.model_dump(mode="json")
+        payload = state.model_dump(mode="json")
+        self._record_trace(
+            state.task_id,
+            stage="plan",
+            operation="research_start",
+            elapsed_ms=round((perf_counter() - started_at) * 1000),
+            input_summary={
+                "task_type": task_type,
+                "sub_question_count": len(questions),
+                "constraint_keys": sorted((constraints or {}).keys()),
+            },
+            output_summary={
+                "status": state.status.value,
+                "sub_question_ids": [
+                    item.sub_question_id for item in plan.sub_questions
+                ],
+            },
+        )
+        return payload
 
     def search_papers(
         self,
@@ -234,6 +281,7 @@ class ResearchTools:
         sections: list[str] | None = None,
     ) -> dict[str, Any]:
         """Run bounded paper-first retrieval for one sub-question."""
+        total_started_at = perf_counter()
         query = query.strip()
         if not query:
             raise ValueError("query must not be empty")
@@ -348,7 +396,7 @@ class ResearchTools:
             for item in final_state.plan.sub_questions
             if item.sub_question_id == sub_question_id
         )
-        return {
+        payload = {
             "task_id": task_id,
             "sub_question_id": sub_question_id,
             "candidate_papers": [
@@ -368,6 +416,36 @@ class ResearchTools:
             "sub_question_status": final_sub_question.status.value,
             "stopped_after_rounds": len(attempts),
         }
+        evidence_ids = list(
+            dict.fromkeys(
+                evidence_id
+                for attempt in attempt_summaries
+                for evidence_id in attempt["evidence_ids"]
+            )
+        )
+        self._record_trace(
+            task_id,
+            stage="retrieve",
+            operation="research_retrieve",
+            elapsed_ms=round((perf_counter() - total_started_at) * 1000),
+            sub_question_id=sub_question_id,
+            input_summary={
+                "query": query,
+                "has_alternative_query": alternative_query is not None,
+                "year_from": year_from,
+                "year_to": year_to,
+                "sections": sections or [],
+            },
+            output_summary={
+                "candidate_paper_ids": [item.paper_id for item in candidate_papers],
+                "paper_search_ms": paper_search_ms,
+                "attempts": attempt_summaries,
+                "evidence_ids": evidence_ids,
+                "coverage_sufficient": attempts[-1]["coverage"]["sufficient"],
+                "sub_question_status": final_sub_question.status.value,
+            },
+        )
+        return payload
 
     @staticmethod
     def _log_attempt(
@@ -440,11 +518,30 @@ class ResearchTools:
             scope=scope,
         )
 
-    def neighbors(self, chunk_id: str, *, window: int = 1) -> list[dict[str, Any]]:
-        return [
+    def neighbors(
+        self,
+        chunk_id: str,
+        *,
+        window: int = 1,
+        task_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        started_at = perf_counter()
+        payload = [
             item.model_dump(mode="json")
             for item in self.retrieval.get_neighbors(chunk_id, window=window)
         ]
+        if task_id is not None:
+            self._record_trace(
+                task_id,
+                stage="retrieve",
+                operation="get_neighbor_evidence",
+                elapsed_ms=round((perf_counter() - started_at) * 1000),
+                input_summary={"chunk_id": chunk_id, "window": window},
+                output_summary={
+                    "chunk_ids": [item["chunk_id"] for item in payload]
+                },
+            )
+        return payload
 
     def verify_claims(
         self,
@@ -454,6 +551,7 @@ class ResearchTools:
         judgments: list[EvidenceJudgment],
     ) -> dict[str, Any]:
         """Build a claim-evidence matrix from a separate semantic review pass."""
+        started_at = perf_counter()
         if not claims:
             raise ValueError("at least one claim is required")
         claim_ids = [item.claim_id for item in claims]
@@ -673,7 +771,7 @@ class ResearchTools:
             citation_checks=citation_checks,
             status=final_status,
         )
-        return {
+        payload = {
             "task_id": task_id,
             "status": updated.status.value,
             "verification_round": updated.verification_rounds,
@@ -693,6 +791,28 @@ class ResearchTools:
             ),
             "claim_evidence_matrix": matrix,
         }
+        self._record_trace(
+            task_id,
+            stage="verify",
+            operation="research_verify",
+            elapsed_ms=round((perf_counter() - started_at) * 1000),
+            input_summary={
+                "claim_ids": [item.claim_id for item in claims],
+                "judgment_count": len(judgments),
+            },
+            output_summary={
+                "status": updated.status.value,
+                "verification_round": updated.verification_rounds,
+                "claim_statuses": {
+                    item.claim_id: item.status.value for item in claim_states
+                },
+                "claim_support_rate": payload["claim_support_rate"],
+                "citation_completeness": payload["citation_completeness"],
+                "citation_correctness": payload["citation_correctness"],
+                "uncovered_sub_question_ids": uncovered_sub_question_ids,
+            },
+        )
+        return payload
 
     @staticmethod
     def _citation_check_payload(
@@ -734,6 +854,7 @@ class ResearchTools:
         top_k: int | None = None,
     ) -> dict[str, Any]:
         """Run one bounded evidence search for a claim that failed verification."""
+        total_started_at = perf_counter()
         query = query.strip()
         if not query:
             raise ValueError("query must not be empty")
@@ -791,7 +912,7 @@ class ResearchTools:
             elapsed_ms=elapsed_ms,
             max_gap_retrievals=self.config.max_gap_retrievals,
         )
-        return {
+        payload = {
             "task_id": task_id,
             "claim_id": claim_id,
             "query": query,
@@ -800,6 +921,20 @@ class ResearchTools:
             "elapsed_ms": elapsed_ms,
             "next_step": "revise the claim or run the final verification round",
         }
+        self._record_trace(
+            task_id,
+            stage="retrieve",
+            operation="research_retrieve_claim_gap",
+            elapsed_ms=round((perf_counter() - total_started_at) * 1000),
+            sub_question_id=claim.sub_question_id,
+            claim_id=claim_id,
+            input_summary={"query": query},
+            output_summary={
+                "scope": scope.value,
+                "evidence_ids": [item.evidence_id for item in evidence],
+            },
+        )
+        return payload
 
     def status(
         self,
@@ -807,10 +942,23 @@ class ResearchTools:
         *,
         include_evidence_text: bool = False,
     ) -> dict[str, Any]:
+        started_at = perf_counter()
         payload = self.states.load(task_id).model_dump(mode="json")
         if not include_evidence_text:
             for evidence in payload["evidence"].values():
                 evidence.pop("text", None)
+        self._record_trace(
+            task_id,
+            stage="inspect",
+            operation="research_status",
+            elapsed_ms=round((perf_counter() - started_at) * 1000),
+            input_summary={"include_evidence_text": include_evidence_text},
+            output_summary={
+                "status": payload["status"],
+                "evidence_count": len(payload["evidence"]),
+                "claim_count": len(payload["claims"]),
+            },
+        )
         return payload
 
 
@@ -864,9 +1012,13 @@ def research_retrieve(
 
 
 @mcp.tool()
-def get_neighbor_evidence(chunk_id: str, window: int = 1) -> list[dict[str, Any]]:
+def get_neighbor_evidence(
+    chunk_id: str,
+    window: int = 1,
+    task_id: str | None = None,
+) -> list[dict[str, Any]]:
     """Read adjacent chunks to check the context around a retrieved passage."""
-    return _tools().neighbors(chunk_id, window=window)
+    return _tools().neighbors(chunk_id, window=window, task_id=task_id)
 
 
 @mcp.tool()
