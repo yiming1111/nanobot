@@ -86,11 +86,11 @@ class ResearchStateStore:
         *,
         query: str,
         paper_ids: list[str] | None = None,
-        scope: RetrievalScope = RetrievalScope.CANDIDATE_PAPERS,
+        scope: RetrievalScope = RetrievalScope.FULL_CORPUS,
         elapsed_ms: int = 0,
         coverage_reason: str = "",
     ) -> ResearchState:
-        """Persist one semantic retrieval round after internal scope fallback."""
+        """Persist one full-corpus semantic retrieval round."""
         with self._lock(task_id):
             path = self._path(task_id)
             if not path.exists():

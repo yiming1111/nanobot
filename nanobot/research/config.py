@@ -37,8 +37,6 @@ class ResearchConfig(BaseSettings):
     rrf_k: int = Field(default=60, ge=1, le=1000)
     # One initial semantic search plus one Reflect-triggered retry.
     max_retrieval_rounds: int = Field(default=2, ge=1, le=2)
-    initial_paper_candidates: int = Field(default=5, ge=1, le=50)
-    expanded_paper_candidates: int = Field(default=10, ge=1, le=100)
 
     @property
     def corpus_file(self) -> Path:

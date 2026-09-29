@@ -1,10 +1,10 @@
 # 科研论文多轮证据检索与技术调研 Agent：项目记录
 
-最后更新：2026-09-29
+最后更新：2026-09-30
 
 ## 1. 项目目标
 
-在 nanobot 现有 Agent Loop、MCP、Skills、Session 和 Memory 能力上，增加一个面向本地科研论文库的技术调研 Agent。系统不仅进行 Query Rewrite 和普通论文检索，还把复杂调研问题拆成独立证据需求，分别检索和跟踪证据，并对回答中的原子主张建立主张—证据关系、引用验证和有边界的定向补检索；后续将增加 Pipeline Trace 与固定评测集。
+在 nanobot 现有 Agent Loop、MCP、Skills、Session 和 Memory 能力上，增加一个面向本地科研论文库的技术调研 Agent。系统进行 Query Rewrite，将复杂调研问题拆成独立证据需求，分别检索和跟踪证据，通过 Reflect 判断证据充分性，并在回答后确定性检查引用定位信息。
 
 项目不修改通用 `AgentLoop` 和 `AgentRunner`。领域能力作为 `nanobot.research` 扩展包实现，并通过 FastMCP 暴露给 nanobot；Agent 的调用规则由 `paper-research` Skill 提供。
 
@@ -23,27 +23,24 @@
   → 多轮上下文解析、指代消解和 Query Rewrite
   → 简单/复杂问题路由
   → 复杂问题拆成多个证据需求
-  → 为每个子问题顺序执行分层检索
-      → 论文级粗召回：BM25 + BGE-M3 + RRF
-      → 保留 Top-N 候选论文（候选范围，不作为不可恢复的硬门）
-      → 在候选论文内部执行 chunk 级 BM25 + BGE-M3 + RRF + Rerank
+  → 为每个子问题顺序执行全库 chunk 检索
+      → BM25 + BGE-M3 召回
+      → RRF 融合
+      → Cross-Encoder Rerank
       → 写入 Pydantic ResearchState
-  → 证据覆盖与冲突检查
+  → Reflect 检查证据充分性
       ├─ 证据充分：进入回答草稿生成
-      ├─ 证据不足：根据证据缺口生成定向 Query，并扩大候选论文范围
-      ├─ 扩大范围后仍不足：最多执行一次全库 chunk 检索兜底
-      └─ 达到检索轮数上限仍无可用证据：明确拒答
-  → 将草稿拆成原子主张
-  → 验证引用可定位性、正确性和完整性
-      ├─ 验证失败：修改表述、删除主张或再次检索
-      └─ 验证通过：输出最终回答
+      ├─ 首轮不足：根据证据缺口生成一个定向 Query，再执行一次全库检索
+      └─ 第二轮仍不足：拒答或只回答已有充分证据的部分
+  → 确定性检查 evidence ID、子问题归属、论文标题、页码和 chunk ID
+  → 输出最终回答
   → 保存会话记忆、结构化调研状态和 Pipeline Trace
 ```
 
 ## 3. 状态与数据边界
 
 - nanobot Session/Memory：保存对话历史、用户偏好和长期记忆。
-- ResearchState：保存调研计划、子问题、检索 Query、候选证据、候选主张和引用检查结果。
+- ResearchState：保存调研计划、子问题、检索 Query、候选证据、Reflect 结果和引用定位检查结果。
 - 论文 PDF、FAISS、BM25、任务状态和 Trace 属于运行数据，不提交到 Git。
 - 源代码位于仓库根目录；`%USERPROFILE%\.nanobot\config.json` 仅保存 `paperResearch` MCP 运行配置，不在其中维护项目代码。论文原文件、模型缓存和检索索引由 `NANOBOT_RESEARCH_DATA_DIR` 与 `HF_HOME` 指向本机数据目录，不提交到 Git。
 
@@ -85,13 +82,13 @@
 当前向 Agent 注册六个工具：
 
 - `research_start`：创建结构化调研计划和任务状态。
-- `research_retrieve`：在一次受控调用内顺序完成论文粗召回、候选论文内证据检索、有限范围扩大和一次全库兜底。
+- `research_retrieve`：对符合年份和章节约束的全库 chunk 执行 BM25、BGE-M3、RRF 与 Rerank。
 - `research_reflect`：判断各证据需求是否已被当前候选证据直接覆盖，并在首次不足时给出一个聚焦补检索 Query。
 - `get_neighbor_evidence`：读取证据前后段落，降低断章取义风险。
 - `research_status`：读取任务计划和当前证据状态。
 - `research_finalize`：在回答生成后确定性检查 evidence ID、子问题归属及论文标题、页码和 chunk ID。
 
-论文级 `search_papers` 与 chunk 级 `retrieve_evidence` 仍作为内部服务存在，但不再分别暴露给 Agent，防止模型并发调用两个有先后依赖的步骤。
+论文级 `search_papers` 仍作为评测和后续对比实验能力保留，不参与当前主检索路径；Agent 只调用统一的全库 chunk 检索工具。
 
 MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_server`。
 
@@ -103,20 +100,18 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 要求在证据可能不完整时读取邻接 chunk。
 - 当前阶段要求回答只能使用已检索证据，并按论文、页码和 chunk ID 引用。
 
-### 阶段 6：检索编排与候选证据覆盖检查【已完成】
+### 阶段 6：全库 chunk 检索编排【已完成】
 
 已实现：
 
-- 新增 `research_retrieve` 服务端编排工具，强制 `search_papers → retrieve_evidence` 顺序执行；
-- 将论文级检索定义为高召回粗筛：保留多个候选论文，不将单次结果作为不可恢复的硬过滤；
-- `paper_ids` 存在时，先限定候选论文的 chunk，再执行候选截断与重排，避免“论文已命中但证据为空”；
-- 候选论文内没有返回任何 chunk 时，按“扩大候选论文范围 → 一次全库 chunk 兜底”的顺序恢复召回；这些属于一次检索调用内的技术性恢复，不再计为多轮语义检索；
+- `research_retrieve` 直接对符合年份和章节约束的全库 chunk 执行混合召回，不再以论文 Top-N 作为硬过滤；
+- 论文级 `search_papers` 从主路径移除，避免论文粗筛漏召回导致正确 chunk 无法进入 RRF 与 Rerank；
 - 检索阶段只负责返回候选证据，Rerank 分数用于排序和观测，不再把“返回了一个 chunk”误判为“证据已经足够回答问题”；
 - 每个子问题最多执行两轮语义检索：首次检索，以及一次由 Reflect 明确触发的聚焦补检索；第三次语义检索由服务端拒绝；
-- 记录候选论文、每轮范围、Query、证据 ID、充分性原因和耗时；
+- 记录每轮 Query、全库检索范围、证据 ID、充分性原因和耗时；
 - Rerank 候选从 30 降至 12，默认返回证据从 8 降至 4；`research_status` 默认省略证据正文，避免上下文重复膨胀；
-- 本地模型在同一 MCP 进程中只初始化一次并加锁复用；论文级粗召回仅执行 BM25、BGE-M3 与 RRF，不再使用 Cross-Encoder 对长论文表示重排；运行配置使用本地 Hugging Face 缓存，工具超时调整为 240 秒。
-- `research_retrieve` 增加入口、论文召回及每轮证据检索的分段耗时日志，用于区分 MCP 调度等待、模型冷启动和实际检索耗时。
+- 本地模型在同一 MCP 进程中只初始化一次并加锁复用；运行配置使用本地 Hugging Face 缓存，工具超时调整为 240 秒。
+- `research_retrieve` 记录入口和全库证据检索耗时，用于区分 MCP 调度等待、模型冷启动和实际检索耗时。
 - MCP 启动时提前构造检索服务并加载 FAISS 索引，避免首次工具调用才触发索引导入；BGE-M3 与 reranker 仍按需加载。模型缓存启用离线读取，避免每次重启重复访问 Hugging Face。
 - Skill 明确将引用格式与引用验证视为回答要求，不能拆成独立子问题；用户明确要求单一子问题时必须只创建一个。
 
@@ -127,7 +122,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 将 Reflect 定义为 Rerank 后、Generate 前的证据充分性门禁；它只判断现有证据是否直接覆盖每个证据需求，不再把 Claim 拆分和多状态聚合作为主流程；
 - 新增 `research_reflect`，每个待检查子问题只返回“充分/不充分”、所依据的证据 ID、原因，以及首次不足时使用的一个聚焦 `next_query`；
 - 对首次 Reflect 不充分的子问题允许一次补检索；第二次仍不充分就停止，全部子问题不足时进入 `refused`，部分充分时只允许回答有证据的部分；
-- 将候选论文扩大和全库兜底定义为检索器内部的空结果恢复，不消耗 Reflect 触发的语义重试次数；
+- 两轮检索均使用全库 chunk；第二轮只替换为 Reflect 针对证据缺口生成的聚焦 Query；
 - Generate 后只运行 `research_finalize` 的确定性引用检查：验证 evidence ID 属于当前任务、属于已回答子问题，并具有论文标题、页码和 chunk ID；
 - 最终状态收敛为 `completed`、`completed_with_gaps` 或 `refused`。旧 Claim 字段只为读取历史 ResearchState 保留，不再由新任务写入或作为评测指标；
 - 更新 `paper-research` Skill，主流程收敛为“检索 → Reflect → 可选一次补检索 → Generate/Abstain → 引用定位检查”。
@@ -178,7 +173,7 @@ tests/research/                            对应单元测试
 
 ## 6. 当前验证记录
 
-- 科研模块流程测试：20 项通过，其中 14 项非 MCP 测试、6 项 MCP 工具流程测试。
+- 科研模块流程测试：21 项通过，其中 15 项非 MCP 测试、6 项 MCP 工具流程测试。
 - nanobot 现有 Skill Loader 回归测试：26 项通过。
 - `nanobot.research` Python 编译检查通过。
 - `nanobot-research --help` 启动通过。
@@ -204,9 +199,10 @@ tests/research/                            对应单元测试
 - 阶段 8 新增 Trace Store 与固定检索集评测器单元测试，新增测试 2 项通过；使用 nanobot-dev 原生环境完成 ResearchTools Trace 冒烟测试，确认 `research_start → research_retrieve → get_neighbor_evidence → research_status` 按顺序落盘。
 - 4 项真实固定集基线已运行成功：Paper Recall@10 与 MRR 均为 1.0，Evidence Recall@8 为 0.875，证据精排平均约 45.3 秒。报告由统一 JSON 评测命令生成。
 - Agentic RAG 流程完成收敛：删除新任务中的 Claim Matrix 与五状态语义聚合，MCP 工具调整为 `research_start`、`research_retrieve`、`research_reflect`、`get_neighbor_evidence`、`research_status`、`research_finalize`。14 项非 MCP research 测试及 6 项 MCP 工具流程测试通过；13 个历史 ResearchState 均能继续读取。
+- 主检索路径由论文 Top-N 粗筛后检索改为全库 chunk 混合检索；年份和章节约束直接作用于 chunk 候选集。新增全库单次调用与年份过滤测试，当前共 15 项非 MCP 测试及 6 项 MCP 流程测试通过。论文级索引保留用于检索评测和后续对比实验。
 
 ## 7. 下一步
 
 1. 重启 WebUI，真实验证“首次检索 → Reflect → 可选一次补检索 → Generate/Abstain → Finalize”及部分子问题不足场景。
 2. 建立可回答/应拒答的证据边界集、跨论文比较集和多轮约束集，固定拒答准确率、引用正确率与 Pipeline Success Rate 的计算规则。
-3. 对比“全库 chunk 检索”和“论文粗筛后 chunk 检索”，再决定论文级粗筛是否保留为默认路径；同时拆分 Dense、Sparse、RRF 与 Rerank 的内部耗时。
+3. 将当前全库 chunk 检索作为默认基线；语料规模扩大后，再与论文粗筛方案比较 Evidence Recall@K 和延迟。同时拆分 Dense、Sparse、RRF 与 Rerank 的内部耗时。

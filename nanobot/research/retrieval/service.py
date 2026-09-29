@@ -230,6 +230,8 @@ class HybridRetrievalService:
         *,
         top_k: int | None = None,
         paper_ids: list[str] | None = None,
+        year_from: int | None = None,
+        year_to: int | None = None,
         sections: list[str] | None = None,
     ) -> list[EvidenceSearchResult]:
         _paper_dense, chunk_dense = self._load_dense()
@@ -240,6 +242,16 @@ class HybridRetrievalService:
             for chunk in self.chunks
             if (not paper_filter or chunk.paper_id in paper_filter)
             and (
+                year_from is None
+                or self.paper_by_id[chunk.paper_id].year is not None
+                and self.paper_by_id[chunk.paper_id].year >= year_from
+            )
+            and (
+                year_to is None
+                or self.paper_by_id[chunk.paper_id].year is not None
+                and self.paper_by_id[chunk.paper_id].year <= year_to
+            )
+            and (
                 not normalized_sections
                 or any(value in chunk.section.casefold() for value in normalized_sections)
             )
@@ -248,7 +260,14 @@ class HybridRetrievalService:
             query,
             sparse=self.chunk_sparse,
             dense=chunk_dense,
-            allowed_ids=(allowed_chunk_ids if paper_filter or normalized_sections else None),
+            allowed_ids=(
+                allowed_chunk_ids
+                if paper_filter
+                or year_from is not None
+                or year_to is not None
+                or normalized_sections
+                else None
+            ),
         )
         fused = reciprocal_rank_fusion(rankings, k=self.config.rrf_k)
         limit = top_k or self.config.default_top_k

@@ -168,26 +168,27 @@ class ResearchTools:
             )
         return evidence
 
-    def _retrieve_scope(
+    def _retrieve_full_corpus(
         self,
         *,
         query: str,
-        paper_ids: list[str] | None,
-        scope: RetrievalScope,
         top_k: int | None,
+        year_from: int | None,
+        year_to: int | None,
         sections: list[str] | None,
     ) -> tuple[list[EvidenceSearchResult], dict[str, Any]]:
         started_at = perf_counter()
         results = self.retrieval.retrieve_evidence(
             query,
             top_k=top_k,
-            paper_ids=paper_ids,
+            paper_ids=None,
+            year_from=year_from,
+            year_to=year_to,
             sections=sections,
         )
         elapsed_ms = round((perf_counter() - started_at) * 1000)
         return results, {
-            "scope": scope.value,
-            "paper_ids": paper_ids or [],
+            "scope": RetrievalScope.FULL_CORPUS.value,
             "chunk_ids": [item.chunk_id for item in results],
             "elapsed_ms": elapsed_ms,
         }
@@ -203,7 +204,7 @@ class ResearchTools:
         year_to: int | None = None,
         sections: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Run one semantic search with internal candidate-scope recovery."""
+        """Run one semantic search over every eligible chunk in the corpus."""
         total_started_at = perf_counter()
         query = query.strip()
         if not query:
@@ -245,57 +246,13 @@ class ResearchTools:
             sub_question_id,
             semantic_round,
         )
-        paper_search_started = perf_counter()
-        candidate_papers = self.retrieval.search_papers(
-            query,
-            top_k=self.config.expanded_paper_candidates,
+        results, retrieval_attempt = self._retrieve_full_corpus(
+            query=query,
+            top_k=top_k,
             year_from=year_from,
             year_to=year_to,
+            sections=sections,
         )
-        paper_search_ms = round((perf_counter() - paper_search_started) * 1000)
-        initial_ids = [
-            item.paper_id
-            for item in candidate_papers[: self.config.initial_paper_candidates]
-        ]
-        expanded_ids = [item.paper_id for item in candidate_papers]
-
-        technical_attempts: list[dict[str, Any]] = []
-        results: list[EvidenceSearchResult] = []
-        final_scope = RetrievalScope.GLOBAL_FALLBACK
-        final_paper_ids: list[str] | None = None
-        if initial_ids:
-            results, attempt = self._retrieve_scope(
-                query=query,
-                paper_ids=initial_ids,
-                scope=RetrievalScope.CANDIDATE_PAPERS,
-                top_k=top_k,
-                sections=sections,
-            )
-            technical_attempts.append(attempt)
-            final_scope = RetrievalScope.CANDIDATE_PAPERS
-            final_paper_ids = initial_ids
-        if not results and len(expanded_ids) > len(initial_ids):
-            results, attempt = self._retrieve_scope(
-                query=query,
-                paper_ids=expanded_ids,
-                scope=RetrievalScope.EXPANDED_CANDIDATES,
-                top_k=top_k,
-                sections=sections,
-            )
-            technical_attempts.append(attempt)
-            final_scope = RetrievalScope.EXPANDED_CANDIDATES
-            final_paper_ids = expanded_ids
-        if not results:
-            results, attempt = self._retrieve_scope(
-                query=query,
-                paper_ids=None,
-                scope=RetrievalScope.GLOBAL_FALLBACK,
-                top_k=top_k,
-                sections=sections,
-            )
-            technical_attempts.append(attempt)
-            final_scope = RetrievalScope.GLOBAL_FALLBACK
-            final_paper_ids = None
 
         evidence = self._evidence_items(
             task_id=task_id,
@@ -304,17 +261,18 @@ class ResearchTools:
         )
         total_elapsed_ms = round((perf_counter() - total_started_at) * 1000)
         coverage_reason = (
-            "candidate passages retrieved; semantic sufficiency awaits research_reflect"
+            "full-corpus candidate passages retrieved; semantic sufficiency awaits "
+            "research_reflect"
             if evidence
-            else "no candidate passages were found after full-corpus fallback"
+            else "no candidate passages were found in the eligible corpus chunks"
         )
         updated = self.states.add_evidence(
             task_id,
             sub_question_id,
             evidence,
             query=query,
-            paper_ids=final_paper_ids,
-            scope=final_scope,
+            paper_ids=None,
+            scope=RetrievalScope.FULL_CORPUS,
             elapsed_ms=total_elapsed_ms,
             coverage_reason=coverage_reason,
         )
@@ -328,17 +286,8 @@ class ResearchTools:
             "sub_question_id": sub_question_id,
             "semantic_round": semantic_round,
             "max_semantic_rounds": updated.max_retrieval_rounds,
-            "candidate_papers": [
-                {
-                    "paper_id": item.paper_id,
-                    "title": item.title,
-                    "year": item.year,
-                    "fused_score": item.fused_score,
-                }
-                for item in candidate_papers
-            ],
-            "paper_search_ms": paper_search_ms,
-            "technical_attempts": technical_attempts,
+            "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
+            "retrieval_attempt": retrieval_attempt,
             "evidence": [item.model_dump(mode="json") for item in evidence],
             "candidate_passages_found": bool(evidence),
             "semantic_sufficiency": "pending_reflect",
@@ -360,9 +309,8 @@ class ResearchTools:
                 "sections": sections or [],
             },
             output_summary={
-                "candidate_paper_ids": [item.paper_id for item in candidate_papers],
-                "paper_search_ms": paper_search_ms,
-                "technical_attempts": technical_attempts,
+                "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
+                "retrieval_attempt": retrieval_attempt,
                 "evidence_ids": [item.evidence_id for item in evidence],
                 "candidate_passages_found": bool(evidence),
                 "task_status": updated.status.value,

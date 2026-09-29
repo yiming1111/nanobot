@@ -50,6 +50,8 @@ class EvidenceRelation(StrEnum):
 
 
 class RetrievalScope(StrEnum):
+    FULL_CORPUS = "full_corpus"
+    # Retained so persisted states from the earlier hierarchical flow still load.
     CANDIDATE_PAPERS = "candidate_papers"
     EXPANDED_CANDIDATES = "expanded_candidates"
     GLOBAL_FALLBACK = "global_fallback"

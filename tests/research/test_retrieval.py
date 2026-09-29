@@ -105,7 +105,9 @@ def test_sparse_service_filters_and_returns_provenance(tmp_path: Path) -> None:
     papers = service.search_papers("graph retrieval", year_from=2024)
     assert reranker.calls == 0
     evidence = service.retrieve_evidence(
-        "multi-hop recall", paper_ids=["P1"], sections=["experiment"]
+        "multi-hop recall",
+        year_from=2024,
+        sections=["experiment"],
     )
 
     assert [paper.paper_id for paper in papers] == ["P1"]
@@ -113,6 +115,19 @@ def test_sparse_service_filters_and_returns_provenance(tmp_path: Path) -> None:
     assert evidence[0].page_start == 3
     assert evidence[0].rerank_score == 1.0
     assert reranker.calls == 1
+
+
+def test_full_corpus_chunk_search_applies_year_filter(tmp_path: Path) -> None:
+    _write_sparse_corpus(tmp_path)
+    service = HybridRetrievalService(
+        ResearchConfig(data_dir=tmp_path, default_top_k=2),
+        reranker=_FakeReranker(),
+        allow_sparse_only=True,
+    )
+
+    evidence = service.retrieve_evidence("retrieval", year_to=2023)
+
+    assert [item.paper_id for item in evidence] == ["P2"]
 
 
 def test_paper_filter_is_applied_before_sparse_candidate_cutoff(tmp_path: Path) -> None:

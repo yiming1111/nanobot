@@ -12,8 +12,7 @@ from nanobot.research.models import (
 
 
 class _FakeRetrieval:
-    def __init__(self, *, global_only: bool = False) -> None:
-        self.global_only = global_only
+    def __init__(self) -> None:
         self.paper_calls: list[dict[str, object]] = []
         self.evidence_calls: list[dict[str, object]] = []
 
@@ -26,8 +25,6 @@ class _FakeRetrieval:
 
     def retrieve_evidence(self, query: str, **kwargs: object) -> list[EvidenceSearchResult]:
         self.evidence_calls.append({"query": query, **kwargs})
-        if self.global_only and kwargs.get("paper_ids") is not None:
-            return []
         return [
             EvidenceSearchResult(
                 chunk_id="P1-C0000",
@@ -84,16 +81,9 @@ def test_retrieval_requires_reflect_before_generation(tmp_path: Path) -> None:
         )
 
 
-def test_empty_result_scope_fallback_is_one_semantic_round(tmp_path: Path) -> None:
-    retrieval = _FakeRetrieval(global_only=True)
-    tools = ResearchTools(
-        ResearchConfig(
-            data_dir=tmp_path,
-            initial_paper_candidates=1,
-            expanded_paper_candidates=2,
-        ),
-        retrieval=retrieval,  # type: ignore[arg-type]
-    )
+def test_retrieval_searches_full_chunk_corpus_once(tmp_path: Path) -> None:
+    retrieval = _FakeRetrieval()
+    tools = _tools(tmp_path, retrieval)
     task_id = _start(tools)
 
     result = tools.research_retrieve(
@@ -103,16 +93,10 @@ def test_empty_result_scope_fallback_is_one_semantic_round(tmp_path: Path) -> No
     )
     status = tools.status(task_id)
 
-    assert [item["scope"] for item in result["technical_attempts"]] == [
-        "candidate_papers",
-        "expanded_candidates",
-        "global_fallback",
-    ]
-    assert [call["paper_ids"] for call in retrieval.evidence_calls] == [
-        ["P1"],
-        ["P1", "P2"],
-        None,
-    ]
+    assert result["retrieval_scope"] == "full_corpus"
+    assert result["retrieval_attempt"]["scope"] == "full_corpus"
+    assert [call["paper_ids"] for call in retrieval.evidence_calls] == [None]
+    assert retrieval.paper_calls == []
     assert status["retrieval_rounds"] == 1
     assert result["semantic_round"] == 1
 
