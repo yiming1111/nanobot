@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,13 @@ CASE_IDS = [
 ]
 
 
+def is_quota_error(error: str | None) -> bool:
+    if error is None:
+        return False
+    normalized = error.casefold()
+    return "out of quota" in normalized or "account is in arrears" in normalized
+
+
 def load_cases(path: Path) -> list[dict[str, Any]]:
     wanted = set(CASE_IDS)
     cases = [
@@ -44,7 +52,10 @@ async def main() -> None:
     parser.add_argument("--benchmark", type=Path, required=True)
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--run-id")
     args = parser.parse_args()
+
+    run_id = args.run_id or datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
 
     args.workspace.mkdir(parents=True, exist_ok=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -84,7 +95,7 @@ async def main() -> None:
             try:
                 response = await agent_loop.process_direct(
                     case["query"],
-                    f"eval:{case_id}",
+                    f"eval:{run_id}:{case_id}",
                     on_progress=on_progress,
                     ephemeral=True,
                 )
@@ -96,6 +107,7 @@ async def main() -> None:
                 error = f"{type(exc).__name__}: {exc}"
             elapsed_ms = round((time.perf_counter() - started) * 1000)
             result = {
+                "run_id": run_id,
                 "case_id": case_id,
                 "query": case["query"],
                 "expected_behavior": case["expected_behavior"],
@@ -122,6 +134,12 @@ async def main() -> None:
                 ),
                 flush=True,
             )
+            if is_quota_error(error):
+                print(
+                    f"[{case_id}] provider quota exhausted; stopping this run",
+                    flush=True,
+                )
+                break
     finally:
         await agent_loop.aclose()
         await mcp_provider.aclose()

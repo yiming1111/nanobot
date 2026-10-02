@@ -9,6 +9,21 @@
     "mean_total_ms": 127177.2,
     "max_total_ms": 176580
   },
+  "model_trials": [
+    {
+      "model": "qwen3.8-flash",
+      "run_id": "qwen38-20261002-clean",
+      "status": "incomplete_quota_exhausted",
+      "completed_cases": 1,
+      "failed_cases": 4,
+      "findings": [
+        "首题耗时 384906 ms，超过 qwen3.7-plus 同题的 176580 ms。",
+        "首题把两个明确问题扩展为系统模型、优化问题和求解算法三个子问题，并加入原问题未要求的算法类别，触发三次首轮检索和一次语义重检索。",
+        "第二题把原问题缩写为‘一致性’，再扩展成定义、机制和权衡三个子问题，未忠实保留‘参与者能否直接观察所有对手动作’这一问题。",
+        "第二题在 Reflect 后额度耗尽，其余三题立即被供应商拒绝，因此本轮不计入正式指标。"
+      ]
+    }
+  ],
   "cases": [
     {
       "case_id": "st-001-vehicular-game",

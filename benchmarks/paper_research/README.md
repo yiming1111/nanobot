@@ -87,3 +87,5 @@ python benchmarks/paper_research/run_agent_smoke.py `
 ```
 
 本次结构化预测保存在 `results/single_turn_agent_smoke.jsonl`，汇总与已发现问题保存在 `results/single_turn_agent_smoke_report.json`。英文检索 Query 来自实际 Agent Trace，不写入人工评测集。
+脚本会为每次运行生成新的 `run_id` 并写入 Session key，防止重复运行时恢复旧评测会话；需要复现实验标识时可显式传入 `--run-id`。
+普通单题错误不会中断整批评测；如果供应商明确返回额度耗尽或账户欠费，脚本会停止本次运行，因为后续题目无法产生有效结果。
