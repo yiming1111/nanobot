@@ -130,7 +130,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 最终状态收敛为 `completed`、`completed_with_gaps` 或 `refused`。旧 Claim 字段只为读取历史 ResearchState 保留，不再由新任务写入或作为评测指标；
 - 更新 `paper-research` Skill，主流程收敛为“检索 → Reflect → 可选一次补检索 → Generate/Abstain → 引用定位检查”。
 
-### 阶段 8：Pipeline Trace 与评测【第一版已完成，答案级评测待扩展】
+### 阶段 8：Pipeline Trace 与评测【评测集已重构，评测执行待完成】
 
 已实现：
 
@@ -141,10 +141,14 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 首次基线结果：Paper Recall@10 = 1.0、Paper MRR = 1.0、Evidence Paper Recall@8 = 1.0、Evidence Recall@8 = 0.875；论文级召回平均约 646 ms，CPU 证据精排平均约 45.3 s；
 - 车联网样例只召回 2 个标注 chunk 中的 1 个，形成一个可复现的后续改进点；该结果也验证了论文命中率与具体证据命中率必须分开统计。
 
-仍需扩展：
+评测集已按统一 RAG 评测结构重构：
 
-- 建立可回答/应拒答的证据边界集，统计拒答决策准确率、过度回答率和误拒答率；另建立跨论文比较与多轮约束集；
-- 将 Dense、Sparse、RRF、Rerank 的内部耗时进一步拆分。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
+- 单轮集 60 题，其中 40 题应完整回答、10 题应部分回答、10 题应拒答；检索和生成共用同一问题、标准答案与相关 chunk 标注；
+- 多轮集 10 组、每组 8 轮，共 80 轮；后段回查前文论文、约束和结论，20 轮标记为记忆检查点；
+- 指标收敛为检索侧 Recall@4、Precision@4、MRR、耗时与超时率，生成侧四项 RAGAS 指标，以及 Decision Accuracy、Citation Accuracy 和 Memory Consistency Rate；不增加 NDCG、意图识别准确率或 Query 改写准确率；
+- 旧的四题固定检索集已经由统一单轮集替代。旧基线只作为历史诊断记录，不与新数据集结果直接比较。
+
+仍需完成：实现新数据结构的批量运行与评分器；固定人工/LLM 评审流程；运行单轮和多轮正式 baseline。将 Dense、Sparse、RRF、Rerank 的内部耗时进一步拆分。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
 
 ### 阶段 9：WebUI 增强【暂不实施】
 
@@ -170,7 +174,9 @@ nanobot/research/workflow/state_store.py   调研状态持久化
 nanobot/research/mcp_server.py             FastMCP 工具
 nanobot/research/cli.py                    索引 CLI
 nanobot/skills/paper-research/SKILL.md     Agent 调研流程
-benchmarks/paper_research/retrieval.jsonl  固定检索评测集
+benchmarks/paper_research/single_turn.jsonl  60 题统一单轮评测集
+benchmarks/paper_research/multi_turn.jsonl   10 组、80 轮多轮评测集
+benchmarks/paper_research/dataset_manifest.json  评测集版本与规模
 tests/research/                            对应单元测试
 ```
 
@@ -208,6 +214,6 @@ tests/research/                            对应单元测试
 
 ## 7. 下一步
 
-1. 重启 WebUI，真实验证“首次检索 → Reflect → 可选一次补检索 → Generate/Abstain → Finalize”及部分子问题不足场景。
-2. 建立可回答/应拒答的证据边界集、跨论文比较集和多轮约束集，固定拒答准确率、引用正确率与 Pipeline Success Rate 的计算规则。
-3. 将当前全库 chunk 检索作为默认基线；语料规模扩大后，再与论文粗筛方案比较 Evidence Recall@K 和延迟。同时拆分 Dense、Sparse、RRF 与 Rerank 的内部耗时。
+1. 为统一单轮集实现批量检索、Agent 输出采集和评分器，先运行 60 题单轮 baseline。
+2. 按对话顺序运行 10 组多轮测试，并只在日志确认发生上下文压缩后统计对应 `memory_probe`。
+3. 将当前全库 chunk 检索作为默认基线；语料规模扩大后，再决定是否进行检索方案对比。同时拆分 Dense、Sparse、RRF 与 Rerank 的内部耗时。
