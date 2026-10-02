@@ -19,6 +19,7 @@
 {
   "case_id": "st-001-vehicular-game",
   "query": "车辆MEC论文如何建模多车计算卸载，车辆调整的核心决策变量是什么？",
+  "retrieval_query": "vehicular MEC game computation offloading decision variable",
   "ground_truth": "依据本地论文整理的标准答案",
   "relevant_chunk_ids": ["4c26f68525f2edb0-C0000"],
   "expected_behavior": "answer",
@@ -28,6 +29,7 @@
 ```
 
 - `ground_truth`：只依据本地语料编写的标准答案。
+- `retrieval_query`：Agent 实际交给检索工具的一条简短英文 Query；原始用户问题仍保存在 `query`。
 - `relevant_chunk_ids`：人工核对后能够直接支持标准答案的 chunk。
 - `expected_behavior`：`answer`、`partial` 或 `abstain`。
 - `unsupported_requirements`：`partial` 和 `abstain` 中没有本地证据的要求。
@@ -62,10 +64,12 @@ nanobot-research eval-single benchmarks/paper_research/single_turn.jsonl `
   --data-dir D:/Data/paper-research/index `
   --hf-home D:/Data/huggingface `
   --top-k 4 `
-  --output benchmarks/paper_research/results/single_turn_retrieval.json
+  --output benchmarks/paper_research/results/single_turn_retrieval_en.json
 ```
 
-评测直接执行当前正式流程使用的全库 chunk 检索，不再先做论文粗筛。`answer` 和 `partial` 共 50 题参与 Recall、Precision 和 MRR 计算；`abstain` 没有正确 chunk，因此只参与耗时、超时率和错误率统计，避免把“没有证据”错误算成检索漏召回。
+评测直接执行当前正式流程使用的全库 chunk 检索，不再先做论文粗筛，并优先使用每题的英文 `retrieval_query`。`answer` 和 `partial` 共 50 题参与 Recall、Precision 和 MRR 计算；`abstain` 没有正确 chunk，因此只参与耗时、超时率和错误率统计，避免把“没有证据”错误算成检索漏召回。
+
+`results/single_turn_retrieval_zh_raw.json` 是中文原问题直接检索英文语料的旧基线，只用于比较 Query 语言变化，不能与新的英文 Query 结果混为同一版本。
 
 单题异常会记录在报告的 `error` 字段中，整批评测会继续执行。`timeout_seconds` 是评测阈值：超过该时长会计入超时率，但评测程序会等待该次本地检索结束，从而避免在后台留下未受控的模型任务。
 

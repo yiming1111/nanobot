@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "created_at": "2026-10-02",
   "corpus": {
     "papers": 15,
@@ -19,5 +19,6 @@
     "memory_probes": 20
   },
   "retrieval_k": 4,
+  "retrieval_query_language": "English",
   "ndcg_enabled": false
 }
