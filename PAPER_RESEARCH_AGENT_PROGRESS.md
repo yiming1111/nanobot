@@ -89,7 +89,7 @@
 - `research_status`：读取任务计划和当前证据状态，并可短暂等待正在执行的检索结束。
 - `research_finalize`：在回答生成后检查引用 chunk 是否经过对应子问题的 Reflect 确认，并补全论文标题和页码。
 
-论文级 `search_papers` 仍作为评测和后续对比实验能力保留，不参与当前主检索路径；Agent 只调用统一的全库 chunk 检索工具。
+论文级 `search_papers` 仅为后续对比实验保留，不参与当前主检索路径或当前单轮基线；Agent 和正式评测都使用统一的全库 chunk 检索。
 
 MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_server`。
 
@@ -136,7 +136,7 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 
 - 新增按 `task_id` 持久化的 `PipelineTrace`，记录 Plan、Retrieve、邻接证据、Reflect、Status 和 Finalize 的输入摘要、输出摘要、chunk ID、决策与耗时；Trace 不复制证据正文，避免再次制造超长工具历史；
 - Trace 写入失败不阻断论文问答主流程，并提供 `nanobot-research trace <task_id>` 汇总工具调用次数、阶段耗时、chunk ID、错误、最近一次 Reflect 与最终引用检查结果；
-- 新增 JSONL 固定检索评测集、`nanobot-research eval` 命令与统一 JSON 报告，计算 Paper Recall@K、Paper MRR、Evidence Recall@K、Evidence Paper Recall@K 和检索延迟；
+- 新增 JSONL 固定检索评测集、`nanobot-research eval-single` 命令与统一 JSON 报告；当前单轮基线直接评测全库 chunk 检索，计算 Recall@4、Precision@4、MRR、平均/P95耗时、超时率和错误率；
 - 第一版真实基线包含 4 个已人工确认目标论文与目标 chunk 的问题，覆盖 MEC 广义纳什均衡、动态势博弈、车联网卸载和区块链资源定价；
 - 首次基线结果：Paper Recall@10 = 1.0、Paper MRR = 1.0、Evidence Paper Recall@8 = 1.0、Evidence Recall@8 = 0.875；论文级召回平均约 646 ms，CPU 证据精排平均约 45.3 s；
 - 车联网样例只召回 2 个标注 chunk 中的 1 个，形成一个可复现的后续改进点；该结果也验证了论文命中率与具体证据命中率必须分开统计。
@@ -147,8 +147,11 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 多轮集 10 组、每组 8 轮，共 80 轮；后段回查前文论文、约束和结论，20 轮标记为记忆检查点；
 - 指标收敛为检索侧 Recall@4、Precision@4、MRR、耗时与超时率，生成侧四项 RAGAS 指标，以及 Decision Accuracy、Citation Accuracy 和 Memory Consistency Rate；不增加 NDCG、意图识别准确率或 Query 改写准确率；
 - 旧的四题固定检索集已经由统一单轮集替代。旧基线只作为历史诊断记录，不与新数据集结果直接比较。
+- 单轮评测器已经适配 60 题结构；`answer` 和 `partial` 共 50 题参与检索相关性指标，10 题 `abstain` 只参与耗时、超时率和错误率；单题异常不会中断整批。
+- 已定义完整 Agent 输出的统一采集结构，并实现完成率、Decision Accuracy 和 Citation Accuracy 的确定性评分；四项语义 RAG 指标必须使用真实回答与检索正文另行计算，不能预填或伪造。
+- 三题真实冒烟测试在离线模型缓存下完成，无错误和超时；单题检索约 43～47 秒。该小样本只验证评测链路，不能作为 60 题正式指标。
 
-仍需完成：实现新数据结构的批量运行与评分器；固定人工/LLM 评审流程；运行单轮和多轮正式 baseline。将 Dense、Sparse、RRF、Rerank 的内部耗时进一步拆分。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
+仍需完成：固定 Faithfulness、Answer Relevancy、Context Relevancy 和 Context Recall 的人工/LLM 评审流程；运行 60 题单轮正式 baseline；之后再实现和运行多轮 baseline。将 Dense、Sparse、RRF、Rerank 的内部耗时进一步拆分。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
 
 ### 阶段 9：WebUI 增强【暂不实施】
 

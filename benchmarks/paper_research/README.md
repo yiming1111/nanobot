@@ -54,3 +54,21 @@
 检索侧使用 `Recall@4`、`Precision@4`、`MRR`、平均/P95耗时和超时率；不计算 NDCG。生成侧使用 `Faithfulness`、`Answer Relevancy`、`Context Relevancy` 和 `Context Recall`。此外记录 `Decision Accuracy`、`Citation Accuracy`，并在多轮数据上统计 `Memory Consistency Rate`。
 
 意图识别、Query 改写和子问题拆解只作为 Pipeline Trace 中的诊断信息，不单独计算准确率。
+
+## 运行单轮检索基线
+
+```powershell
+nanobot-research eval-single benchmarks/paper_research/single_turn.jsonl `
+  --data-dir D:/Data/paper-research/index `
+  --hf-home D:/Data/huggingface `
+  --top-k 4 `
+  --output benchmarks/paper_research/results/single_turn_retrieval.json
+```
+
+评测直接执行当前正式流程使用的全库 chunk 检索，不再先做论文粗筛。`answer` 和 `partial` 共 50 题参与 Recall、Precision 和 MRR 计算；`abstain` 没有正确 chunk，因此只参与耗时、超时率和错误率统计，避免把“没有证据”错误算成检索漏召回。
+
+单题异常会记录在报告的 `error` 字段中，整批评测会继续执行。`timeout_seconds` 是评测阈值：超过该时长会计入超时率，但评测程序会等待该次本地检索结束，从而避免在后台留下未受控的模型任务。
+
+Agent 完整回答可保存为 `SingleTurnPrediction` JSONL，随后执行 `nanobot-research score-single <测试集> <回答文件>` 计算完成率、决策准确率和引用准确率。回答记录包含实际行为、检索/引用 chunk、`research_finalize` 的引用定位检查结果、任务 ID、总耗时和错误。Faithfulness、Answer Relevancy、Context Relevancy 与 Context Recall 需要真实回答和检索正文，不能在只有测试题时预先生成分数。
+
+命令默认启用 `--offline`，直接使用已经下载到本机的 BGE 模型文件，防止 Hugging Face 联网检查混入检索耗时。如果本机尚未缓存模型，可临时使用 `--online` 完成首次下载。

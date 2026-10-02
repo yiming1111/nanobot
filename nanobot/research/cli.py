@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import typer
 
 from nanobot.research.config import ResearchConfig
 from nanobot.research.corpus.indexer import CorpusIndexer
-from nanobot.research.evaluation import evaluate_retrieval, load_retrieval_cases
+from nanobot.research.evaluation import (
+    evaluate_single_turn_retrieval,
+    load_single_turn_cases,
+    load_single_turn_predictions,
+    score_single_turn_outputs,
+)
 from nanobot.research.observability.trace import PipelineTraceStore
 from nanobot.research.retrieval.service import HybridRetrievalService
 
@@ -51,23 +57,54 @@ def task_trace(
     typer.echo(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
-@app.command("eval")
-def evaluate_index(
+@app.command("eval-single")
+def evaluate_single_turn(
     benchmark: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
     data_dir: Path | None = typer.Option(None, help="Directory containing the index."),
     output: Path | None = typer.Option(None, help="Optional JSON report path."),
-    paper_top_k: int = typer.Option(10, min=1, max=100),
-    evidence_top_k: int = typer.Option(8, min=1, max=100),
+    top_k: int = typer.Option(4, min=1, max=100),
+    timeout_seconds: int = typer.Option(240, min=1),
+    hf_home: Path | None = typer.Option(
+        None,
+        help="Optional Hugging Face model-cache directory.",
+    ),
+    offline: bool = typer.Option(
+        True,
+        "--offline/--online",
+        help="Use local model files without Hugging Face network checks.",
+    ),
 ) -> None:
+    if hf_home is not None:
+        os.environ["HF_HOME"] = str(hf_home)
+    if offline:
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ["TRANSFORMERS_OFFLINE"] = "1"
     config = ResearchConfig(data_dir=data_dir) if data_dir is not None else ResearchConfig()
     service = HybridRetrievalService(config)
     service.prepare_indexes()
     service.prepare_models()
-    report = evaluate_retrieval(
+    report = evaluate_single_turn_retrieval(
         service,
-        load_retrieval_cases(benchmark),
-        paper_top_k=paper_top_k,
-        evidence_top_k=evidence_top_k,
+        load_single_turn_cases(benchmark),
+        top_k=top_k,
+        timeout_ms=timeout_seconds * 1000,
+    )
+    payload = report.model_dump_json(indent=2)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(payload, encoding="utf-8")
+    typer.echo(payload)
+
+
+@app.command("score-single")
+def score_single_turn(
+    benchmark: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    predictions: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    output: Path | None = typer.Option(None, help="Optional JSON report path."),
+) -> None:
+    report = score_single_turn_outputs(
+        load_single_turn_cases(benchmark),
+        load_single_turn_predictions(predictions),
     )
     payload = report.model_dump_json(indent=2)
     if output is not None:
