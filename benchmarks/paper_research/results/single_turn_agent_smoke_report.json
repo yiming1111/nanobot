@@ -1,13 +1,15 @@
 {
   "run_kind": "isolated_agent_smoke",
+  "run_id": "qwen37-20261003-paid",
   "model": "qwen3.7-plus",
   "case_count": 5,
   "metrics": {
-    "completion_rate": 0.8,
-    "decision_accuracy": 0.8,
+    "completion_rate": 1.0,
+    "decision_accuracy": 1.0,
     "citation_accuracy": 1.0,
-    "mean_total_ms": 127177.2,
-    "max_total_ms": 176580
+    "manual_rendered_citation_accuracy": 0.75,
+    "mean_total_ms": 171108.6,
+    "max_total_ms": 226090
   },
   "model_trials": [
     {
@@ -32,14 +34,15 @@
       "passed": true,
       "task_status": "completed",
       "retrieval_call_count": 2,
+      "reflect_call_count": 2,
       "retrieval_queries": [
-        "multi-vehicle computation offloading system model vehicle MEC mobile edge computing",
-        "vehicle adjustment decision variables offloading probability resource allocation trajectory optimization"
+        "vehicle MEC multi-vehicle computation offloading system model task model communication model",
+        "vehicle MEC computation offloading decision variables optimization trajectory speed resource allocation offloading probability"
       ],
       "retrieved_chunk_count": 13,
-      "cited_chunk_count": 6,
+      "cited_chunk_count": 10,
       "citation_locators_valid": true,
-      "total_ms": 176580,
+      "total_ms": 205425,
       "error": null
     },
     {
@@ -49,13 +52,14 @@
       "passed": true,
       "task_status": "completed",
       "retrieval_call_count": 1,
+      "reflect_call_count": 1,
       "retrieval_queries": [
-        "consensus-based distributed Nash Equilibrium seeking player observation opponents actions partial information neighbor communication"
+        "consensus-based distributed Nash Equilibrium seeking information structure partial observability opponents actions"
       ],
-      "retrieved_chunk_count": 5,
+      "retrieved_chunk_count": 4,
       "cited_chunk_count": 4,
       "citation_locators_valid": true,
-      "total_ms": 80433,
+      "total_ms": 87290,
       "error": null
     },
     {
@@ -65,14 +69,15 @@
       "passed": true,
       "task_status": "completed",
       "retrieval_call_count": 2,
+      "reflect_call_count": 1,
       "retrieval_queries": [
-        "co-located edge computing generalized Nash equilibrium GNE joint resource allocation computing caching communication",
-        "GNEP player MNO CRP objective function minimize OPEX energy cost optimization"
+        "co-located edge computing generalized Nash equilibrium GNE joint resource allocation",
+        "MNO CRP optimization objective minimize OPEX cost energy in GNEP co-located edge computing"
       ],
-      "retrieved_chunk_count": 6,
-      "cited_chunk_count": 5,
+      "retrieved_chunk_count": 5,
+      "cited_chunk_count": 4,
       "citation_locators_valid": true,
-      "total_ms": 142984,
+      "total_ms": 133940,
       "error": null
     },
     {
@@ -81,42 +86,47 @@
       "actual_behavior": "partial",
       "passed": true,
       "task_status": "completed_with_gaps",
-      "retrieval_call_count": 4,
+      "retrieval_call_count": 3,
+      "reflect_call_count": 2,
       "retrieval_queries": [
-        "vehicular MEC offloading algorithm Nash equilibrium game theory convergence 2025",
-        "vehicular MEC offloading real fleet deployment average energy saving ratio 2025",
-        "vehicle MEC computation offloading game theoretic equilibrium Nash energy efficiency",
-        "vehicular edge computing offloading real-world fleet testbed deployment energy saving percentage"
+        "vehicle MEC offloading algorithm Nash equilibrium game-theoretic analysis convergence properties",
+        "vehicle MEC offloading algorithm energy savings ratio real fleet deployment 2025",
+        "vehicle MEC offloading real fleet deployment 2025 energy savings ratio field test evaluation"
       ],
-      "retrieved_chunk_count": 7,
+      "retrieved_chunk_count": 8,
       "cited_chunk_count": 4,
       "citation_locators_valid": true,
-      "total_ms": 171910,
+      "total_ms": 202798,
       "error": null
     },
     {
       "case_id": "st-051-abstain-quantum",
       "expected_behavior": "abstain",
-      "actual_behavior": null,
-      "passed": false,
-      "task_status": "retrieving",
-      "retrieval_call_count": 1,
+      "actual_behavior": "abstain",
+      "passed": true,
+      "task_status": "refused",
+      "retrieval_call_count": 4,
+      "reflect_call_count": 2,
       "retrieval_queries": [
-        "surface code error threshold depolarizing noise numerical value"
+        "surface code quantum error correction threshold value depolarizing noise",
+        "surface code error threshold proof topological code fault-tolerant quantum computing",
+        "surface code threshold error rate quantum error correction Kitaev toric code",
+        "surface code threshold proof fault-tolerant quantum computation topological stabilizer code"
       ],
-      "retrieved_chunk_count": 4,
+      "retrieved_chunk_count": 13,
       "cited_chunk_count": 0,
       "citation_locators_valid": null,
-      "total_ms": 63979,
-      "error": "LLM provider quota exhausted before Reflect and final answer"
+      "total_ms": 226090,
+      "error": null
     }
   ],
   "findings": [
-    "3 道完整回答题和 1 道部分回答题均产生了预期行为。",
-    "拒答题已进入检索，但在 Reflect 和最终回答前遇到模型额度耗尽，因此记为基础设施失败，不算拒答成功。",
-    "复用默认工作区时，长期 Memory 曾直接回答一道题而跳过检索；正式记录因此改用空 Memory 的隔离工作区和独立 Session。",
-    "第一题把‘车辆调整的决策变量’过度扩展为轨迹、速度和资源分配，造成 Query 范围偏宽；还调用了 5 次邻接证据并出现 1 次未写入 Trace 的失败 Reflect，工具和 Token 开销偏高。",
-    "部分回答题第一轮把 2025 年约束错误地应用到两个子问题；Reflect 在第二轮恢复了可回答的均衡性质，但约束应更早绑定到对应子问题。",
-    "拒答题第一次调用时抄错 task_id，查询状态后重新创建了任务；task_id 的原样传递需要加强。"
+    "3 道完整回答题、1 道部分回答题和 1 道拒答题均产生预期行为；无额度错误、工具超时或 task_id 错误。",
+    "5 道题使用独立 Session，空长期 Memory，没有旧答案绕过检索。",
+    "工具内部 citation locator 校验在 4 道需要引用的题上全部通过。",
+    "人工复核发现部分回答题把原论文页码范围写为 4987–4999，实际为 4987–4995，因此最终展示引用准确率按题计为 3/4。",
+    "第一题的英文 Query 仍加入 trajectory、speed、resource allocation 等原问题没有的候选概念，虽未改变最终结论，但扩大了检索范围。",
+    "第一题执行两次 Reflect；其余完整回答题只执行一次。部分回答和拒答题分别对证据不足的子问题追加一次检索，符合每个子问题最多重检一次的规则。",
+    "拒答题被拆为阈值数值和阈值证明两个子问题，因此两轮共执行 4 次语义检索；最终正确拒答，但耗时最高。"
   ]
 }
