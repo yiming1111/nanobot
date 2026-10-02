@@ -74,3 +74,16 @@ nanobot-research eval-single benchmarks/paper_research/single_turn.jsonl `
 Agent 完整回答可保存为 `SingleTurnPrediction` JSONL，随后执行 `nanobot-research score-single <测试集> <回答文件>` 计算完成率、决策准确率和引用准确率。回答记录包含 Agent 实际生成的英文检索 Query、检索/引用 chunk、`research_finalize` 的引用定位检查结果、任务 ID、总耗时和错误。Faithfulness、Answer Relevancy、Context Relevancy 与 Context Recall 需要真实回答和检索正文，不能在只有测试题时预先生成分数。
 
 命令默认启用 `--offline`，直接使用已经下载到本机的 BGE 模型文件，防止 Hugging Face 联网检查混入检索耗时。如果本机尚未缓存模型，可临时使用 `--online` 完成首次下载。
+
+## 运行端到端冒烟评测
+
+下面的命令在独立工作区中运行 5 道代表性问题：3 道完整回答、1 道部分回答和 1 道拒答。独立工作区保留 paper-research Skill，但使用空 Memory 和互相隔离的 Session，避免历史论文记录绕过检索。
+
+```powershell
+python benchmarks/paper_research/run_agent_smoke.py `
+  --benchmark benchmarks/paper_research/single_turn.jsonl `
+  --workspace <独立评测工作区> `
+  --output benchmarks/paper_research/results/single_turn_agent_smoke_raw.json
+```
+
+本次结构化预测保存在 `results/single_turn_agent_smoke.jsonl`，汇总与已发现问题保存在 `results/single_turn_agent_smoke_report.json`。英文检索 Query 来自实际 Agent Trace，不写入人工评测集。
