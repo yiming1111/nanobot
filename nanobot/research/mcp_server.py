@@ -7,7 +7,7 @@ import threading
 import time
 from functools import lru_cache
 from time import perf_counter
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
@@ -135,6 +135,8 @@ class ResearchTools:
         sub_question_id: str | None = None,
         input_summary: dict[str, Any] | None = None,
         output_summary: dict[str, Any] | None = None,
+        status: Literal["completed", "failed"] = "completed",
+        error: str | None = None,
     ) -> None:
         try:
             self.traces.append(
@@ -145,9 +147,44 @@ class ResearchTools:
                 sub_question_id=sub_question_id,
                 input_summary=input_summary,
                 output_summary=output_summary,
+                status=status,
+                error=error,
             )
         except Exception:
             logger.exception("failed to record research trace task=%s", task_id)
+
+    def _load_state(
+        self,
+        task_id: str,
+        *,
+        stage: str,
+        operation: str,
+        started_at: float,
+    ) -> ResearchState:
+        try:
+            return self.states.load(task_id)
+        except FileNotFoundError:
+            error = (
+                f"research task not found: {task_id}. Reuse the exact opaque task_id "
+                "returned by research_start; do not start a replacement task."
+            )
+            self._record_trace(
+                task_id,
+                stage=stage,
+                operation=operation,
+                elapsed_ms=round((perf_counter() - started_at) * 1000),
+                input_summary={"task_id": task_id},
+                status="failed",
+                error=error,
+            )
+            raise FileNotFoundError(error) from None
+
+    @staticmethod
+    def _semantic_rounds(sub_question: SubQuestion) -> int:
+        return sum(
+            attempt.scope != RetrievalScope.MEMORY_EVIDENCE
+            for attempt in sub_question.retrieval_attempts
+        )
 
     @property
     def retrieval(self) -> HybridRetrievalService:
@@ -265,6 +302,110 @@ class ResearchTools:
             "elapsed_ms": elapsed_ms,
         }
 
+    def research_load_evidence(
+        self,
+        *,
+        task_id: str,
+        sub_question_id: str,
+        chunk_ids: list[str],
+    ) -> dict[str, Any]:
+        """Reload exact provenance chunks from Memory without semantic search."""
+        started_at = perf_counter()
+        if not chunk_ids:
+            raise ValueError("at least one chunk_id is required")
+        if len(chunk_ids) != len(set(chunk_ids)):
+            raise ValueError("chunk_ids must be unique")
+        try:
+            state = self._load_state(
+                task_id,
+                stage="retrieve",
+                operation="research_load_evidence",
+                started_at=started_at,
+            )
+            sub_question = self._find_sub_question(state, sub_question_id)
+            if sub_question.retrieval_attempts:
+                first_attempt = sub_question.retrieval_attempts[0]
+                if (
+                    len(sub_question.retrieval_attempts) == 1
+                    and first_attempt.scope == RetrievalScope.MEMORY_EVIDENCE
+                    and first_attempt.chunk_ids == chunk_ids
+                ):
+                    evidence = [
+                        state.evidence[f"{sub_question_id}:{chunk_id}"]
+                        for chunk_id in chunk_ids
+                    ]
+                    return {
+                        "task_id": task_id,
+                        "sub_question_id": sub_question_id,
+                        "retrieval_scope": RetrievalScope.MEMORY_EVIDENCE.value,
+                        "semantic_rounds_used": 0,
+                        "evidence": [item.model_dump(mode="json") for item in evidence],
+                        "candidate_passages_found": bool(evidence),
+                        "semantic_sufficiency": "pending_reflect",
+                        "task_status": state.status.value,
+                        "execution_status": "completed",
+                        "recovered": True,
+                        "next_step": (
+                            "run research_reflect after all pending sub-questions "
+                            "have evidence"
+                        ),
+                    }
+                raise RuntimeError(
+                    f"evidence has already been loaded for {sub_question_id}"
+                )
+            results = self.retrieval.get_chunks(chunk_ids)
+            evidence = self._evidence_items(
+                sub_question_id=sub_question_id,
+                results=results,
+            )
+            updated = self.states.add_memory_evidence(
+                task_id,
+                sub_question_id,
+                evidence,
+            )
+            payload = {
+                "task_id": task_id,
+                "sub_question_id": sub_question_id,
+                "retrieval_scope": RetrievalScope.MEMORY_EVIDENCE.value,
+                "semantic_rounds_used": 0,
+                "evidence": [item.model_dump(mode="json") for item in evidence],
+                "candidate_passages_found": bool(evidence),
+                "semantic_sufficiency": "pending_reflect",
+                "task_status": updated.status.value,
+                "execution_status": "completed",
+                "recovered": False,
+                "next_step": (
+                    "run research_reflect after all pending sub-questions have evidence"
+                ),
+            }
+            self._record_trace(
+                task_id,
+                stage="retrieve",
+                operation="research_load_evidence",
+                elapsed_ms=round((perf_counter() - started_at) * 1000),
+                sub_question_id=sub_question_id,
+                input_summary={"chunk_ids": chunk_ids},
+                output_summary={
+                    "retrieval_scope": RetrievalScope.MEMORY_EVIDENCE.value,
+                    "chunk_ids": chunk_ids,
+                    "semantic_rounds_used": 0,
+                },
+            )
+            return payload
+        except Exception as exc:
+            if not isinstance(exc, FileNotFoundError):
+                self._record_trace(
+                    task_id,
+                    stage="retrieve",
+                    operation="research_load_evidence",
+                    elapsed_ms=round((perf_counter() - started_at) * 1000),
+                    sub_question_id=sub_question_id,
+                    input_summary={"chunk_ids": chunk_ids},
+                    status="failed",
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+            raise
+
     def research_retrieve(
         self,
         *,
@@ -282,7 +423,12 @@ class ResearchTools:
         if not query:
             raise ValueError("query must not be empty")
 
-        state = self.states.load(task_id)
+        state = self._load_state(
+            task_id,
+            stage="retrieve",
+            operation="research_retrieve",
+            started_at=total_started_at,
+        )
         sub_question = self._find_sub_question(state, sub_question_id)
         cached = self._cached_retrieval_payload(state, sub_question)
         if cached is not None and sub_question.retrieval_attempts[-1].query == query:
@@ -302,7 +448,12 @@ class ResearchTools:
             }
 
         try:
-            state = self.states.load(task_id)
+            state = self._load_state(
+                task_id,
+                stage="retrieve",
+                operation="research_retrieve",
+                started_at=total_started_at,
+            )
             sub_question = self._find_sub_question(state, sub_question_id)
             cached = self._cached_retrieval_payload(state, sub_question)
             if (
@@ -314,7 +465,8 @@ class ResearchTools:
                 raise RuntimeError(
                     f"evidence is already sufficient for {sub_question_id}"
                 )
-            if len(sub_question.retrieval_attempts) >= state.max_retrieval_rounds:
+            semantic_rounds = self._semantic_rounds(sub_question)
+            if semantic_rounds >= state.max_retrieval_rounds:
                 raise RuntimeError(
                     f"maximum semantic retrieval rounds reached for {sub_question_id}"
                 )
@@ -332,7 +484,7 @@ class ResearchTools:
                 )
 
             self.states.begin_retrieval(task_id, sub_question_id, query=query)
-            semantic_round = len(sub_question.retrieval_attempts) + 1
+            semantic_round = semantic_rounds + 1
             logger.info(
                 "research retrieval started task=%s sub_question=%s semantic_round=%d",
                 task_id,
@@ -440,15 +592,38 @@ class ResearchTools:
     ) -> dict[str, Any]:
         """Decide whether retrieved evidence covers each outstanding evidence need."""
         started_at = perf_counter()
-        if not assessments:
-            raise ValueError("at least one evidence assessment is required")
-        updated = self.states.record_reflections(task_id, assessments)
+        try:
+            if not assessments:
+                raise ValueError("at least one evidence assessment is required")
+            self._load_state(
+                task_id,
+                stage="reflect",
+                operation="research_reflect",
+                started_at=started_at,
+            )
+            updated = self.states.record_reflections(task_id, assessments)
+        except Exception as exc:
+            if not isinstance(exc, FileNotFoundError):
+                self._record_trace(
+                    task_id,
+                    stage="reflect",
+                    operation="research_reflect",
+                    elapsed_ms=round((perf_counter() - started_at) * 1000),
+                    input_summary={
+                        "assessments": [
+                            item.model_dump(mode="json") for item in assessments
+                        ]
+                    },
+                    status="failed",
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+            raise
         retry_sub_questions = [
             {
                 "sub_question_id": item.sub_question_id,
                 "next_query": item.next_query,
                 "remaining_semantic_rounds": (
-                    updated.max_retrieval_rounds - len(item.retrieval_attempts)
+                    updated.max_retrieval_rounds - self._semantic_rounds(item)
                 ),
             }
             for item in updated.plan.sub_questions
@@ -523,7 +698,7 @@ class ResearchTools:
             )
         return payload
 
-    def finalize(
+    def _finalize(
         self,
         *,
         task_id: str,
@@ -676,6 +851,45 @@ class ResearchTools:
         )
         return payload
 
+    def finalize(
+        self,
+        *,
+        task_id: str,
+        answered_sub_question_ids: list[str],
+        citations: list[CitationReference],
+    ) -> dict[str, Any]:
+        """Validate citations and retain rejected finalization calls in Trace."""
+        started_at = perf_counter()
+        try:
+            self._load_state(
+                task_id,
+                stage="finalize",
+                operation="research_finalize",
+                started_at=started_at,
+            )
+            return self._finalize(
+                task_id=task_id,
+                answered_sub_question_ids=answered_sub_question_ids,
+                citations=citations,
+            )
+        except Exception as exc:
+            if not isinstance(exc, FileNotFoundError):
+                self._record_trace(
+                    task_id,
+                    stage="finalize",
+                    operation="research_finalize",
+                    elapsed_ms=round((perf_counter() - started_at) * 1000),
+                    input_summary={
+                        "answered_sub_question_ids": answered_sub_question_ids,
+                        "citations": [
+                            item.model_dump(mode="json") for item in citations
+                        ],
+                    },
+                    status="failed",
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+            raise
+
     def status(
         self,
         task_id: str,
@@ -743,6 +957,20 @@ def research_start(
         task_type=task_type,
         constraints=constraints,
         session_key=session_key,
+    )
+
+
+@mcp.tool()
+def research_load_evidence(
+    task_id: str,
+    sub_question_id: str,
+    chunk_ids: list[str],
+) -> dict[str, Any]:
+    """Reload exact chunks cited by long-term Memory without semantic search."""
+    return _tools().research_load_evidence(
+        task_id=task_id,
+        sub_question_id=sub_question_id,
+        chunk_ids=chunk_ids,
     )
 
 

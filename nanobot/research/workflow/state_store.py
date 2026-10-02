@@ -68,6 +68,13 @@ class ResearchStateStore:
         with self._lock(task_id):
             return ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
 
+    @staticmethod
+    def _semantic_rounds(sub_question: SubQuestion) -> int:
+        return sum(
+            attempt.scope != RetrievalScope.MEMORY_EVIDENCE
+            for attempt in sub_question.retrieval_attempts
+        )
+
     def begin_retrieval(
         self,
         task_id: str,
@@ -82,7 +89,7 @@ class ResearchStateStore:
                 raise FileNotFoundError(f"research task not found: {task_id}")
             state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
             sub_question = self._find_sub_question(state, sub_question_id)
-            semantic_round = len(sub_question.retrieval_attempts) + 1
+            semantic_round = self._semantic_rounds(sub_question) + 1
             previous = sub_question.retrieval_execution
             technical_attempt = 1
             if (
@@ -173,7 +180,8 @@ class ResearchStateStore:
                 raise FileNotFoundError(f"research task not found: {task_id}")
             state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
             sub_question = self._find_sub_question(state, sub_question_id)
-            if len(sub_question.retrieval_attempts) >= state.max_retrieval_rounds:
+            semantic_rounds = self._semantic_rounds(sub_question)
+            if semantic_rounds >= state.max_retrieval_rounds:
                 raise RuntimeError(
                     f"maximum semantic retrieval rounds reached for {sub_question_id}: "
                     f"{state.max_retrieval_rounds}"
@@ -195,7 +203,7 @@ class ResearchStateStore:
                     sub_question.chunk_ids.append(item.chunk_id)
             sub_question.retrieval_attempts.append(
                 RetrievalAttempt(
-                    round_index=len(sub_question.retrieval_attempts) + 1,
+                    round_index=semantic_rounds + 1,
                     query=query,
                     scope=scope,
                     paper_ids=paper_ids or [],
@@ -213,7 +221,7 @@ class ResearchStateStore:
             )
             sub_question.retrieval_execution = RetrievalExecution(
                 query=query,
-                semantic_round=len(sub_question.retrieval_attempts),
+                semantic_round=semantic_rounds + 1,
                 technical_attempt=technical_attempt,
                 status=RetrievalExecutionStatus.COMPLETED,
                 started_at=(
@@ -237,11 +245,66 @@ class ResearchStateStore:
                 for item in state.plan.sub_questions
                 if item.status != SubQuestionStatus.SUFFICIENT
                 and len(item.retrieval_attempts) == len(item.reflections)
-                and len(item.retrieval_attempts) < state.max_retrieval_rounds
+                and self._semantic_rounds(item) < state.max_retrieval_rounds
             }
             state.status = (
                 ResearchTaskStatus.RETRIEVING
                 if pending_ids
+                else ResearchTaskStatus.REFLECTING
+            )
+            self._write(path, state)
+            return state
+
+    def add_memory_evidence(
+        self,
+        task_id: str,
+        sub_question_id: str,
+        evidence: list[EvidenceItem],
+    ) -> ResearchState:
+        """Attach exact chunks named by Memory without consuming a search round."""
+        with self._lock(task_id):
+            path = self._path(task_id)
+            if not path.exists():
+                raise FileNotFoundError(f"research task not found: {task_id}")
+            state = ResearchState.model_validate_json(path.read_text(encoding="utf-8"))
+            sub_question = self._find_sub_question(state, sub_question_id)
+            if sub_question.retrieval_attempts:
+                raise RuntimeError(
+                    "memory evidence must be loaded before retrieval for "
+                    f"{sub_question_id}"
+                )
+            for item in evidence:
+                state.evidence[f"{sub_question_id}:{item.chunk_id}"] = item
+                if item.chunk_id not in sub_question.chunk_ids:
+                    sub_question.chunk_ids.append(item.chunk_id)
+            sub_question.retrieval_attempts.append(
+                RetrievalAttempt(
+                    round_index=0,
+                    query="exact chunks referenced by long-term memory",
+                    scope=RetrievalScope.MEMORY_EVIDENCE,
+                    chunk_ids=[item.chunk_id for item in evidence],
+                    coverage_reason=(
+                        "exact provenance chunks reloaded; semantic sufficiency awaits "
+                        "research_reflect"
+                        if evidence
+                        else "no stored provenance chunks were available"
+                    ),
+                )
+            )
+            sub_question.status = (
+                SubQuestionStatus.EVIDENCE_FOUND
+                if evidence
+                else SubQuestionStatus.INSUFFICIENT
+            )
+            has_pending_search = any(
+                item.status != SubQuestionStatus.SUFFICIENT
+                and len(item.retrieval_attempts) == len(item.reflections)
+                and self._semantic_rounds(item) < state.max_retrieval_rounds
+                for item in state.plan.sub_questions
+            )
+            state.status = (
+                ResearchTaskStatus.RETRIEVING
+                if has_pending_search
                 else ResearchTaskStatus.REFLECTING
             )
             self._write(path, state)
@@ -286,7 +349,7 @@ class ResearchStateStore:
                         f"{sorted(unknown_chunks)}"
                     )
                 can_retry = (
-                    len(sub_question.retrieval_attempts) < state.max_retrieval_rounds
+                    self._semantic_rounds(sub_question) < state.max_retrieval_rounds
                 )
                 if not assessment.sufficient and can_retry and not assessment.next_query:
                     raise ValueError(
@@ -325,7 +388,7 @@ class ResearchStateStore:
                 item.status == SubQuestionStatus.SUFFICIENT
                 or (
                     item.status == SubQuestionStatus.INSUFFICIENT
-                    and len(item.retrieval_attempts) >= state.max_retrieval_rounds
+                    and self._semantic_rounds(item) >= state.max_retrieval_rounds
                     and len(item.reflections) == len(item.retrieval_attempts)
                 )
                 for item in state.plan.sub_questions

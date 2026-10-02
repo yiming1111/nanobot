@@ -117,9 +117,9 @@ class PipelineTraceStore:
                 chunk_ids.update(str(value) for value in raw_ids)
             if event.status == "failed":
                 errors.append({"operation": event.operation, "error": event.error})
-            if event.operation == "research_reflect":
+            if event.operation == "research_reflect" and event.status == "completed":
                 latest_reflection = dict(event.output_summary)
-            if event.operation == "research_finalize":
+            if event.operation == "research_finalize" and event.status == "completed":
                 latest_finalization = dict(event.output_summary)
         return {
             "task_id": task_id,

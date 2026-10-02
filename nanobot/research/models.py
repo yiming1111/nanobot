@@ -51,6 +51,7 @@ class EvidenceRelation(StrEnum):
 
 class RetrievalScope(StrEnum):
     FULL_CORPUS = "full_corpus"
+    MEMORY_EVIDENCE = "memory_evidence"
     # Retained so persisted states from the earlier hierarchical flow still load.
     CANDIDATE_PAPERS = "candidate_papers"
     EXPANDED_CANDIDATES = "expanded_candidates"
@@ -118,7 +119,9 @@ class PaperChunk(ResearchModel):
 
 
 class RetrievalAttempt(ResearchModel):
-    round_index: int = Field(ge=1)
+    # Exact evidence reloaded from long-term Memory is recorded as round 0 and
+    # does not consume one of the semantic retrieval rounds.
+    round_index: int = Field(ge=0)
     query: str = Field(min_length=1)
     scope: RetrievalScope
     paper_ids: list[str] = Field(default_factory=list)

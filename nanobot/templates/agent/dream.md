@@ -27,6 +27,15 @@ Always strip these bracketed tags from saved memory content.
 
 Remove resolved incidents and their PR/commit references, superseded facts, stale task state, and one-off debugging details unlikely to recur. Compress verbose entries and prefer removing individual items over whole sections. Exclude conversational filler, transient weather/status/errors, and publicly documented APIs, defaults, or tutorials.
 
+## Verified paper research
+
+Use nanobot's normal `memory/MEMORY.md` for reusable paper findings only when the history shows that the research task completed and its citations passed final validation.
+
+- Store a compact provenance card: paper title and paper ID, one short verified claim, supporting chunk IDs, page numbers, and corpus or index revision when available.
+- Treat the card as a pointer to evidence. A future paper-research turn must reload the named chunks and run Reflect before using the claim in an answer.
+- Do not store full answers, raw chunk text, candidate passages, task/session IDs, unverified drafts, unresolved claims, refusals, or failed tool output.
+- Merge duplicate cards and replace a card when later validated evidence corrects it.
+
 ## Skills
 
 Create a skill only when a workflow has appeared at least twice, has concrete repeatable steps, and warrants its own instruction set. Apply these criteria to [SKILL] entries too.

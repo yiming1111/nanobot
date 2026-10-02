@@ -14,6 +14,10 @@ This file stores important information that should persist across sessions.
 
 (Information about ongoing projects)
 
+## Verified Research
+
+(Compact citation-validated claims with paper title/ID, supporting chunk IDs, and pages)
+
 ## Important Notes
 
 (Things to remember)

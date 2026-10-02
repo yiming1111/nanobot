@@ -170,6 +170,14 @@ class TestBuildDreamPrompt:
         assert "[correction]: replace the older conflicting fact" in prompt
         assert "Always strip these bracketed tags from saved memory content" in prompt
 
+    def test_dream_prompt_keeps_verified_research_as_provenance_cards(self):
+        prompt = MemoryStore.default_dream_prompt()
+
+        assert "Verified paper research" in prompt
+        assert "supporting chunk IDs" in prompt
+        assert "must reload the named chunks and run Reflect" in prompt
+        assert "Do not store full answers" in prompt
+
 
 class TestDreamRunCompletion:
     """The runner's terminal state gates Dream cursor advancement."""

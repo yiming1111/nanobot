@@ -313,3 +313,24 @@ class HybridRetrievalService:
             )
             for chunk in chunks
         ]
+
+    def get_chunks(self, chunk_ids: list[str]) -> list[EvidenceSearchResult]:
+        """Load exact corpus chunks without running semantic retrieval."""
+        missing = [
+            chunk_id for chunk_id in chunk_ids if chunk_id not in self.chunk_by_id
+        ]
+        if missing:
+            raise KeyError(f"unknown chunks: {missing}")
+        return [
+            EvidenceSearchResult(
+                chunk_id=chunk.chunk_id,
+                paper_id=chunk.paper_id,
+                title=self.paper_by_id[chunk.paper_id].title,
+                section=chunk.section,
+                page_start=chunk.page_start,
+                page_end=chunk.page_end,
+                text=chunk.text,
+                fused_score=0.0,
+            )
+            for chunk in (self.chunk_by_id[chunk_id] for chunk_id in chunk_ids)
+        ]

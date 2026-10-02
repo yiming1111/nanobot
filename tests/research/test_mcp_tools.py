@@ -45,6 +45,25 @@ class _FakeRetrieval:
     def get_neighbors(self, chunk_id: str, **kwargs: object) -> list[EvidenceSearchResult]:
         return self.retrieve_evidence(chunk_id)
 
+    def get_chunks(self, chunk_ids: list[str]) -> list[EvidenceSearchResult]:
+        available = {"P1-C0000"}
+        missing = [chunk_id for chunk_id in chunk_ids if chunk_id not in available]
+        if missing:
+            raise KeyError(f"unknown chunks: {missing}")
+        return [
+            EvidenceSearchResult(
+                chunk_id=chunk_id,
+                paper_id="P1",
+                title="Paper One",
+                section="Results",
+                page_start=4,
+                page_end=4,
+                text="The method improves evidence recall.",
+                fused_score=0.0,
+            )
+            for chunk_id in chunk_ids
+        ]
+
 
 class _BlockingRetrieval(_FakeRetrieval):
     def __init__(self) -> None:
@@ -132,6 +151,65 @@ def test_retrieval_searches_full_chunk_corpus_once(tmp_path: Path) -> None:
     assert retrieval.paper_calls == []
     assert status["retrieval_rounds"] == 1
     assert result["semantic_round"] == 1
+
+
+def test_memory_evidence_is_reflected_without_consuming_semantic_round(
+    tmp_path: Path,
+) -> None:
+    retrieval = _FakeRetrieval()
+    tools = _tools(tmp_path, retrieval)
+    task_id = _start(tools)
+
+    loaded = tools.research_load_evidence(
+        task_id=task_id,
+        sub_question_id="SQ1",
+        chunk_ids=["P1-C0000"],
+    )
+    status = tools.status(task_id)
+
+    assert loaded["retrieval_scope"] == "memory_evidence"
+    assert loaded["semantic_rounds_used"] == 0
+    assert status["retrieval_rounds"] == 0
+    assert retrieval.evidence_calls == []
+
+    reflected = tools.reflect(
+        task_id=task_id,
+        assessments=[
+            EvidenceAssessment(
+                sub_question_id="SQ1",
+                sufficient=False,
+                reason="The remembered passage is too narrow.",
+                next_query="broader verified evidence",
+            )
+        ],
+    )
+    retrieved = tools.research_retrieve(
+        task_id=task_id,
+        sub_question_id="SQ1",
+        query="broader verified evidence",
+    )
+
+    assert reflected["retry_sub_questions"][0]["remaining_semantic_rounds"] == 2
+    assert retrieved["semantic_round"] == 1
+    assert tools.status(task_id)["retrieval_rounds"] == 1
+
+
+def test_memory_evidence_rejects_stale_chunk_without_searching(tmp_path: Path) -> None:
+    retrieval = _FakeRetrieval()
+    tools = _tools(tmp_path, retrieval)
+    task_id = _start(tools)
+
+    with pytest.raises(KeyError, match="unknown chunks"):
+        tools.research_load_evidence(
+            task_id=task_id,
+            sub_question_id="SQ1",
+            chunk_ids=["missing-C1"],
+        )
+
+    assert retrieval.evidence_calls == []
+    assert tools.traces.summary(task_id)["errors"][0]["operation"] == (
+        "research_load_evidence"
+    )
 
 
 def test_duplicate_retrieval_does_not_start_while_original_is_running(
@@ -404,3 +482,63 @@ def test_finalize_rejects_unknown_or_missing_citations(tmp_path: Path) -> None:
             answered_sub_question_ids=["SQ1"],
             citations=[],
         )
+
+
+def test_rejected_reflect_is_recorded_in_pipeline_trace(tmp_path: Path) -> None:
+    tools = _tools(tmp_path)
+    task_id = _start(tools)
+    tools.research_retrieve(
+        task_id=task_id,
+        sub_question_id="SQ1",
+        query="evidence recall",
+    )
+
+    with pytest.raises(ValueError, match="next_query is required"):
+        tools.reflect(
+            task_id=task_id,
+            assessments=[
+                EvidenceAssessment(
+                    sub_question_id="SQ1",
+                    sufficient=False,
+                    reason="The evidence is insufficient.",
+                )
+            ],
+        )
+
+    summary = tools.traces.summary(task_id)
+    errors = summary["errors"]
+    assert errors[-1]["operation"] == "research_reflect"
+    assert "next_query is required" in str(errors[-1]["error"])
+    assert summary["latest_reflection"] is None
+
+
+def test_unknown_task_id_is_traced_and_tells_agent_not_to_restart(
+    tmp_path: Path,
+) -> None:
+    tools = _tools(tmp_path)
+
+    with pytest.raises(FileNotFoundError, match="do not start a replacement task"):
+        tools.research_retrieve(
+            task_id="mistyped-task-id",
+            sub_question_id="SQ1",
+            query="evidence recall",
+        )
+
+    summary = tools.traces.summary("mistyped-task-id")
+    assert summary["errors"][0]["operation"] == "research_retrieve"
+
+
+def test_paper_research_skill_keeps_rewrite_and_constraints_faithful() -> None:
+    skill = (
+        Path(__file__).parents[2]
+        / "nanobot"
+        / "skills"
+        / "paper-research"
+        / "SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    assert "without discarding or broadening" in skill
+    assert "only in the evidence need it modifies" in skill
+    assert "Do not add related concepts" in skill
+    assert "do not create a replacement task" in skill
+    assert "Never answer a paper question solely from a remembered summary" in skill
