@@ -31,7 +31,6 @@ class AnswerBehavior(StrEnum):
 class SingleTurnEvalCase(ResearchModel):
     case_id: str = Field(min_length=1)
     query: str = Field(min_length=1)
-    retrieval_query: str | None = Field(default=None, min_length=1)
     ground_truth: str = Field(min_length=1)
     relevant_chunk_ids: list[str] = Field(default_factory=list)
     expected_behavior: AnswerBehavior
@@ -85,6 +84,7 @@ class SingleTurnPrediction(ResearchModel):
     case_id: str = Field(min_length=1)
     answer_text: str = ""
     actual_behavior: AnswerBehavior | None = None
+    retrieval_queries: list[str] = Field(default_factory=list)
     retrieved_chunk_ids: list[str] = Field(default_factory=list)
     cited_chunk_ids: list[str] = Field(default_factory=list)
     citation_locators_valid: bool | None = None
@@ -184,10 +184,7 @@ def evaluate_single_turn_retrieval(
         evidence: list[EvidenceSearchResult] = []
         error: str | None = None
         try:
-            evidence = service.retrieve_evidence(
-                case.retrieval_query or case.query,
-                top_k=top_k,
-            )
+            evidence = service.retrieve_evidence(case.query, top_k=top_k)
         except Exception as exc:  # A failed case must not abort the remaining benchmark.
             error = f"{type(exc).__name__}: {exc}"
         retrieval_ms = round((perf_counter() - started) * 1000)

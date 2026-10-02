@@ -19,7 +19,6 @@
 {
   "case_id": "st-001-vehicular-game",
   "query": "车辆MEC论文如何建模多车计算卸载，车辆调整的核心决策变量是什么？",
-  "retrieval_query": "vehicular MEC game computation offloading decision variable",
   "ground_truth": "依据本地论文整理的标准答案",
   "relevant_chunk_ids": ["4c26f68525f2edb0-C0000"],
   "expected_behavior": "answer",
@@ -29,7 +28,6 @@
 ```
 
 - `ground_truth`：只依据本地语料编写的标准答案。
-- `retrieval_query`：Agent 实际交给检索工具的一条简短英文 Query；原始用户问题仍保存在 `query`。
 - `relevant_chunk_ids`：人工核对后能够直接支持标准答案的 chunk。
 - `expected_behavior`：`answer`、`partial` 或 `abstain`。
 - `unsupported_requirements`：`partial` 和 `abstain` 中没有本地证据的要求。
@@ -64,15 +62,15 @@ nanobot-research eval-single benchmarks/paper_research/single_turn.jsonl `
   --data-dir D:/Data/paper-research/index `
   --hf-home D:/Data/huggingface `
   --top-k 4 `
-  --output benchmarks/paper_research/results/single_turn_retrieval_en.json
+  --output benchmarks/paper_research/results/single_turn_retrieval_raw.json
 ```
 
-评测直接执行当前正式流程使用的全库 chunk 检索，不再先做论文粗筛，并优先使用每题的英文 `retrieval_query`。`answer` 和 `partial` 共 50 题参与 Recall、Precision 和 MRR 计算；`abstain` 没有正确 chunk，因此只参与耗时、超时率和错误率统计，避免把“没有证据”错误算成检索漏召回。
+该命令把评测集中的中文用户问题直接交给全库 chunk 检索，用于测量检索器自身的跨语言能力。完整 Agent 评测则从中文用户问题开始，由 Agent 在运行时生成英文检索 Query；生成的 Query 属于预测结果和 Pipeline Trace，不写入评测集。`answer` 和 `partial` 共 50 题参与 Recall、Precision 和 MRR 计算；`abstain` 没有正确 chunk，因此只参与耗时、超时率和错误率统计。
 
-`results/single_turn_retrieval_zh_raw.json` 是中文原问题直接检索英文语料的旧基线，只用于比较 Query 语言变化，不能与新的英文 Query 结果混为同一版本。
+`results/single_turn_retrieval_zh_raw.json` 保存中文原问题直接检索英文语料的基线。完整 Agent 运行产生的英文 Query、检索结果和最终回答应写入 `SingleTurnPrediction`，不能作为人工标签预先填入测试集。
 
 单题异常会记录在报告的 `error` 字段中，整批评测会继续执行。`timeout_seconds` 是评测阈值：超过该时长会计入超时率，但评测程序会等待该次本地检索结束，从而避免在后台留下未受控的模型任务。
 
-Agent 完整回答可保存为 `SingleTurnPrediction` JSONL，随后执行 `nanobot-research score-single <测试集> <回答文件>` 计算完成率、决策准确率和引用准确率。回答记录包含实际行为、检索/引用 chunk、`research_finalize` 的引用定位检查结果、任务 ID、总耗时和错误。Faithfulness、Answer Relevancy、Context Relevancy 与 Context Recall 需要真实回答和检索正文，不能在只有测试题时预先生成分数。
+Agent 完整回答可保存为 `SingleTurnPrediction` JSONL，随后执行 `nanobot-research score-single <测试集> <回答文件>` 计算完成率、决策准确率和引用准确率。回答记录包含 Agent 实际生成的英文检索 Query、检索/引用 chunk、`research_finalize` 的引用定位检查结果、任务 ID、总耗时和错误。Faithfulness、Answer Relevancy、Context Relevancy 与 Context Recall 需要真实回答和检索正文，不能在只有测试题时预先生成分数。
 
 命令默认启用 `--offline`，直接使用已经下载到本机的 BGE 模型文件，防止 Hugging Face 联网检查混入检索耗时。如果本机尚未缓存模型，可临时使用 `--online` 完成首次下载。

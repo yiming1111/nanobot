@@ -153,8 +153,8 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 中文原问题直接检索英文语料的60题基线已经完成并保存为 `benchmarks/paper_research/results/single_turn_retrieval_zh_raw.json`：50 道有相关 chunk 标注的问题得到 Recall@4 = 0.465、Precision@4 = 0.205、MRR = 0.502；60 题错误率为 0，超时率为 1.67%。该结果现作为 Query 语言调整前的旧基线。
 - 59 道未超时题的平均检索耗时约 47.55 秒，中位数约 45.58 秒，全部样本的 P95 约 55.06 秒。`st-024-uav-decomposition` 出现一次约 2466.56 秒的孤立长尾，导致包含该异常值的整体平均耗时升至 87.87 秒；相邻题随后恢复到约 45 秒。
 - 50 道检索计分题中，35 道至少召回一个目标 chunk，13 道完整召回全部目标 chunk，15 道 Recall@4 为 0。这些失败题将作为下一轮检索诊断清单，不能通过修改标准答案来迎合当前检索结果。
-- 当前索引语料均为英文。Skill 已明确要求每个证据需求在调用 `research_retrieve` 前改写为一条简短英文 Query；60题单轮集新增对应的 `retrieval_query`，评测器优先使用该字段。用户原问题和最终回答仍可使用中文，不拆成两种检索 Query。
-- 对旧基线的15道零召回题进行候选层快速复查后，使用英文 Query 已使13道目标证据进入 RRF 前12并到达 Reranker；只剩1道停在初始召回、1道停在 RRF 前12。因此暂不修改 RRF，先以英文 Query 运行新的正式基线再判断后续瓶颈。
+- 当前索引语料均为英文。Skill 已明确要求 Agent 在运行时为每个证据需求生成一条简短英文 Query；用户原问题、标准答案和最终回答仍可使用中文。英文 Query 属于系统预测和 Pipeline Trace，不作为人工标签写入评测集。
+- 对旧基线的15道零召回题进行临时英文 Query 候选层诊断后，13道目标证据能够进入 RRF 前12并到达 Reranker，只剩1道停在初始召回、1道停在 RRF 前12。该结果仅证明 Query 语言值得优先修正，不作为正式评测结果，也暂不据此修改 RRF。
 
 仍需完成：逐题复核 15 道零召回案例并定位 Dense、Sparse、RRF 或 Rerank 的失败阶段；运行 60 题完整 Agent 回答并计算生成侧指标；固定 Faithfulness、Answer Relevancy、Context Relevancy 和 Context Recall 的人工/LLM 评审流程；之后再实现和运行多轮 baseline。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
 

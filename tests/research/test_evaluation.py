@@ -27,12 +27,9 @@ def _evidence(chunk_id: str) -> EvidenceSearchResult:
 
 
 class _FakeRetrieval:
-    last_query: str | None = None
-
     def retrieve_evidence(
         self, query: str, **kwargs: object
     ) -> list[EvidenceSearchResult]:
-        self.last_query = query
         if query == "failure":
             raise RuntimeError("temporary failure")
         if query == "irrelevant":
@@ -58,12 +55,9 @@ def _case(
 
 
 def test_evaluate_single_turn_retrieval_computes_metrics() -> None:
-    service = _FakeRetrieval()
-    case = _case()
-    case.retrieval_query = "English retrieval query"
     report = evaluate_single_turn_retrieval(
-        service,
-        [case],
+        _FakeRetrieval(),
+        [_case()],
         top_k=4,
     )
 
@@ -72,7 +66,6 @@ def test_evaluate_single_turn_retrieval_computes_metrics() -> None:
     assert report.metrics["precision_at_k"] == 0.25
     assert report.metrics["mrr"] == 0.5
     assert report.metrics["error_rate"] == 0.0
-    assert service.last_query == "English retrieval query"
 
 
 def test_abstain_is_not_scored_as_retrieval_miss_and_failure_does_not_abort() -> None:
