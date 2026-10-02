@@ -88,6 +88,11 @@ def evaluate_single_turn(
         load_single_turn_cases(benchmark),
         top_k=top_k,
         timeout_ms=timeout_seconds * 1000,
+        on_case_complete=lambda index, total, result: typer.echo(
+            f"[{index}/{total}] {result.case_id} {result.retrieval_ms}ms"
+            + (f" error={result.error}" if result.error else ""),
+            err=True,
+        ),
     )
     payload = report.model_dump_json(indent=2)
     if output is not None:

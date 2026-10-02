@@ -150,8 +150,11 @@ MCP Server 入口：`nanobot-research-mcp` 或 `python -m nanobot.research.mcp_s
 - 单轮评测器已经适配 60 题结构；`answer` 和 `partial` 共 50 题参与检索相关性指标，10 题 `abstain` 只参与耗时、超时率和错误率；单题异常不会中断整批。
 - 已定义完整 Agent 输出的统一采集结构，并实现完成率、Decision Accuracy 和 Citation Accuracy 的确定性评分；四项语义 RAG 指标必须使用真实回答与检索正文另行计算，不能预填或伪造。
 - 三题真实冒烟测试在离线模型缓存下完成，无错误和超时；单题检索约 43～47 秒。该小样本只验证评测链路，不能作为 60 题正式指标。
+- 60 题正式单轮检索基线已经完成并保存为 `benchmarks/paper_research/results/single_turn_retrieval.json`：50 道有相关 chunk 标注的问题得到 Recall@4 = 0.465、Precision@4 = 0.205、MRR = 0.502；60 题错误率为 0，超时率为 1.67%。
+- 59 道未超时题的平均检索耗时约 47.55 秒，中位数约 45.58 秒，全部样本的 P95 约 55.06 秒。`st-024-uav-decomposition` 出现一次约 2466.56 秒的孤立长尾，导致包含该异常值的整体平均耗时升至 87.87 秒；相邻题随后恢复到约 45 秒。
+- 50 道检索计分题中，35 道至少召回一个目标 chunk，13 道完整召回全部目标 chunk，15 道 Recall@4 为 0。这些失败题将作为下一轮检索诊断清单，不能通过修改标准答案来迎合当前检索结果。
 
-仍需完成：固定 Faithfulness、Answer Relevancy、Context Relevancy 和 Context Recall 的人工/LLM 评审流程；运行 60 题单轮正式 baseline；之后再实现和运行多轮 baseline。将 Dense、Sparse、RRF、Rerank 的内部耗时进一步拆分。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
+仍需完成：逐题复核 15 道零召回案例并定位 Dense、Sparse、RRF 或 Rerank 的失败阶段；运行 60 题完整 Agent 回答并计算生成侧指标；固定 Faithfulness、Answer Relevancy、Context Relevancy 和 Context Recall 的人工/LLM 评审流程；之后再实现和运行多轮 baseline。Generate、Token 和 Memory 位于 nanobot 主 Agent 侧，不能仅靠 research MCP 准确关联，后续应复用原生用量与会话日志做关联汇总，不能把模型自评当作真实标签。
 
 ### 阶段 9：WebUI 增强【暂不实施】
 
@@ -180,6 +183,7 @@ nanobot/skills/paper-research/SKILL.md     Agent 调研流程
 benchmarks/paper_research/single_turn.jsonl  60 题统一单轮评测集
 benchmarks/paper_research/multi_turn.jsonl   10 组、80 轮多轮评测集
 benchmarks/paper_research/dataset_manifest.json  评测集版本与规模
+benchmarks/paper_research/results/single_turn_retrieval.json  60 题单轮检索基线报告
 tests/research/                            对应单元测试
 ```
 

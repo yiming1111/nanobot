@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -169,13 +170,15 @@ def evaluate_single_turn_retrieval(
     *,
     top_k: int = 4,
     timeout_ms: int | None = 240_000,
+    on_case_complete: Callable[[int, int, SingleTurnRetrievalResult], None]
+    | None = None,
 ) -> SingleTurnRetrievalReport:
     """Run full-corpus chunk retrieval and continue after individual failures."""
 
     if top_k < 1:
         raise ValueError("top_k must be at least 1")
     results: list[SingleTurnRetrievalResult] = []
-    for case in cases:
+    for index, case in enumerate(cases, start=1):
         started = perf_counter()
         evidence: list[EvidenceSearchResult] = []
         error: str | None = None
@@ -196,21 +199,22 @@ def evaluate_single_turn_retrieval(
             None,
         )
         is_scored = bool(relevant_chunks) and error is None
-        results.append(
-            SingleTurnRetrievalResult(
-                case_id=case.case_id,
-                expected_behavior=case.expected_behavior,
-                chunk_ids=chunk_ids,
-                recall_at_k=(matched_count / len(relevant_chunks)) if is_scored else None,
-                precision_at_k=(matched_count / top_k) if is_scored else None,
-                reciprocal_rank=(1.0 / first_rank if first_rank else 0.0)
-                if is_scored
-                else None,
-                retrieval_ms=retrieval_ms,
-                timed_out=timeout_ms is not None and retrieval_ms > timeout_ms,
-                error=error,
-            )
+        result = SingleTurnRetrievalResult(
+            case_id=case.case_id,
+            expected_behavior=case.expected_behavior,
+            chunk_ids=chunk_ids,
+            recall_at_k=(matched_count / len(relevant_chunks)) if is_scored else None,
+            precision_at_k=(matched_count / top_k) if is_scored else None,
+            reciprocal_rank=(1.0 / first_rank if first_rank else 0.0)
+            if is_scored
+            else None,
+            retrieval_ms=retrieval_ms,
+            timed_out=timeout_ms is not None and retrieval_ms > timeout_ms,
+            error=error,
         )
+        results.append(result)
+        if on_case_complete is not None:
+            on_case_complete(index, len(cases), result)
 
     def average(field: str) -> float | None:
         values = [
