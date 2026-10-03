@@ -540,5 +540,14 @@ def test_paper_research_skill_keeps_rewrite_and_constraints_faithful() -> None:
     assert "without discarding or broadening" in skill
     assert "only in the evidence need it modifies" in skill
     assert "Do not add related concepts" in skill
+    assert "Do not add parenthetical examples" in skill
+    assert "do not expand it into `trajectory`, `speed`, or `resource allocation`" in skill
     assert "do not create a replacement task" in skill
     assert "Never answer a paper question solely from a remembered summary" in skill
+    assert "Neighbor passages are context-only" in skill
+    assert "never put their chunk IDs in `supporting_chunk_ids`" in skill
+    assert "using only IDs returned for that same evidence need" in skill
+    assert "do not copy its ID from one sub-question into the other" in skill
+    assert "《title》，证据页 page_start–page_end" in skill
+    assert "never replace them with a journal's printed pagination" in skill
+    assert "Do not add authors, venue, year, volume, issue" in skill

@@ -1,0 +1,63 @@
+{
+  "run_kind": "targeted_guardrail_validation",
+  "run_id": "qwen37-20261003-targeted-guardrails",
+  "model": "qwen3.7-plus",
+  "case_count": 2,
+  "metrics": {
+    "completion_rate": 1.0,
+    "decision_accuracy": 1.0,
+    "manual_rendered_citation_accuracy": 1.0,
+    "mean_total_ms": 149723.0,
+    "max_total_ms": 149756,
+    "tool_error_count": 0
+  },
+  "cases": [
+    {
+      "run_id": "qwen37-20261003-targeted-guardrails",
+      "case_id": "st-001-vehicular-game",
+      "expected_behavior": "answer",
+      "actual_behavior": "answer",
+      "passed": true,
+      "task_status": "completed",
+      "retrieval_call_count": 2,
+      "reflect_call_count": 1,
+      "reflect_error_count": 0,
+      "neighbor_call_count": 0,
+      "retrieval_queries": [
+        "multi-vehicle computation offloading modeling in vehicular MEC",
+        "vehicle adjustment core decision variable offloading probability vehicular MEC game"
+      ],
+      "cited_chunk_count": 9,
+      "reader_citations_use_validated_fields": true,
+      "total_ms": 149756,
+      "error": null
+    },
+    {
+      "run_id": "qwen37-20261003-targeted-guardrails",
+      "case_id": "st-037-colocated-resources",
+      "expected_behavior": "answer",
+      "actual_behavior": "answer",
+      "passed": true,
+      "task_status": "completed",
+      "retrieval_call_count": 2,
+      "reflect_call_count": 1,
+      "reflect_error_count": 0,
+      "neighbor_call_count": 0,
+      "retrieval_queries": [
+        "co-located edge computing generalized Nash equilibrium joint resource allocation",
+        "each participant objective function minimize OPEX MNO CRP generalized Nash equilibrium"
+      ],
+      "cited_chunk_count": 6,
+      "reader_citations_use_validated_fields": true,
+      "total_ms": 149690,
+      "error": null
+    }
+  ],
+  "findings": [
+    "两个针对性复测用例均完成，无超时或工具错误。",
+    "检索 Query 保留用户问题含义，没有再加入 trajectory、speed 或 resource allocation 等无关候选概念。",
+    "两个用例均未调用相邻 chunk；相邻 chunk 继续只作为必要时的上下文补充。",
+    "共址边缘计算用例只执行一次 Reflect，没有再跨子问题混用 chunk ID。",
+    "最终引用只展示 research_finalize 校验后的论文题名和证据页，没有再补写作者、期刊卷期或期刊印刷页码。"
+  ]
+}
