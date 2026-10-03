@@ -1,0 +1,1222 @@
+{
+  "created_at": "2026-10-03T09:49:36.045274+00:00",
+  "status": "completed",
+  "model": "qwen3.7-plus",
+  "case_count": 60,
+  "scored_case_count": 50,
+  "top_k": 4,
+  "timeout_ms": 240000,
+  "metrics": {
+    "recall_at_k": 0.5866666666666667,
+    "precision_at_k": 0.27,
+    "mrr": 0.65,
+    "mean_rewrite_ms": 61029.38333333333,
+    "mean_retrieval_ms": 45379.55,
+    "p95_retrieval_ms": 47874.75,
+    "timeout_rate": 0.0,
+    "rewrite_error_rate": 0.0,
+    "retrieval_error_rate": 0.0
+  },
+  "cases": [
+    {
+      "case_id": "st-001-vehicular-game",
+      "original_query": "车辆MEC论文如何建模多车计算卸载，车辆调整的核心决策变量是什么？",
+      "rewritten_query": "modeling multi-vehicle computation offloading vehicle MEC core decision variables vehicle adjustment",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "4c26f68525f2edb0-C0002",
+        "4c26f68525f2edb0-C0007",
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0015"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.3333333333333333,
+      "rewrite_ms": 29694,
+      "retrieval_ms": 48611,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-002-vehicular-payoff",
+      "original_query": "车辆MEC卸载博弈的收益函数考虑了哪些因素？",
+      "rewritten_query": "factors considered in the payoff function of vehicular MEC offloading game",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "4c26f68525f2edb0-C0032",
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0007",
+        "4c26f68525f2edb0-C0015"
+      ],
+      "recall_at_k": 0.3333333333333333,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.5,
+      "rewrite_ms": 14155,
+      "retrieval_ms": 43045,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-003-vehicular-convergence",
+      "original_query": "车辆MEC论文提出了什么分布式算法，其均衡和数值收敛结果如何？",
+      "rewritten_query": "vehicular MEC distributed algorithm equilibrium numerical convergence results",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0029",
+        "017bb185b06de72c-C0047",
+        "4c26f68525f2edb0-C0028"
+      ],
+      "recall_at_k": 0.25,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.5,
+      "rewrite_ms": 204643,
+      "retrieval_ms": 44237,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-004-blockchain-roles",
+      "original_query": "区块链云雾资源定价论文中的两阶段Stackelberg博弈由谁先决策、谁后决策？",
+      "rewritten_query": "blockchain cloud-fog resource pricing two-stage Stackelberg game leader follower decision order",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0005",
+        "df7e81c5ac2dae80-C0015",
+        "df7e81c5ac2dae80-C0006"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 21237,
+      "retrieval_ms": 43308,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-005-blockchain-pricing",
+      "original_query": "区块链资源定价论文如何分析统一定价与差别定价？",
+      "rewritten_query": "blockchain resource pricing uniform pricing versus differential pricing analysis",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "df7e81c5ac2dae80-C0051",
+        "df7e81c5ac2dae80-C0005",
+        "df7e81c5ac2dae80-C0017",
+        "df7e81c5ac2dae80-C0018"
+      ],
+      "recall_at_k": 0.3333333333333333,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.25,
+      "rewrite_ms": 17980,
+      "retrieval_ms": 43339,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-006-blockchain-offload",
+      "original_query": "PoW区块链中的矿工为什么会向云雾提供商卸载计算？",
+      "rewritten_query": "PoW blockchain miners computation offloading to cloud-fog providers",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0004",
+        "df7e81c5ac2dae80-C0012",
+        "df7e81c5ac2dae80-C0005"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 237985,
+      "retrieval_ms": 44582,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-007-drl-gnn-generalization",
+      "original_query": "DRL与GNN结合为什么能泛化到训练时未见的网络拓扑？",
+      "rewritten_query": "why combining Deep Reinforcement Learning and Graph Neural Networks generalizes to unseen network topologies during training",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0003",
+        "8277b122b6bf049f-C0037",
+        "8277b122b6bf049f-C0031"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 21633,
+      "retrieval_ms": 45230,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-008-drl-gnn-scale",
+      "original_query": "DRL+GNN路由论文在多少个未见拓扑上进行了测试？",
+      "rewritten_query": "DRL+GNN routing number of unseen topologies tested",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0029",
+        "8277b122b6bf049f-C0003",
+        "8277b122b6bf049f-C0037"
+      ],
+      "recall_at_k": 0.6666666666666666,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 117807,
+      "retrieval_ms": 45168,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-009-drl-production",
+      "original_query": "为什么缺乏拓扑泛化会阻碍DRL路由在生产网络部署？",
+      "rewritten_query": "lack of topology generalization hindering DRL routing deployment in production networks",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0037",
+        "8277b122b6bf049f-C0002",
+        "8277b122b6bf049f-C0023"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.3333333333333333,
+      "rewrite_ms": 21382,
+      "retrieval_ms": 45053,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-010-gne-local-info",
+      "original_query": "双层近端点GNE算法对每个参与者掌握的信息和通信范围有什么要求？",
+      "rewritten_query": "bi-level proximal point GNE algorithm requirements for participant information and communication range",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0057",
+        "679c02946bc59dda-C0015",
+        "679c02946bc59dda-C0005"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 17087,
+      "retrieval_ms": 45788,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-011-gne-two-constraints",
+      "original_query": "双层近端点论文分别怎样处理等式和不等式仿射耦合约束？",
+      "rewritten_query": "bilevel proximal point paper how to handle equality and inequality affine coupling constraints respectively",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "679c02946bc59dda-C0000",
+        "679c02946bc59dda-C0057",
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0005"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 278761,
+      "retrieval_ms": 43909,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-012-gne-double-layer",
+      "original_query": "为什么该论文把GNE求解算法称为双层算法？",
+      "rewritten_query": "Why is the GNE solving algorithm called a bilevel algorithm in the paper",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "679c02946bc59dda-C0005",
+        "679c02946bc59dda-C0000",
+        "679c02946bc59dda-C0038",
+        "679c02946bc59dda-C0003"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.5,
+      "rewrite_ms": 69684,
+      "retrieval_ms": 44049,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-013-consensus-information",
+      "original_query": "基于一致性的分布式NE求解中，参与者能否直接观察所有对手动作？",
+      "rewritten_query": "consensus-based distributed Nash Equilibrium solving players directly observe all opponents' actions",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0002",
+        "8097c2e32a040c2f-C0003",
+        "8097c2e32a040c2f-C0004"
+      ],
+      "recall_at_k": 0.6666666666666666,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 28676,
+      "retrieval_ms": 43632,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-014-consensus-method",
+      "original_query": "基于一致性的NE求解策略由哪两个主要部分组成？",
+      "rewritten_query": "two main components of consensus-based NE solving strategy",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8097c2e32a040c2f-C0002",
+        "679c02946bc59dda-C0003",
+        "b3f03bef65256ae8-C0007",
+        "b3f03bef65256ae8-C0010"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 19702,
+      "retrieval_ms": 43428,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-015-consensus-convergence",
+      "original_query": "该一致性NE策略对非二次和二次博弈分别给出了什么收敛结论？",
+      "rewritten_query": "consensus NE strategy convergence conclusions non-quadratic games quadratic games",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8097c2e32a040c2f-C0004",
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0006",
+        "b3f03bef65256ae8-C0006"
+      ],
+      "recall_at_k": 0.25,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.5,
+      "rewrite_ms": 27967,
+      "retrieval_ms": 43571,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-016-continuous-advantages",
+      "original_query": "连续时间控制方法用于分布式NE求解有什么优势？",
+      "rewritten_query": "advantages of continuous-time control methods for distributed Nash equilibrium solving",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "b3f03bef65256ae8-C0047",
+        "b3f03bef65256ae8-C0046",
+        "68699812d603c771-C0003",
+        "8097c2e32a040c2f-C0004"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 14804,
+      "retrieval_ms": 45615,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-017-ne-seeking-challenges",
+      "original_query": "连续时间NE综述总结了哪些均衡求解难点？",
+      "rewritten_query": "continuous-time Nash equilibrium review survey equilibrium solving difficulties",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8097c2e32a040c2f-C0004",
+        "68699812d603c771-C0003",
+        "f9dcb1528729941e-C0027",
+        "b3f03bef65256ae8-C0047"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 1858952,
+      "retrieval_ms": 47398,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-018-nonsmooth-constraints",
+      "original_query": "广义凸博弈的非光滑分布式算法允许哪些约束？",
+      "rewritten_query": "allowed constraints in non-smooth distributed algorithms for generalized convex games",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "68699812d603c771-C0000",
+        "68699812d603c771-C0023",
+        "68699812d603c771-C0002",
+        "68699812d603c771-C0001"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 14985,
+      "retrieval_ms": 45805,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-019-nonsmooth-penalty",
+      "original_query": "非光滑广义凸博弈如何利用惩罚方法处理约束？",
+      "rewritten_query": "nonsmooth generalized convex games penalty methods constraints",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "68699812d603c771-C0023",
+        "68699812d603c771-C0002",
+        "f9dcb1528729941e-C0000",
+        "017bb185b06de72c-C0041"
+      ],
+      "recall_at_k": 0.3333333333333333,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.5,
+      "rewrite_ms": 4957,
+      "retrieval_ms": 45271,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-020-nonsmooth-convergence",
+      "original_query": "非光滑广义凸博弈算法的集中式和分布式收敛结论有何区别？",
+      "rewritten_query": "centralized vs distributed convergence non-smooth generalized convex game algorithm",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "68699812d603c771-C0001",
+        "68699812d603c771-C0000",
+        "68699812d603c771-C0003",
+        "b3f03bef65256ae8-C0006"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 6275,
+      "retrieval_ms": 51576,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-021-dynamic-game-model",
+      "original_query": "动态势博弈如何描述随时间变化的环境与参与者决策？",
+      "rewritten_query": "dynamic potential games time-varying environments player decisions",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0048",
+        "8cd42a00c01c48e6-C0001",
+        "8cd42a00c01c48e6-C0005"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 14017,
+      "retrieval_ms": 48706,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-022-dynamic-reduction",
+      "original_query": "动态势博弈为什么比一般动态博弈更容易求解？",
+      "rewritten_query": "why dynamic potential games are easier to solve than general dynamic games",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8cd42a00c01c48e6-C0002",
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0005",
+        "8cd42a00c01c48e6-C0003"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 15695,
+      "retrieval_ms": 45141,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-023-dynamic-applications",
+      "original_query": "约束动态势博弈论文给出了哪四类通信应用？",
+      "rewritten_query": "constrained dynamic potential game four types of communication applications",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0048",
+        "8cd42a00c01c48e6-C0004",
+        "8cd42a00c01c48e6-C0005"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 11771,
+      "retrieval_ms": 47836,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-024-uav-decomposition",
+      "original_query": "多无人机节能覆盖部署问题被分成哪两个步骤？",
+      "rewritten_query": "two steps of multi-UAV energy-saving coverage deployment problem",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0045",
+        "e124a1b43d67eaf0-C0011",
+        "e124a1b43d67eaf0-C0001"
+      ],
+      "recall_at_k": 0.6666666666666666,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 14393,
+      "retrieval_ms": 45523,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-025-uav-algorithm",
+      "original_query": "多无人机节能覆盖论文采用什么算法实现部署？",
+      "rewritten_query": "algorithm for energy-efficient coverage deployment of multiple UAVs",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0022",
+        "e124a1b43d67eaf0-C0045",
+        "e124a1b43d67eaf0-C0002"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 11866,
+      "retrieval_ms": 45453,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-026-uav-coverage",
+      "original_query": "多无人机覆盖模型用什么方式描述成功覆盖，并兼顾什么通信目标？",
+      "rewritten_query": "multi-UAV coverage model successful coverage description communication objective",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "e124a1b43d67eaf0-C0002",
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0045"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.75,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 139345,
+      "retrieval_ms": 47628,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-027-hf-objective",
+      "original_query": "高频通信信道分集论文的优化目标是什么？",
+      "rewritten_query": "high-frequency communication channel diversity optimization objective",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8ea212392df2fe65-C0001",
+        "8ea212392df2fe65-C0000",
+        "82314d0bd4754f24-C0009",
+        "017bb185b06de72c-C0024"
+      ],
+      "recall_at_k": 0.6666666666666666,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 14666,
+      "retrieval_ms": 46707,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-028-hf-decomposition",
+      "original_query": "HF信道分集优化如何降低巨大策略空间带来的求解难度？",
+      "rewritten_query": "HF channel diversity optimization reduce solving difficulty huge strategy space",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "8ea212392df2fe65-C0006",
+        "8ea212392df2fe65-C0001",
+        "8ea212392df2fe65-C0004",
+        "e124a1b43d67eaf0-C0002"
+      ],
+      "recall_at_k": 0.3333333333333333,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.3333333333333333,
+      "rewrite_ms": 5961,
+      "retrieval_ms": 46271,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-029-equality-problem",
+      "original_query": "非光滑非合作博弈的等式约束论文研究了什么问题？",
+      "rewritten_query": "nonsmooth noncooperative games equality constraints",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "f9dcb1528729941e-C0000",
+        "f9dcb1528729941e-C0001",
+        "f9dcb1528729941e-C0002",
+        "f9dcb1528729941e-C0027"
+      ],
+      "recall_at_k": 0.6666666666666666,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 14782,
+      "retrieval_ms": 46405,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-030-equality-method",
+      "original_query": "该等式约束NE求解策略使用了哪些主要技术？",
+      "rewritten_query": "main techniques used in equality-constrained Nash Equilibrium solution strategy",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "f9dcb1528729941e-C0000",
+        "68699812d603c771-C0003",
+        "f9dcb1528729941e-C0027",
+        "f9dcb1528729941e-C0001"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 17328,
+      "retrieval_ms": 45179,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-031-equality-feasibility",
+      "original_query": "等式约束NE策略如何保证状态满足可行约束？",
+      "rewritten_query": "How does equality-constrained NE policy ensure state satisfies feasible constraints?",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "b3f03bef65256ae8-C0018",
+        "68699812d603c771-C0006",
+        "679c02946bc59dda-C0000",
+        "b3f03bef65256ae8-C0016"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 20277,
+      "retrieval_ms": 45473,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-032-data-sharing-motive",
+      "original_query": "具有竞争关系的组织为什么可能拒绝共享数据？",
+      "rewritten_query": "why competing organizations may refuse to share data",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "d65d7a8617754fb7-C0001",
+        "d65d7a8617754fb7-C0002",
+        "d65d7a8617754fb7-C0004",
+        "d65d7a8617754fb7-C0005"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 8783,
+      "retrieval_ms": 45685,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-033-data-sharing-mechanism",
+      "original_query": "数据竞争力论文提出了什么激励机制和求解方法？",
+      "rewritten_query": "incentive mechanism and solution method for data competitiveness",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "d65d7a8617754fb7-C0001",
+        "d65d7a8617754fb7-C0005",
+        "d65d7a8617754fb7-C0028",
+        "d65d7a8617754fb7-C0002"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 8783,
+      "retrieval_ms": 45015,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-034-cognitive-two-games",
+      "original_query": "认知无线网络论文提出的局部利他博弈和局部拥塞博弈分别优化什么？",
+      "rewritten_query": "cognitive radio networks local altruistic game local congestion game respectively optimize",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "82314d0bd4754f24-C0033",
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0003",
+        "82314d0bd4754f24-C0031"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.5,
+      "rewrite_ms": 5435,
+      "retrieval_ms": 45562,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-035-cognitive-csap",
+      "original_query": "C-SAP在认知无线信道选择中起什么作用？",
+      "rewritten_query": "role of C-SAP in cognitive radio channel selection",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0033",
+        "82314d0bd4754f24-C0024",
+        "82314d0bd4754f24-C0027"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 13913,
+      "retrieval_ms": 43667,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-036-cognitive-local",
+      "original_query": "为什么认知无线信道选择采用局部交互博弈？",
+      "rewritten_query": "why cognitive radio channel selection adopts local interaction games",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "82314d0bd4754f24-C0033",
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0032",
+        "82314d0bd4754f24-C0002"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.25,
+      "rewrite_ms": 19675,
+      "retrieval_ms": 43523,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-037-colocated-resources",
+      "original_query": "共址边缘计算GNE模型联合分配哪些资源，各参与者优化什么目标？",
+      "rewritten_query": "co-located edge computing GNE model joint resource allocation participant optimization objective",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0007",
+        "017bb185b06de72c-C0005",
+        "017bb185b06de72c-C0051"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 16663,
+      "retrieval_ms": 43883,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-038-colocated-queue",
+      "original_query": "共址边缘计算论文怎样表示任务卸载时延并形成GNE问题？",
+      "rewritten_query": "co-located edge computing task offloading delay generalized Nash equilibrium problem formulation",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0003",
+        "017bb185b06de72c-C0005",
+        "017bb185b06de72c-C0051"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 9260,
+      "retrieval_ms": 45277,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-039-colocated-algorithms",
+      "original_query": "共址边缘计算GNE论文提出的两个去中心化算法分别求什么均衡？",
+      "rewritten_query": "What equilibria do the two decentralized algorithms proposed in the co-located edge computing GNE paper respectively solve for?",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "017bb185b06de72c-C0000",
+        "679c02946bc59dda-C0000",
+        "017bb185b06de72c-C0003",
+        "017bb185b06de72c-C0051"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 21061,
+      "retrieval_ms": 45544,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-040-colocated-appendix",
+      "original_query": "共址边缘计算数学附录如何处理端到端时延的无穷不连续，并得到什么性质？",
+      "rewritten_query": "co-located edge computing mathematical appendix end-to-end delay infinite discontinuity properties",
+      "expected_behavior": "answer",
+      "chunk_ids": [
+        "0f27423c825612c0-C0000",
+        "017bb185b06de72c-C0028",
+        "017bb185b06de72c-C0049",
+        "017bb185b06de72c-C0046"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 12579,
+      "retrieval_ms": 45510,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-041-partial-vehicular-field",
+      "original_query": "说明车辆MEC卸载算法的均衡性质，并给出它在2025年真实车队部署中的平均节能比例。",
+      "rewritten_query": "vehicle MEC offloading algorithm equilibrium properties 2025 real fleet deployment average energy saving ratio",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0029",
+        "4c26f68525f2edb0-C0030",
+        "4c26f68525f2edb0-C0003"
+      ],
+      "recall_at_k": 0.6666666666666666,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 0.5,
+      "rewrite_ms": 4730,
+      "retrieval_ms": 45649,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-042-partial-blockchain-quantum",
+      "original_query": "解释区块链云雾定价的两阶段博弈，并比较量子矿机加入后的均衡价格。",
+      "rewritten_query": "blockchain cloud-fog pricing two-stage game equilibrium price comparison quantum miners",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0005",
+        "df7e81c5ac2dae80-C0018",
+        "df7e81c5ac2dae80-C0058"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 18356,
+      "retrieval_ms": 45310,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-043-partial-drl-gpt6",
+      "original_query": "说明DRL+GNN路由为何能泛化，并比较它与GPT-6路由算法的结果。",
+      "rewritten_query": "DRL+GNN routing generalization compared with GPT-6 routing algorithm results",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "8277b122b6bf049f-C0003",
+        "8277b122b6bf049f-C0037",
+        "8277b122b6bf049f-C0030",
+        "8277b122b6bf049f-C0000"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.25,
+      "rewrite_ms": 17519,
+      "retrieval_ms": 45940,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-044-partial-gne-asynchronous",
+      "original_query": "说明双层近端点GNE算法如何处理不等式约束，并报告它在异步有向图上的加速比。",
+      "rewritten_query": "bilevel proximal point GNE algorithm inequality constraints asynchronous directed graph speedup",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "679c02946bc59dda-C0057",
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0017",
+        "679c02946bc59dda-C0000"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 0.25,
+      "rewrite_ms": 15585,
+      "retrieval_ms": 45478,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-045-partial-consensus-grid",
+      "original_query": "说明一致性NE算法的通信假设，并给出其在真实国家电网上线后的收敛时间。",
+      "rewritten_query": "consensus NE algorithm communication assumptions convergence time real national power grid",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "679c02946bc59dda-C0003",
+        "b3f03bef65256ae8-C0007",
+        "b3f03bef65256ae8-C0034",
+        "b3f03bef65256ae8-C0033"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 20662,
+      "retrieval_ms": 45549,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-046-partial-nonsmooth-dataset",
+      "original_query": "解释非光滑广义凸博弈如何使用l1惩罚，并报告某工业数据集上的准确率。",
+      "rewritten_query": "non-smooth generalized convex games l1 penalty industrial dataset accuracy",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "68699812d603c771-C0003",
+        "68699812d603c771-C0023",
+        "68699812d603c771-C0005",
+        "017bb185b06de72c-C0041"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 14833,
+      "retrieval_ms": 45514,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-047-partial-dynamic-5g",
+      "original_query": "说明动态势博弈为何可化为一个最优控制问题，并给出其在5G商用网中的吞吐率提升。",
+      "rewritten_query": "dynamic potential games optimal control problem formulation throughput improvement 5G commercial networks",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0048",
+        "82314d0bd4754f24-C0013",
+        "8cd42a00c01c48e6-C0004"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 21227,
+      "retrieval_ms": 45768,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-048-partial-uav-carbon",
+      "original_query": "说明多无人机覆盖部署的两个优化步骤，并报告2025年城市试验的碳排放下降比例。",
+      "rewritten_query": "multi-UAV coverage deployment two optimization steps 2025 urban trial carbon emission reduction ratio",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0045",
+        "e124a1b43d67eaf0-C0023",
+        "e124a1b43d67eaf0-C0001"
+      ],
+      "recall_at_k": 1.0,
+      "precision_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 4596,
+      "retrieval_ms": 45472,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-049-partial-cognitive-6g",
+      "original_query": "比较局部利他博弈与局部拥塞博弈，并给出它们在6G原型系统中的时延。",
+      "rewritten_query": "latency comparison of local altruistic game and local congestion game in 6G prototype system",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "82314d0bd4754f24-C0033",
+        "82314d0bd4754f24-C0031",
+        "82314d0bd4754f24-C0003",
+        "82314d0bd4754f24-C0027"
+      ],
+      "recall_at_k": 0.0,
+      "precision_at_k": 0.0,
+      "reciprocal_rank": 0.0,
+      "rewrite_ms": 16211,
+      "retrieval_ms": 45714,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-050-partial-colocated-live",
+      "original_query": "说明共址边缘计算模型分配的资源，并给出2026年商用网络现场节能比例。",
+      "rewritten_query": "co-located edge computing model resource allocation 2026 commercial network sites energy saving ratio",
+      "expected_behavior": "partial",
+      "chunk_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0049",
+        "017bb185b06de72c-C0003",
+        "017bb185b06de72c-C0046"
+      ],
+      "recall_at_k": 0.5,
+      "precision_at_k": 0.25,
+      "reciprocal_rank": 1.0,
+      "rewrite_ms": 15831,
+      "retrieval_ms": 46052,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-051-abstain-quantum",
+      "original_query": "根据本地论文库说明表面码量子纠错阈值及其证明。",
+      "rewritten_query": "surface code quantum error correction threshold proof",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "df7e81c5ac2dae80-C0028",
+        "679c02946bc59dda-C0035",
+        "df7e81c5ac2dae80-C0025",
+        "0f27423c825612c0-C0000"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 6383,
+      "retrieval_ms": 45028,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-052-abstain-medical",
+      "original_query": "根据本地论文库给出胰腺癌早筛的临床敏感度和特异度。",
+      "rewritten_query": "clinical sensitivity and specificity of early screening for pancreatic cancer",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "82314d0bd4754f24-C0031",
+        "679c02946bc59dda-C0015",
+        "82314d0bd4754f24-C0032",
+        "b3f03bef65256ae8-C0017"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 7933,
+      "retrieval_ms": 43863,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-053-abstain-policy",
+      "original_query": "根据本地论文库比较2025年和2026年上海差旅报销政策。",
+      "rewritten_query": "compare Shanghai travel reimbursement policy 2025 and 2026",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "8277b122b6bf049f-C0020",
+        "b3f03bef65256ae8-C0053",
+        "4c26f68525f2edb0-C0006",
+        "b3f03bef65256ae8-C0054"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 8269,
+      "retrieval_ms": 43804,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-054-abstain-transformer",
+      "original_query": "根据本地论文库解释Transformer中RoPE的位置编码公式。",
+      "rewritten_query": "Transformer RoPE positional encoding formula",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "e124a1b43d67eaf0-C0018",
+        "8ea212392df2fe65-C0005",
+        "68699812d603c771-C0016",
+        "017bb185b06de72c-C0030"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 7821,
+      "retrieval_ms": 44659,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-055-abstain-database",
+      "original_query": "根据本地论文库比较B+树和LSM树的写放大。",
+      "rewritten_query": "compare write amplification of B+ tree and LSM tree",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "679c02946bc59dda-C0026",
+        "8097c2e32a040c2f-C0029",
+        "8ea212392df2fe65-C0005",
+        "679c02946bc59dda-C0058"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 8844,
+      "retrieval_ms": 45557,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-056-abstain-vision",
+      "original_query": "根据本地论文库说明SAM在医学图像分割中的Dice分数。",
+      "rewritten_query": "SAM medical image segmentation Dice score",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "8277b122b6bf049f-C0025",
+        "e124a1b43d67eaf0-C0029",
+        "8277b122b6bf049f-C0030",
+        "8277b122b6bf049f-C0031"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 5158,
+      "retrieval_ms": 45051,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-057-abstain-law",
+      "original_query": "根据本地论文库概述欧盟2026年最新人工智能监管条款。",
+      "rewritten_query": "EU 2026 latest artificial intelligence regulation provisions",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "4c26f68525f2edb0-C0006",
+        "4c26f68525f2edb0-C0005",
+        "b3f03bef65256ae8-C0054",
+        "017bb185b06de72c-C0049"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 11330,
+      "retrieval_ms": 45164,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-058-abstain-pagerank",
+      "original_query": "根据本地论文库推导PageRank随机游走的收敛定理。",
+      "rewritten_query": "derive PageRank random walk convergence theorem",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "017bb185b06de72c-C0044",
+        "82314d0bd4754f24-C0027",
+        "82314d0bd4754f24-C0026",
+        "82314d0bd4754f24-C0025"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 10061,
+      "retrieval_ms": 46397,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-059-abstain-unindexed",
+      "original_query": "只依据文件《势博弈.pdf》，概述其中定理3的证明。",
+      "rewritten_query": "Potential Games Theorem 3 proof",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "82314d0bd4754f24-C0019",
+        "8097c2e32a040c2f-C0014",
+        "8cd42a00c01c48e6-C0010",
+        "8097c2e32a040c2f-C0033"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 8695,
+      "retrieval_ms": 44968,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    },
+    {
+      "case_id": "st-060-abstain-weather",
+      "original_query": "根据本地论文库预测上海下周每天的降雨概率。",
+      "rewritten_query": "predict daily precipitation probability in Shanghai for next week",
+      "expected_behavior": "abstain",
+      "chunk_ids": [
+        "d65d7a8617754fb7-C0000",
+        "b3f03bef65256ae8-C0052",
+        "d65d7a8617754fb7-C0001",
+        "82314d0bd4754f24-C0018"
+      ],
+      "recall_at_k": null,
+      "precision_at_k": null,
+      "reciprocal_rank": null,
+      "rewrite_ms": 13100,
+      "retrieval_ms": 45233,
+      "timed_out": false,
+      "rewrite_error": null,
+      "retrieval_error": null
+    }
+  ]
+}

@@ -69,6 +69,20 @@ nanobot-research eval-single benchmarks/paper_research/single_turn.jsonl `
 
 `results/single_turn_retrieval_zh_raw.json` 保存中文原问题直接检索英文语料的基线。完整 Agent 运行产生的英文 Query、检索结果和最终回答应写入 `SingleTurnPrediction`，不能作为人工标签预先填入测试集。
 
+若只评估 Query 改写对检索的影响，而不混入答案生成、Reflect 和引用校验耗时，运行：
+
+```powershell
+python benchmarks/paper_research/run_rewritten_query_eval.py `
+  --benchmark benchmarks/paper_research/single_turn.jsonl `
+  --workspace <独立评测工作区> `
+  --data-dir D:/Data/paper-research/index `
+  --hf-home D:/Data/huggingface `
+  --top-k 4 `
+  --output benchmarks/paper_research/results/single_turn_retrieval_en_query.json
+```
+
+该脚本使用当前模型把每道中文问题改写为一条忠实的英文检索 Query，再运行与中文基线相同的全库 chunk 检索。英文 Query 作为预测结果保存在报告中，不写回人工标注的评测集。使用 `--resume` 可从已保存的 Query 或检索结果继续执行。
+
 单题异常会记录在报告的 `error` 字段中，整批评测会继续执行。`timeout_seconds` 是评测阈值：超过该时长会计入超时率，但评测程序会等待该次本地检索结束，从而避免在后台留下未受控的模型任务。
 
 Agent 完整回答可保存为 `SingleTurnPrediction` JSONL，随后执行 `nanobot-research score-single <测试集> <回答文件>` 计算完成率、决策准确率和引用准确率。回答记录包含 Agent 实际生成的英文检索 Query、检索/引用 chunk、`research_finalize` 的引用定位检查结果、任务 ID、总耗时和错误。Faithfulness、Answer Relevancy、Context Relevancy 与 Context Recall 需要真实回答和检索正文，不能在只有测试题时预先生成分数。
