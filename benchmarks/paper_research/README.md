@@ -103,3 +103,17 @@ python benchmarks/paper_research/run_agent_smoke.py `
 本次结构化预测保存在 `results/single_turn_agent_smoke.jsonl`，汇总与已发现问题保存在 `results/single_turn_agent_smoke_report.json`。英文检索 Query 来自实际 Agent Trace，不写入人工评测集。
 脚本会为每次运行生成新的 `run_id` 并写入 Session key，防止重复运行时恢复旧评测会话；需要复现实验标识时可显式传入 `--run-id`。
 普通单题错误不会中断整批评测；如果供应商明确返回额度耗尽或账户欠费，脚本会停止本次运行，因为后续题目无法产生有效结果。
+
+在同样的隔离条件下运行全部 60 道单轮题，并允许中断后续跑：
+
+```powershell
+python benchmarks/paper_research/run_agent_smoke.py `
+  --benchmark benchmarks/paper_research/single_turn.jsonl `
+  --workspace <独立评测工作区> `
+  --output benchmarks/paper_research/results/single_turn_agent_full_raw.json `
+  --run-id <本次实验标识> `
+  --all `
+  --resume
+```
+
+全量模式仍为每道题分配独立 Session，并在每题结束后立即保存结果。工具输出只保留调用名称、参数、错误和研究任务 ID；完整证据与阶段记录继续由 `ResearchState` 和 `PipelineTrace` 保存，避免批量结果重复写入 chunk 正文。

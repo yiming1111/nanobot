@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -36,15 +37,55 @@ def is_quota_error(error: str | None) -> bool:
     return "out of quota" in normalized or "account is in arrears" in normalized
 
 
-def load_cases(path: Path) -> list[dict[str, Any]]:
-    wanted = set(CASE_IDS)
+def load_cases(path: Path, *, all_cases: bool = False) -> list[dict[str, Any]]:
     cases = [
         json.loads(line)
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+    if all_cases:
+        return cases
+    wanted = set(CASE_IDS)
     selected = {case["case_id"]: case for case in cases if case["case_id"] in wanted}
     return [selected[case_id] for case_id in CASE_IDS]
+
+
+def _find_task_ids(value: Any) -> set[str]:
+    """Extract research task IDs without retaining large MCP result payloads."""
+    found: set[str] = set()
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key == "task_id" and isinstance(item, str) and item:
+                found.add(item)
+            else:
+                found.update(_find_task_ids(item))
+    elif isinstance(value, list):
+        for item in value:
+            found.update(_find_task_ids(item))
+    elif isinstance(value, str):
+        found.update(
+            re.findall(r'["\']task_id["\']\s*:\s*["\']([0-9a-f]{32})["\']', value)
+        )
+    return found
+
+
+def _compact_tool_events(events: Any) -> tuple[list[dict[str, Any]], set[str]]:
+    compact: list[dict[str, Any]] = []
+    task_ids: set[str] = set()
+    for event in events if isinstance(events, list) else []:
+        if not isinstance(event, dict):
+            continue
+        task_ids.update(_find_task_ids(event.get("arguments")))
+        task_ids.update(_find_task_ids(event.get("result")))
+        compact.append(
+            {
+                "phase": event.get("phase"),
+                "name": event.get("name"),
+                "arguments": event.get("arguments") or {},
+                "error": event.get("error"),
+            }
+        )
+    return compact, task_ids
 
 
 async def main() -> None:
@@ -53,9 +94,27 @@ async def main() -> None:
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--run-id")
+    parser.add_argument("--all", dest="all_cases", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
 
-    run_id = args.run_id or datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+    results: list[dict[str, Any]] = []
+    if args.resume and args.output.exists():
+        saved = json.loads(args.output.read_text(encoding="utf-8"))
+        if not isinstance(saved, list):
+            raise ValueError("resume output must contain a JSON array")
+        results = saved
+    saved_run_ids = {str(item.get("run_id")) for item in results if item.get("run_id")}
+    if len(saved_run_ids) > 1:
+        raise ValueError("resume output contains multiple run IDs")
+    saved_run_id = next(iter(saved_run_ids), None)
+    if args.run_id and saved_run_id and args.run_id != saved_run_id:
+        raise ValueError("--run-id does not match the existing resume output")
+    run_id = (
+        args.run_id
+        or saved_run_id
+        or datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+    )
 
     args.workspace.mkdir(parents=True, exist_ok=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -76,15 +135,28 @@ async def main() -> None:
         tool_registry=tools,
     )
 
-    results: list[dict[str, Any]] = []
+    completed_case_ids = {str(item.get("case_id")) for item in results}
     try:
         await mcp_provider.connect()
-        for case in load_cases(args.benchmark):
+        for case in load_cases(args.benchmark, all_cases=args.all_cases):
             case_id = case["case_id"]
+            if case_id in completed_case_ids:
+                continue
             progress: list[dict[str, Any]] = []
+            task_ids: set[str] = set()
 
             async def on_progress(content: str, **kwargs: Any) -> None:
-                progress.append({"content": content, **kwargs})
+                compact_events, discovered_task_ids = _compact_tool_events(
+                    kwargs.get("tool_events")
+                )
+                task_ids.update(discovered_task_ids)
+                item: dict[str, Any] = {
+                    "content": content,
+                    "tool_hint": bool(kwargs.get("tool_hint")),
+                }
+                if compact_events:
+                    item["tool_events"] = compact_events
+                progress.append(item)
                 if kwargs.get("tool_hint"):
                     print(f"[{case_id}] {content}", flush=True)
 
@@ -115,9 +187,11 @@ async def main() -> None:
                 "elapsed_ms": elapsed_ms,
                 "error": error,
                 "response_metadata": response_metadata,
+                "task_ids": sorted(task_ids),
                 "progress": progress,
             }
             results.append(result)
+            completed_case_ids.add(case_id)
             args.output.write_text(
                 json.dumps(results, ensure_ascii=False, indent=2),
                 encoding="utf-8",
