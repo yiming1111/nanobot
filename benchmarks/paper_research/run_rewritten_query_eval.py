@@ -98,6 +98,30 @@ def build_metrics(records: list[dict[str, Any]], timeout_ms: int) -> dict[str, f
     }
 
 
+def score_retrieval_record(case: Any, record: dict[str, Any], top_k: int) -> None:
+    """Recompute label-dependent metrics from saved retrieval output."""
+    record["expected_behavior"] = case.expected_behavior.value
+    record["recall_at_k"] = None
+    record["precision_at_k"] = None
+    record["reciprocal_rank"] = None
+    relevant = set(case.relevant_chunk_ids)
+    if not relevant or record.get("retrieval_error") is not None:
+        return
+    chunk_ids = list(record.get("chunk_ids") or [])
+    matched = len(relevant.intersection(chunk_ids))
+    first_rank = next(
+        (
+            rank
+            for rank, chunk_id in enumerate(chunk_ids, start=1)
+            if chunk_id in relevant
+        ),
+        None,
+    )
+    record["recall_at_k"] = matched / len(relevant)
+    record["precision_at_k"] = matched / top_k
+    record["reciprocal_rank"] = 1.0 / first_rank if first_rank else 0.0
+
+
 async def rewrite_query(provider: Any, question: str) -> str:
     response = await provider.chat_with_retry(
         messages=[
@@ -163,6 +187,9 @@ async def main() -> None:
         )
         for case in cases
     ]
+    for case, record in zip(cases, records, strict=True):
+        if record.get("retrieval_ms") is not None:
+            score_retrieval_record(case, record, args.top_k)
 
     def save(status: str) -> None:
         payload = {
@@ -206,13 +233,18 @@ async def main() -> None:
             if callable(close):
                 await close()
 
-    if args.hf_home is not None:
-        os.environ["HF_HOME"] = str(args.hf_home)
-    os.environ["HF_HUB_OFFLINE"] = "1"
-    os.environ["TRANSFORMERS_OFFLINE"] = "1"
-    service = HybridRetrievalService(ResearchConfig(data_dir=args.data_dir))
-    service.prepare_indexes()
-    service.prepare_models()
+    service = None
+    if any(
+        item.get("retrieval_ms") is None and item.get("rewritten_query")
+        for item in records
+    ):
+        if args.hf_home is not None:
+            os.environ["HF_HOME"] = str(args.hf_home)
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ["TRANSFORMERS_OFFLINE"] = "1"
+        service = HybridRetrievalService(ResearchConfig(data_dir=args.data_dir))
+        service.prepare_indexes()
+        service.prepare_models()
 
     for index, (case, record) in enumerate(zip(cases, records, strict=True), start=1):
         if record.get("retrieval_ms") is not None:
@@ -220,6 +252,7 @@ async def main() -> None:
         query = record.get("rewritten_query")
         if not query:
             continue
+        assert service is not None
         started = perf_counter()
         evidence = []
         try:
@@ -231,20 +264,7 @@ async def main() -> None:
         record["retrieval_ms"] = retrieval_ms
         record["timed_out"] = retrieval_ms > args.timeout_seconds * 1000
         record["chunk_ids"] = [item.chunk_id for item in evidence]
-        relevant = set(case.relevant_chunk_ids)
-        if relevant and record["retrieval_error"] is None:
-            matched = len(relevant.intersection(record["chunk_ids"]))
-            first_rank = next(
-                (
-                    rank
-                    for rank, chunk_id in enumerate(record["chunk_ids"], start=1)
-                    if chunk_id in relevant
-                ),
-                None,
-            )
-            record["recall_at_k"] = matched / len(relevant)
-            record["precision_at_k"] = matched / args.top_k
-            record["reciprocal_rank"] = 1.0 / first_rank if first_rank else 0.0
+        score_retrieval_record(case, record, args.top_k)
         save("retrieving")
         suffix = f" error={record['retrieval_error']}" if record["retrieval_error"] else ""
         print(f"[retrieve {index}/{len(cases)}] {case.case_id} {retrieval_ms}ms{suffix}", flush=True)

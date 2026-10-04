@@ -117,3 +117,33 @@ python benchmarks/paper_research/run_agent_smoke.py `
 ```
 
 全量模式仍为每道题分配独立 Session，并在每题结束后立即保存结果。工具输出只保留调用名称、参数、错误和研究任务 ID；完整证据与阶段记录继续由 `ResearchState` 和 `PipelineTrace` 保存，避免批量结果重复写入 chunk 正文。
+
+运行完成后，将原始检查点与 `ResearchState` 合并为结构化预测和正式报告：
+
+```powershell
+python benchmarks/paper_research/build_agent_report.py `
+  --benchmark benchmarks/paper_research/single_turn.jsonl `
+  --raw benchmarks/paper_research/results/single_turn_agent_full_raw.json `
+  --state-dir D:/Data/paper-research/index/states `
+  --model <模型名称> `
+  --predictions benchmarks/paper_research/results/single_turn_agent_full.jsonl `
+  --report benchmarks/paper_research/results/single_turn_agent_full_report.json
+```
+
+报告中的 `completion_rate` 只表示 Agent 返回了结果；`pipeline_execution_rate` 表示实际建立了论文研究任务；`pipeline_success_rate` 进一步要求决策类型正确，且需要引用的回答通过定位校验。绕过论文检索而直接使用模型常识作答，不计为 Pipeline 成功。`target_chunk_recall` 使用每题所有检索轮次的 chunk 并集计算，用来诊断端到端流程是否覆盖人工证据，不等同于固定 K 的单次检索 Recall@K。
+
+## qwen3.7-plus 单轮全量基线（2026-10-04）
+
+| 指标 | 结果 |
+|---|---:|
+| 回答完成率 | 100.0% |
+| 严格决策准确率 | 91.7% |
+| 引用定位准确率 | 94.0% |
+| 论文研究 Pipeline 执行率 | 95.0% |
+| 严格 Pipeline 成功率 | 91.7% |
+| 端到端目标 chunk 平均召回率 | 66.6% |
+| 目标 chunk 零命中率 | 8.0% |
+| 平均总耗时 | 138.0 秒 |
+| P95 总耗时 | 249.9 秒 |
+
+严格口径把没有 `ResearchState` 的结果计为决策和 Pipeline 失败。本轮有两道可回答题绕过论文检索、直接使用模型常识作答；另有一道明显越界的天气题在检索前直接拒答。状态明确的两处行为错误是：`st-017` 未召回关键证据后误拒答，`st-059` 忽略“只依据指定文件”的来源约束后回答了另一份已入库论文。完整逐题结果见 `results/single_turn_agent_full_report.json`。
