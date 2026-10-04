@@ -152,6 +152,19 @@ def test_paper_filter_is_applied_before_sparse_candidate_cutoff(tmp_path: Path) 
     assert [item.paper_id for item in evidence] == ["P1"]
 
 
+def test_explicit_source_resolution_uses_exact_filename_or_title(tmp_path: Path) -> None:
+    _write_sparse_corpus(tmp_path)
+    service = HybridRetrievalService(
+        ResearchConfig(data_dir=tmp_path),
+        reranker=_FakeReranker(),
+        allow_sparse_only=True,
+    )
+
+    assert service.resolve_paper_scope(source_files=["p1.pdf"]) == ["P1"]
+    assert service.resolve_paper_scope(paper_titles=["Graph Retrieval"]) == ["P1"]
+    assert service.resolve_paper_scope(source_files=["graph.pdf"]) == []
+
+
 def test_prepare_models_warms_encoder_and_reranker(tmp_path: Path) -> None:
     _write_sparse_corpus(tmp_path)
     encoder = _FakeEncoder()

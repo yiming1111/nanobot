@@ -51,6 +51,7 @@ class EvidenceRelation(StrEnum):
 
 class RetrievalScope(StrEnum):
     FULL_CORPUS = "full_corpus"
+    EXPLICIT_PAPERS = "explicit_papers"
     MEMORY_EVIDENCE = "memory_evidence"
     # Retained so persisted states from the earlier hierarchical flow still load.
     CANDIDATE_PAPERS = "candidate_papers"
@@ -206,6 +207,8 @@ class ResearchPlan(ResearchModel):
     normalized_question: str = Field(min_length=1)
     task_type: str = "paper_research"
     constraints: dict[str, ConstraintValue] = Field(default_factory=dict)
+    source_constraint: str | None = None
+    restricted_paper_ids: list[str] = Field(default_factory=list)
     requires_decomposition: bool = False
     sub_questions: list[SubQuestion] = Field(min_length=1)
 

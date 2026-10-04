@@ -26,6 +26,16 @@ class _FakeRetrieval:
             PaperSearchResult(paper_id="P2", title="Paper Two", fused_score=0.08),
         ]
 
+    def resolve_paper_scope(
+        self,
+        *,
+        source_files: list[str] | tuple[str, ...] = (),
+        paper_titles: list[str] | tuple[str, ...] = (),
+    ) -> list[str]:
+        if list(source_files) == ["p1.pdf"] or list(paper_titles) == ["Paper One"]:
+            return ["P1"]
+        return []
+
     def retrieve_evidence(self, query: str, **kwargs: object) -> list[EvidenceSearchResult]:
         self.evidence_calls.append({"query": query, **kwargs})
         return [
@@ -151,6 +161,52 @@ def test_retrieval_searches_full_chunk_corpus_once(tmp_path: Path) -> None:
     assert retrieval.paper_calls == []
     assert status["retrieval_rounds"] == 1
     assert result["semantic_round"] == 1
+
+
+def test_explicit_source_file_restricts_chunk_retrieval(tmp_path: Path) -> None:
+    retrieval = _FakeRetrieval()
+    tools = _tools(tmp_path, retrieval)
+    started = tools.start(
+        original_question="Use only p1.pdf.",
+        normalized_question="Use only p1.pdf.",
+        sub_questions=["What improves recall?"],
+        constraints={"source_file": "p1.pdf"},
+    )
+
+    result = tools.research_retrieve(
+        task_id=str(started["task_id"]),
+        sub_question_id="SQ1",
+        query="evidence recall",
+    )
+
+    assert result["retrieval_scope"] == "explicit_papers"
+    assert result["retrieval_attempt"]["paper_ids"] == ["P1"]
+    assert [call["paper_ids"] for call in retrieval.evidence_calls] == [["P1"]]
+
+
+def test_missing_explicit_source_does_not_search_similar_papers(tmp_path: Path) -> None:
+    retrieval = _FakeRetrieval()
+    tools = _tools(tmp_path, retrieval)
+    started = tools.start(
+        original_question="Use only 《missing.pdf》.",
+        normalized_question="Use only missing.pdf.",
+        sub_questions=["What does theorem 3 prove?"],
+        constraints=None,
+    )
+
+    result = tools.research_retrieve(
+        task_id=str(started["task_id"]),
+        sub_question_id="SQ1",
+        query="theorem 3 proof",
+    )
+
+    assert result["retrieval_scope"] == "explicit_papers"
+    assert result["candidate_passages_found"] is False
+    assert result["retrieval_attempt"] is None
+    assert result["must_abstain"] is True
+    assert started["status"] == "refused"
+    assert started["plan"]["restricted_paper_ids"] == []
+    assert retrieval.evidence_calls == []
 
 
 def test_memory_evidence_is_reflected_without_consuming_semantic_round(

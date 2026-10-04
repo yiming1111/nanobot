@@ -58,6 +58,42 @@ class HybridRetrievalService:
             round((perf_counter() - started_at) * 1000),
         )
 
+    @staticmethod
+    def _normalize_source_name(value: str) -> str:
+        return " ".join(value.strip().casefold().split())
+
+    def resolve_paper_scope(
+        self,
+        *,
+        source_files: Sequence[str] = (),
+        paper_titles: Sequence[str] = (),
+    ) -> list[str]:
+        """Resolve explicit source constraints without semantic substitution."""
+        normalized_files = {
+            self._normalize_source_name(value.replace("\\", "/").rsplit("/", 1)[-1])
+            for value in source_files
+        }
+        normalized_titles = {
+            self._normalize_source_name(value) for value in paper_titles
+        }
+        matches = self.papers
+        if normalized_files:
+            matches = [
+                paper
+                for paper in matches
+                if self._normalize_source_name(
+                    paper.source_path.replace("\\", "/").rsplit("/", 1)[-1]
+                )
+                in normalized_files
+            ]
+        if normalized_titles:
+            matches = [
+                paper
+                for paper in matches
+                if self._normalize_source_name(paper.title) in normalized_titles
+            ]
+        return [paper.paper_id for paper in matches]
+
     def prepare_indexes(self) -> None:
         """Load the small persisted indexes without loading neural models."""
         self._load_dense()

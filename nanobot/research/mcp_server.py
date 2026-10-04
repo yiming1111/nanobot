@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import threading
 import time
 from functools import lru_cache
@@ -198,6 +199,20 @@ class ResearchTools:
             )
         return self._retrieval
 
+    @staticmethod
+    def _constraint_strings(
+        constraints: dict[str, ConstraintValue], key: str
+    ) -> list[str]:
+        value = constraints.get(key)
+        values = value if isinstance(value, list) else [value]
+        return [item.strip() for item in values if isinstance(item, str) and item.strip()]
+
+    @staticmethod
+    def _explicit_pdf_files(question: str) -> list[str]:
+        """Keep literal PDF references authoritative across Agent retries."""
+        matches = re.findall(r"《([^》]+\.pdf)》", question, flags=re.IGNORECASE)
+        return list(dict.fromkeys(value.strip() for value in matches if value.strip()))
+
     def start(
         self,
         *,
@@ -212,25 +227,62 @@ class ResearchTools:
         questions = [value.strip() for value in sub_questions if value.strip()]
         if not questions:
             questions = [normalized_question.strip()]
+        resolved_constraints = constraints or {}
+        source_files = self._explicit_pdf_files(original_question)
+        if not source_files:
+            source_files = self._constraint_strings(resolved_constraints, "source_file")
+        paper_titles = self._constraint_strings(resolved_constraints, "paper_title")
+        source_constraint = None
+        restricted_paper_ids: list[str] = []
+        if source_files or paper_titles:
+            parts = [*(f"source_file={value}" for value in source_files)]
+            parts.extend(f"paper_title={value}" for value in paper_titles)
+            source_constraint = "; ".join(parts)
+            restricted_paper_ids = self.retrieval.resolve_paper_scope(
+                source_files=source_files,
+                paper_titles=paper_titles,
+            )
+        source_missing = source_constraint is not None and not restricted_paper_ids
         plan = ResearchPlan(
             original_question=original_question,
             normalized_question=normalized_question,
             task_type=task_type,
-            constraints=constraints or {},
+            constraints=resolved_constraints,
+            source_constraint=source_constraint,
+            restricted_paper_ids=restricted_paper_ids,
             requires_decomposition=len(questions) > 1,
             sub_questions=[
-                SubQuestion(sub_question_id=f"SQ{index}", question=question)
+                SubQuestion(
+                    sub_question_id=f"SQ{index}",
+                    question=question,
+                    status=(
+                        SubQuestionStatus.INSUFFICIENT
+                        if source_missing
+                        else SubQuestionStatus.PENDING
+                    ),
+                )
                 for index, question in enumerate(questions, start=1)
             ],
         )
         state = ResearchState(
             session_key=session_key,
-            status=ResearchTaskStatus.RETRIEVING,
+            status=(
+                ResearchTaskStatus.REFUSED
+                if source_missing
+                else ResearchTaskStatus.RETRIEVING
+            ),
             plan=plan,
             max_retrieval_rounds=self.config.max_retrieval_rounds,
         )
         self.states.create(state)
         payload = state.model_dump(mode="json")
+        payload["source_constraint_matched"] = not source_missing
+        payload["must_abstain"] = source_missing
+        payload["next_step"] = (
+            "refuse because the explicitly requested paper or file is not indexed"
+            if source_missing
+            else "retrieve evidence for each pending sub-question"
+        )
         self._record_trace(
             state.task_id,
             stage="plan",
@@ -243,6 +295,8 @@ class ResearchTools:
             },
             output_summary={
                 "status": state.status.value,
+                "source_constraint_matched": not source_missing,
+                "restricted_paper_ids": restricted_paper_ids,
                 "sub_question_ids": [
                     item.sub_question_id for item in plan.sub_questions
                 ],
@@ -277,7 +331,7 @@ class ResearchTools:
             )
         return evidence
 
-    def _retrieve_full_corpus(
+    def _retrieve_chunks(
         self,
         *,
         query: str,
@@ -285,19 +339,33 @@ class ResearchTools:
         year_from: int | None,
         year_to: int | None,
         sections: list[str] | None,
+        paper_ids: list[str] | None,
     ) -> tuple[list[EvidenceSearchResult], dict[str, Any]]:
         started_at = perf_counter()
+        scope = (
+            RetrievalScope.EXPLICIT_PAPERS
+            if paper_ids is not None
+            else RetrievalScope.FULL_CORPUS
+        )
+        if paper_ids == []:
+            return [], {
+                "scope": scope.value,
+                "paper_ids": [],
+                "chunk_ids": [],
+                "elapsed_ms": round((perf_counter() - started_at) * 1000),
+            }
         results = self.retrieval.retrieve_evidence(
             query,
             top_k=top_k,
-            paper_ids=None,
+            paper_ids=paper_ids,
             year_from=year_from,
             year_to=year_to,
             sections=sections,
         )
         elapsed_ms = round((perf_counter() - started_at) * 1000)
         return results, {
-            "scope": RetrievalScope.FULL_CORPUS.value,
+            "scope": scope.value,
+            "paper_ids": paper_ids or [],
             "chunk_ids": [item.chunk_id for item in results],
             "elapsed_ms": elapsed_ms,
         }
@@ -417,7 +485,7 @@ class ResearchTools:
         year_to: int | None = None,
         sections: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Run one semantic search over every eligible chunk in the corpus."""
+        """Run one semantic search within the task's eligible source scope."""
         total_started_at = perf_counter()
         query = query.strip()
         if not query:
@@ -430,6 +498,23 @@ class ResearchTools:
             started_at=total_started_at,
         )
         sub_question = self._find_sub_question(state, sub_question_id)
+        if state.plan.source_constraint is not None and not state.plan.restricted_paper_ids:
+            return {
+                "task_id": task_id,
+                "sub_question_id": sub_question_id,
+                "retrieval_scope": RetrievalScope.EXPLICIT_PAPERS.value,
+                "retrieval_attempt": None,
+                "evidence": [],
+                "candidate_passages_found": False,
+                "semantic_sufficiency": "insufficient",
+                "task_status": ResearchTaskStatus.REFUSED.value,
+                "sub_question_status": SubQuestionStatus.INSUFFICIENT.value,
+                "execution_status": "completed",
+                "must_abstain": True,
+                "next_step": (
+                    "refuse because the explicitly requested paper or file is not indexed"
+                ),
+            }
         cached = self._cached_retrieval_payload(state, sub_question)
         if cached is not None and sub_question.retrieval_attempts[-1].query == query:
             return cached
@@ -491,12 +576,23 @@ class ResearchTools:
                 sub_question_id,
                 semantic_round,
             )
-            results, retrieval_attempt = self._retrieve_full_corpus(
+            paper_ids = (
+                state.plan.restricted_paper_ids
+                if state.plan.source_constraint is not None
+                else None
+            )
+            retrieval_scope = (
+                RetrievalScope.EXPLICIT_PAPERS
+                if paper_ids is not None
+                else RetrievalScope.FULL_CORPUS
+            )
+            results, retrieval_attempt = self._retrieve_chunks(
                 query=query,
                 top_k=top_k,
                 year_from=year_from,
                 year_to=year_to,
                 sections=sections,
+                paper_ids=paper_ids,
             )
             evidence = self._evidence_items(
                 sub_question_id=sub_question_id,
@@ -504,18 +600,22 @@ class ResearchTools:
             )
             total_elapsed_ms = round((perf_counter() - total_started_at) * 1000)
             coverage_reason = (
-                "full-corpus candidate passages retrieved; semantic sufficiency awaits "
+                "candidate passages retrieved; semantic sufficiency awaits "
                 "research_reflect"
                 if evidence
-                else "no candidate passages were found in the eligible corpus chunks"
+                else (
+                    "the explicitly requested paper or file is not present in the index"
+                    if state.plan.source_constraint is not None and not paper_ids
+                    else "no candidate passages were found in the eligible corpus chunks"
+                )
             )
             updated = self.states.add_evidence(
                 task_id,
                 sub_question_id,
                 evidence,
                 query=query,
-                paper_ids=None,
-                scope=RetrievalScope.FULL_CORPUS,
+                paper_ids=paper_ids,
+                scope=retrieval_scope,
                 elapsed_ms=total_elapsed_ms,
                 coverage_reason=coverage_reason,
             )
@@ -525,7 +625,7 @@ class ResearchTools:
                 "sub_question_id": sub_question_id,
                 "semantic_round": semantic_round,
                 "max_semantic_rounds": updated.max_retrieval_rounds,
-                "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
+                "retrieval_scope": retrieval_scope.value,
                 "retrieval_attempt": retrieval_attempt,
                 "evidence": [item.model_dump(mode="json") for item in evidence],
                 "candidate_passages_found": bool(evidence),
@@ -550,9 +650,10 @@ class ResearchTools:
                     "year_from": year_from,
                     "year_to": year_to,
                     "sections": sections or [],
+                    "paper_ids": paper_ids or [],
                 },
                 output_summary={
-                    "retrieval_scope": RetrievalScope.FULL_CORPUS.value,
+                    "retrieval_scope": retrieval_scope.value,
                     "retrieval_attempt": retrieval_attempt,
                     "chunk_ids": [item.chunk_id for item in evidence],
                     "candidate_passages_found": bool(evidence),
@@ -984,7 +1085,7 @@ def research_retrieve(
     year_to: int | None = None,
     sections: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Run one semantic retrieval round with automatic empty-result fallback."""
+    """Run one semantic retrieval round within the task's source scope."""
     return _tools().research_retrieve(
         task_id=task_id,
         sub_question_id=sub_question_id,
