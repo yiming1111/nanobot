@@ -544,6 +544,10 @@ def test_paper_research_skill_keeps_rewrite_and_constraints_faithful() -> None:
     assert "do not expand it into `trajectory`, `speed`, or `resource allocation`" in skill
     assert "do not create a replacement task" in skill
     assert "Never answer a paper question solely from a remembered summary" in skill
+    assert "the current turn must create a research task" in skill
+    assert "even when the user does not explicitly mention papers" in skill
+    assert "chat history are not evidence" in skill
+    assert "never answer the factual paper question directly" in skill
     assert "Neighbor passages are context-only" in skill
     assert "never put their chunk IDs in `supporting_chunk_ids`" in skill
     assert "using only IDs returned for that same evidence need" in skill

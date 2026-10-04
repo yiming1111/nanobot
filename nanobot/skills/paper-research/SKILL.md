@@ -7,7 +7,19 @@ metadata: {"nanobot":{"emoji":"📚","requires":{}}}
 
 # Paper Research
 
-Apply this workflow only when the user asks a question that should be answered from the configured scientific-paper corpus.
+This deployment is a local-paper research Agent. While this skill is active, treat every
+substantive technical, scientific, or research-domain factual question as a request for a
+corpus-grounded answer, even when the user does not explicitly mention papers, the corpus,
+or citations. Start this workflow before answering such a question. Only an obviously
+non-research request may bypass the paper workflow.
+
+For any factual answer about a paper or a claim that should come from the paper corpus,
+the current turn must create a research task and load exact corpus chunks before drafting
+the answer. The model's pretrained knowledge, a remembered prose summary, and ordinary
+chat history are not evidence. They may help interpret the question, plan the search, or
+word the final response, but they must never replace `research_start` followed by
+`research_retrieve` or `research_load_evidence`. If retrieval produces no validated chunks,
+refuse for lack of corpus evidence; never answer the factual paper question directly.
 
 1. Resolve references and constraints from the conversation. Produce a standalone `normalized_question` without discarding or broadening the user's original meaning. Preserve a broad phrase as broad instead of guessing examples for it. Do not add parenthetical examples, candidate concepts, variables, methods, or optimization dimensions that the user did not mention.
 2. Keep a simple factual question as one evidence need. Decompose only when the answer requires independently verifiable facts, such as two sides of a comparison or separate hops. Do not split modifiers, citation formatting, or output requirements into evidence needs. Keep a year, paper name, population, method, or other clause-specific condition only in the evidence need it modifies. Put a condition in the top-level `constraints` only when it applies to every evidence need. If the user explicitly asks for one sub-question, create exactly one.
