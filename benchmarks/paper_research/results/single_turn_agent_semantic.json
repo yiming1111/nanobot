@@ -1,0 +1,3018 @@
+{
+  "model": "qwen3.7-plus",
+  "metrics": {
+    "case_count": 50,
+    "scored_case_count": 50,
+    "error_count": 0,
+    "faithfulness": 0.9506623931623932,
+    "answer_relevancy": 0.995,
+    "context_relevancy": 0.7434877344877345,
+    "context_recall": 0.92
+  },
+  "cases": [
+    {
+      "case_id": "st-001-vehicular-game",
+      "context_count": 9,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该论文将多车计算卸载建模为一个多用户非合作计算卸载博弈（multiuser noncooperative computation offloading game）。",
+          "supported": true
+        },
+        {
+          "text": "在 MEC 接入点覆盖范围内有一组车辆 N = {1, 2, ..., n}，每辆车产生计算密集型任务，可选择本地执行或卸载到路侧 MEC 平台。",
+          "supported": true
+        },
+        {
+          "text": "将每辆车的卸载行为视为对 MEC 服务器资源的竞争。每辆车根据自身效用（utility）和开销（cost）的权衡来决定卸载策略。",
+          "supported": true
+        },
+        {
+          "text": "博弈的收益函数综合考虑了车辆与 MEC 接入点之间的距离、应用模型与通信模型、多车对 MEC 资源的竞争。",
+          "supported": true
+        },
+        {
+          "text": "基于最佳响应机制（best response）构造分布式算法，最终收敛到唯一的纳什均衡（NE）。",
+          "supported": true
+        },
+        {
+          "text": "核心决策变量是每辆车的卸载概率 p_i（offloading probability）。",
+          "supported": true
+        },
+        {
+          "text": "每辆车通过调整自己的卸载概率 p_i 来最大化自身效用。",
+          "supported": true
+        },
+        {
+          "text": "实验表明：卸载概率随车辆与 MEC 距离增大而减小，随任务截止时间宽松度增大而减小，随车辆数量增多而减小。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文把车辆之间对MEC资源的竞争建模为多用户非合作计算卸载博弈",
+          "covered": true
+        },
+        {
+          "text": "每辆车调整自己的任务卸载概率",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0002",
+        "4c26f68525f2edb0-C0003",
+        "4c26f68525f2edb0-C0007",
+        "4c26f68525f2edb0-C0028",
+        "4c26f68525f2edb0-C0029",
+        "4c26f68525f2edb0-C0030",
+        "4c26f68525f2edb0-C0031",
+        "4c26f68525f2edb0-C0032"
+      ],
+      "answer_relevancy_reason": "生成的答案直接且完整地回答了问题的两个部分：如何建模多车计算卸载（多用户非合作博弈、收益函数设计、分布式求解等）以及核心决策变量是什么（卸载概率），内容高度相关且无冗余。",
+      "error": null
+    },
+    {
+      "case_id": "st-002-vehicular-payoff",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "收益函数由效用（utility）和价格（price）两部分组成。",
+          "supported": true
+        },
+        {
+          "text": "效用部分以任务执行时间为基础进行评估。",
+          "supported": true
+        },
+        {
+          "text": "效用部分考虑了本地执行时间、MEC卸载执行时间、最大可容忍执行时间和卸载概率。",
+          "supported": true
+        },
+        {
+          "text": "任务执行时间越短效用越大，超过截止时间则收益为负。",
+          "supported": true
+        },
+        {
+          "text": "价格部分引入了动态定价机制来调控卸载行为。",
+          "supported": true
+        },
+        {
+          "text": "价格部分考虑了定价因子、其他车辆的卸载概率和其他车辆的任务到达率。",
+          "supported": true
+        },
+        {
+          "text": "完整的收益函数形式为 u_i(p) = (t_{i,max} - t_{i,l})/t_{i,max} · (1 - p_i) + (t_{i,max} - t_{i,e})/t_{i,max} · p_i - p_i² · ρ · [1 - ∏_{j≠i}(1 - λ_j · p_j)]。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "收益函数综合考虑车辆与MEC接入点的距离。",
+          "covered": true
+        },
+        {
+          "text": "收益函数综合考虑车辆的应用与通信模型。",
+          "covered": true
+        },
+        {
+          "text": "收益函数综合考虑其他车辆对MEC资源的竞争。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "4c26f68525f2edb0-C0007",
+        "4c26f68525f2edb0-C0013",
+        "4c26f68525f2edb0-C0015",
+        "4c26f68525f2edb0-C0030"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by detailing the specific variables and components (utility and price) of the payoff function, which perfectly aligns with the factors considered in the game.",
+      "error": null
+    },
+    {
+      "case_id": "st-003-vehicular-convergence",
+      "context_count": 6,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文提出了一种基于博弈论的分布式最优响应算法（distributed best response algorithm）。",
+          "supported": true
+        },
+        {
+          "text": "该算法建立在一个多用户非合作计算卸载博弈模型之上。",
+          "supported": true
+        },
+        {
+          "text": "收益函数的设计综合考虑了车辆与MEC接入点之间的距离、应用与通信模型、以及多车对MEC资源的竞争。",
+          "supported": true
+        },
+        {
+          "text": "论文证明了在特定条件下，该分布式算法的策略更新机制能够收敛到一个唯一且稳定的纳什均衡。",
+          "supported": true
+        },
+        {
+          "text": "收缩映射条件为公式：\\sum_{j \\neq i} \\frac{|t_{i,l} - t_{i,e}| \\prod_{k \\neq i,j}(1 - \\lambda_k p_k)}{2\\rho\\, t_{i,\\max}\\left(1 - \\prod_{j \\neq i}(1 - \\lambda_j p_j)\\right)^2} < 1。",
+          "supported": true
+        },
+        {
+          "text": "由于MEC服务器的计算和通信能力远大于单车，该条件在大多数实际场景下均可满足。",
+          "supported": true
+        },
+        {
+          "text": "数值实验表明，在6辆车的场景下，每辆车的卸载概率在15次迭代内即可快速收敛到稳定的纳什均衡。",
+          "supported": true
+        },
+        {
+          "text": "在10辆车的场景下，不同任务到达率和定价因子下，平均卸载概率同样能快速收敛到稳定均衡。",
+          "supported": true
+        },
+        {
+          "text": "随着任务到达率增大，均衡平均卸载概率逐渐降低；定价因子越高，卸载概率也越低。",
+          "supported": true
+        },
+        {
+          "text": "与其他卸载方案对比，该博弈分布式算法在期望收益和时延方面均表现出性能提升。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文提出基于最佳响应的分布式卸载算法。",
+          "covered": true
+        },
+        {
+          "text": "在给定收缩条件下策略收敛到唯一稳定的纳什均衡。",
+          "covered": true
+        },
+        {
+          "text": "数值实验中六辆车的卸载概率在约15次迭代内稳定。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0003",
+        "4c26f68525f2edb0-C0016",
+        "4c26f68525f2edb0-C0028",
+        "4c26f68525f2edb0-C0029",
+        "4c26f68525f2edb0-C0033"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses all parts of the question: the proposed distributed algorithm, the equilibrium results (including the contraction condition), and the numerical convergence results (including the 15-iteration convergence for 6 vehicles and other numerical findings).",
+      "error": null
+    },
+    {
+      "case_id": "st-004-blockchain-roles",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.75,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "第一阶段（先决策）— CFP（Cloud/Fog Provider，云雾计算提供商）作为领导者（leader）率先设定计算资源卸载的单位价格。",
+          "supported": true
+        },
+        {
+          "text": "第二阶段（后决策）— 矿工（miners）作为跟随者（follower）在观察到 CFP 设定的价格后，决定各自要购买的计算服务量。",
+          "supported": true
+        },
+        {
+          "text": "论文通过逆向归纳法（backward induction）求解子博弈完美均衡：先分析第二阶段矿工的最优响应策略，再回推到第一阶段 CFP 的最优定价策略。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "第一阶段云雾资源提供商设定计算资源价格",
+          "covered": true
+        },
+        {
+          "text": "第二阶段矿工根据价格决定购买的计算服务量",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0005",
+        "df7e81c5ac2dae80-C0015"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by clearly stating who decides first and who decides second in the two-stage Stackelberg game, along with their respective roles and actions.",
+      "error": null
+    },
+    {
+      "case_id": "st-005-blockchain-pricing",
+      "context_count": 10,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文将云/雾计算资源提供商（CFP）与区块链矿工之间的交互建模为两阶段 Stackelberg 博弈。",
+          "supported": true
+        },
+        {
+          "text": "第一阶段：CFP 设定计算资源的单位价格；第二阶段：矿工根据价格决定购买的服务量。",
+          "supported": true
+        },
+        {
+          "text": "通过逆向归纳法求解子博弈精炼均衡。",
+          "supported": true
+        },
+        {
+          "text": "统一定价定义：CFP 对所有矿工收取相同单位价格，即 p_i = p。",
+          "supported": true
+        },
+        {
+          "text": "在给定价格下，矿工之间的需求竞争构成非合作博弈（MDG），论文证明了纳什均衡的存在性与唯一性。",
+          "supported": true
+        },
+        {
+          "text": "进而通过逆向归纳验证 Stackelberg 均衡的唯一性。",
+          "supported": true
+        },
+        {
+          "text": "统一定价优势：实现简单，CFP 无需追踪每个矿工的信息；对所有矿工公平。",
+          "supported": true
+        },
+        {
+          "text": "统一定价局限：CFP 利润最大化的自由度有限；最优价格等于最高可接受价格（因为利润随价格单调递增）。",
+          "supported": true
+        },
+        {
+          "text": "差别定价定义：CFP 对不同矿工设定不同的单位价格。",
+          "supported": true
+        },
+        {
+          "text": "差别定价分析路径：利用变分不等式理论证明 Stackelberg 均衡的唯一性。",
+          "supported": true
+        },
+        {
+          "text": "差别定价优势：CFP 可获得更高利润，因为能针对不同矿工的异质性进行价格歧视。",
+          "supported": true
+        },
+        {
+          "text": "差别定价局限：需要掌握每个矿工的详细信息，实现复杂度更高。",
+          "supported": true
+        },
+        {
+          "text": "数值实验结论：差别定价下 CFP 的利润始终优于或等于统一定价。",
+          "supported": true
+        },
+        {
+          "text": "但当矿工异质性降低（如区块大小方差 σ² 减小时），两种定价方案的性能差距缩小。",
+          "supported": true
+        },
+        {
+          "text": "可变奖励因子增大时，矿工对服务需求的增长激励不同，CFP 会对需求较低的矿工设定更低价格以刺激需求。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文对统一定价和差别定价都采用逆向归纳分析子博弈精炼均衡。",
+          "covered": true
+        },
+        {
+          "text": "统一定价通过矿工最佳响应验证Stackelberg均衡。",
+          "covered": true
+        },
+        {
+          "text": "差别定价借助变分不等式证明均衡唯一性。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0005",
+        "df7e81c5ac2dae80-C0006",
+        "df7e81c5ac2dae80-C0017",
+        "df7e81c5ac2dae80-C0018",
+        "df7e81c5ac2dae80-C0051",
+        "df7e81c5ac2dae80-C0052",
+        "df7e81c5ac2dae80-C0053",
+        "df7e81c5ac2dae80-C0056",
+        "df7e81c5ac2dae80-C0058"
+      ],
+      "answer_relevancy_reason": "生成答案直接且全面地回答了问题，详细阐述了论文中统一定价与差别定价的建模方法、分析路径、优缺点以及数值实验结论，完全切题。",
+      "error": null
+    },
+    {
+      "case_id": "st-006-blockchain-offload",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.75,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "PoW共识协议要求节点通过求解加密难题来竞争出块权，这是一个计算密集型的密码学哈希过程，需要大量的算力投入。",
+          "supported": true
+        },
+        {
+          "text": "许多潜在的共识节点（如物联网设备、移动设备等）本身是计算轻量级的，本地资源不足以直接参与PoW共识过程。",
+          "supported": true
+        },
+        {
+          "text": "通过将这些计算密集型任务卸载到远程云端或附近的雾计算单元，轻量级设备可以购买CFP的算力来参与共识。",
+          "supported": true
+        },
+        {
+          "text": "现有的云挖矿协议（如Stratum）可以实现这一点，且不会带来显著的传输开销。",
+          "supported": true
+        },
+        {
+          "text": "对矿工而言，通过购买算力参与共识可以获得出块奖励，提升自身收益。",
+          "supported": true
+        },
+        {
+          "text": "对区块链网络而言，更多节点参与共识会使网络的鲁棒性自然提升。",
+          "supported": true
+        },
+        {
+          "text": "对DApp生态而言，用户活跃度提高会吸引更多用户，形成正向循环。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "理性矿工本地计算资源有限",
+          "covered": true
+        },
+        {
+          "text": "PoW解题计算密集",
+          "covered": true
+        },
+        {
+          "text": "把共识计算负载卸载给云雾资源提供商成为可行选择",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0004",
+        "df7e81c5ac2dae80-C0012"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by explaining the core reasons (computation-intensive PoW and limited local resources) and elaborating on the feasibility and multi-party benefits of offloading to cloud/fog providers.",
+      "error": null
+    },
+    {
+      "case_id": "st-007-drl-gnn-generalization",
+      "context_count": 4,
+      "faithfulness": 0.7692307692307693,
+      "answer_relevancy": 0.95,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "传统DRL方案使用全连接网络或卷积神经网络来处理网络状态，但这些架构无法有效学习以图形式组织的数据",
+          "supported": true
+        },
+        {
+          "text": "网络拓扑本质上就是图结构（节点=路由器/交换机，边=链路）",
+          "supported": false
+        },
+        {
+          "text": "传统神经网络将输入展平为固定维度向量，丢失了拓扑的结构信息",
+          "supported": false
+        },
+        {
+          "text": "GNN是专门为图结构数据设计的深度学习模型，能够直接在图上进行学习和推理",
+          "supported": true
+        },
+        {
+          "text": "GNN通过消息传递（message passing）机制在节点之间聚合邻居信息",
+          "supported": false
+        },
+        {
+          "text": "GNN的操作不依赖于图的特定大小或形状",
+          "supported": true
+        },
+        {
+          "text": "论文将GNN集成到DRL智能体中，并设计了与问题匹配的action space来配合泛化能力",
+          "supported": true
+        },
+        {
+          "text": "在仅用14节点的NSFNet拓扑训练后，该DRL+GNN智能体在180个合成拓扑（20~100节点）和232个真实拓扑上进行了测试",
+          "supported": true
+        },
+        {
+          "text": "在30节点拓扑上性能接近理论流体模型",
+          "supported": true
+        },
+        {
+          "text": "100节点拓扑上仅有约15%的性能下降",
+          "supported": true
+        },
+        {
+          "text": "在NSFNet上训练的DRL+GNN智能体直接迁移到完全未见的Geant2拓扑上，在80%的实验中比传统DRL方案提升超过45%",
+          "supported": true
+        },
+        {
+          "text": "传统DRL在未见拓扑上表现很差",
+          "supported": true
+        },
+        {
+          "text": "缺乏泛化能力是传统DRL在网络领域部署时最大的障碍",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "传统神经网络不适合直接学习图结构",
+          "covered": true
+        },
+        {
+          "text": "GNN天生面向不同规模和结构的图",
+          "covered": true
+        },
+        {
+          "text": "论文将GNN嵌入DRL",
+          "covered": true
+        },
+        {
+          "text": "论文设计问题特定动作空间",
+          "covered": true
+        },
+        {
+          "text": "使策略能够迁移到未见拓扑",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0022",
+        "8277b122b6bf049f-C0029",
+        "8277b122b6bf049f-C0037"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question about why DRL+GNN can generalize to unseen network topologies. It covers the core reasons (GNN's graph adaptability, permutation invariance, problem-specific action space design) and provides experimental evidence. The answer is well-structured and highly relevant, though it includes some additional details beyond the reference answer.",
+      "error": null
+    },
+    {
+      "case_id": "st-008-drl-gnn-scale",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.75,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该论文在412个未见拓扑上进行了测试",
+          "supported": true
+        },
+        {
+          "text": "180个合成拓扑",
+          "supported": true
+        },
+        {
+          "text": "节点数从20到100不等",
+          "supported": true
+        },
+        {
+          "text": "每种规模生成20个",
+          "supported": true
+        },
+        {
+          "text": "每个拓扑跑1000个episode",
+          "supported": true
+        },
+        {
+          "text": "232个真实世界网络拓扑",
+          "supported": true
+        },
+        {
+          "text": "代理仅在一个14节点的NSFNet拓扑上训练",
+          "supported": true
+        },
+        {
+          "text": "在30节点拓扑上接近理论流体模型",
+          "supported": true
+        },
+        {
+          "text": "在100节点拓扑上仅有约15%的性能下降",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文在180个未见合成拓扑上评估了该方法",
+          "covered": true
+        },
+        {
+          "text": "论文在232个未见真实网络拓扑上评估了该方法",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0003",
+        "8277b122b6bf049f-C0029"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely answers the question by providing the exact total number of unseen topologies (412) and breaking it down into synthetic (180) and real-world (232) categories. The additional details about the experimental setup and performance degradation are highly relevant to the context of evaluating on unseen topologies.",
+      "error": null
+    },
+    {
+      "case_id": "st-009-drl-production",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "传统神经网络无法处理图结构数据",
+          "supported": true
+        },
+        {
+          "text": "缺乏泛化意味着DRL方案必须在其部署的同一网络中进行训练",
+          "supported": true
+        },
+        {
+          "text": "训练DRL智能体极其昂贵且耗时，需要大量算力和对网络的深度监测（如延迟、抖动等指标）",
+          "supported": true
+        },
+        {
+          "text": "训练过程中DRL智能体做出的决策可能导致性能下降甚至服务中断",
+          "supported": true
+        },
+        {
+          "text": "在客户的实际生产网络中进行训练是不可接受的",
+          "supported": true
+        },
+        {
+          "text": "具备泛化能力时，可以在受控实验室环境中训练，然后直接部署",
+          "supported": true
+        },
+        {
+          "text": "论文明确指出缺乏泛化能力是阻碍DRL在生产网络中使用和部署的主要障碍",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "缺乏泛化意味着模型必须在部署网络上重新训练",
+          "covered": true
+        },
+        {
+          "text": "训练耗时",
+          "covered": true
+        },
+        {
+          "text": "需要大量计算",
+          "covered": true
+        },
+        {
+          "text": "需要网络测量",
+          "covered": true
+        },
+        {
+          "text": "训练决策可能降低性能甚至造成服务中断",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0002",
+        "8277b122b6bf049f-C0023",
+        "8277b122b6bf049f-C0037"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by explaining the practical deployment obstacles caused by the lack of topological generalization, perfectly aligning with the reference answer and expanding on the root causes and ideal alternatives based on the text.",
+      "error": null
+    },
+    {
+      "case_id": "st-010-gne-local-info",
+      "context_count": 6,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.6666666666666666,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "每个参与者只需要掌握自身的局部目标函数",
+          "supported": true
+        },
+        {
+          "text": "每个参与者只需要掌握自身的局部可行集",
+          "supported": true
+        },
+        {
+          "text": "每个参与者只需要掌握耦合约束中属于自己的局部块",
+          "supported": true
+        },
+        {
+          "text": "算法是无中心节点的，不依赖任何协调中心",
+          "supported": true
+        },
+        {
+          "text": "参与者之间通过一个连通无向图进行通信",
+          "supported": true
+        },
+        {
+          "text": "每个参与者只能与其邻居进行点对点通信",
+          "supported": true
+        },
+        {
+          "text": "通信图必须是连通的",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "每个参与者只使用自己的目标函数",
+          "covered": true
+        },
+        {
+          "text": "每个参与者只使用局部可行集",
+          "covered": true
+        },
+        {
+          "text": "每个参与者只使用耦合约束的局部块",
+          "covered": true
+        },
+        {
+          "text": "每个参与者只与邻居通信",
+          "covered": true
+        },
+        {
+          "text": "不需要中心协调者掌握全部数据",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "679c02946bc59dda-C0000",
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0015",
+        "679c02946bc59dda-C0016"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses both parts of the question: the information required by each player and the communication scope. It perfectly aligns with the reference answer and is fully supported by the retrieved contexts.",
+      "error": null
+    },
+    {
+      "case_id": "st-011-gne-two-constraints",
+      "context_count": 5,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.8,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文是《Distributed Generalized Nash Equilibria Computation of Monotone Games via Double-Layer Preconditioned Proximal-Point Algorithms》（Peng Yi & Lacra Pavel, IEEE TCNS 2019）。",
+          "supported": true
+        },
+        {
+          "text": "等式仿射耦合约束采用近端交替方向乘子法（Proximal ADMM）。",
+          "supported": true
+        },
+        {
+          "text": "通过原始-对偶分析，将GNE求解转化为单调算子求零点问题，单调算子由斜对称线性算子与涉及伪次微分的算子组合而成。",
+          "supported": true
+        },
+        {
+          "text": "基于预条件近端点算法（PPPA）框架设计近端ADMM。",
+          "supported": true
+        },
+        {
+          "text": "等式约束的子博弈构造中使用了二次罚项，动机来自等式约束优化的增广拉格朗日方法。",
+          "supported": true
+        },
+        {
+          "text": "等式约束的变量更新顺序为 x → λ̄ → Z（串行），并充分利用最新可用信息。",
+          "supported": true
+        },
+        {
+          "text": "不等式仿射耦合约束采用近端并行分裂算法（Proximal Parallel Splitting）。",
+          "supported": true
+        },
+        {
+          "text": "不等式约束的更新顺序中，x 和 Z 可以并行更新，仅 λ 的更新利用最新信息。",
+          "supported": true
+        },
+        {
+          "text": "不等式约束的子博弈构造仅使用近端项和拉格朗日项，不包含二次罚项，因为不等式约束优化的增广拉格朗日方法可能涉及不可微项。",
+          "supported": true
+        },
+        {
+          "text": "不等式约束的单调算子中包含了非负象限的法锥算子以处理不等式约束。",
+          "supported": true
+        },
+        {
+          "text": "两种算法都是双层结构：内层为正则化子博弈的NE求解，外层为乘子和辅助变量的分布式更新。",
+          "supported": true
+        },
+        {
+          "text": "两者的收敛性均通过证明它们是PPPA的特例来建立。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "等式约束采用近端交替方向乘子法。",
+          "covered": true
+        },
+        {
+          "text": "不等式约束采用并行分裂型算法。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "679c02946bc59dda-C0000",
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0005",
+        "679c02946bc59dda-C0029"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by detailing how the paper handles both equality and inequality affine coupling constraints, including the specific algorithms used, their update orders, subgame constructions, and underlying motivations.",
+      "error": null
+    },
+    {
+      "case_id": "st-012-gne-double-layer",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.5,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "算法将GNE的计算分解为两个层次",
+          "supported": true
+        },
+        {
+          "text": "外层分布式地更新局部乘子和辅助变量",
+          "supported": true
+        },
+        {
+          "text": "内层对正则化子博弈进行序列化的NE求解",
+          "supported": true
+        },
+        {
+          "text": "由于引入了近端项，子博弈的伪梯度/伪次微分被正则化为强单调的",
+          "supported": true
+        },
+        {
+          "text": "可以用已有的分布式NE求解算法高效求解",
+          "supported": true
+        },
+        {
+          "text": "内层的NE求解算法不需要事先指定",
+          "supported": true
+        },
+        {
+          "text": "子博弈允许不精确求解",
+          "supported": true
+        },
+        {
+          "text": "加入了松弛步骤以加速收敛",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "外层执行乘子和辅助变量的分布式更新",
+          "covered": true
+        },
+        {
+          "text": "内层依次求解正则化子博弈的纳什均衡",
+          "covered": true
+        },
+        {
+          "text": "内层只需非精确求解强单调子博弈",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0005"
+      ],
+      "answer_relevancy_reason": "生成的答案直接且完整地回答了为什么该算法被称为双层算法的问题，详细解释了外层和内层各自的功能，并引用了论文原文作为支撑，还补充了双层结构的其他重要特点。",
+      "error": null
+    },
+    {
+      "case_id": "st-013-consensus-information",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "在基于一致性的分布式纳什均衡求解中，参与者无法直接观察所有对手的动作",
+          "supported": true
+        },
+        {
+          "text": "如果参与者 j 不是参与者 i 的邻居，那么参与者 i 无法直接获取参与者 j 的动作",
+          "supported": true
+        },
+        {
+          "text": "参与者只能与通信图上的邻居进行局部通信",
+          "supported": true
+        },
+        {
+          "text": "该方法引入了领导者跟随一致性协议",
+          "supported": true
+        },
+        {
+          "text": "每个参与者作为虚拟领导者，将自己的动作作为参考信号广播",
+          "supported": true
+        },
+        {
+          "text": "其他参与者通过一致性协议生成对所有参与者动作的估计值",
+          "supported": true
+        },
+        {
+          "text": "基于这些估计值执行梯度博弈来逼近纳什均衡",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "不能",
+          "covered": true
+        },
+        {
+          "text": "参与者只能与无向连通图中的邻居通信",
+          "covered": true
+        },
+        {
+          "text": "无法直接观察非邻居动作",
+          "covered": true
+        },
+        {
+          "text": "需要维护对其他参与者动作的估计",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0002",
+        "8097c2e32a040c2f-C0003",
+        "8097c2e32a040c2f-C0004"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely answers the question with a clear 'No', followed by a detailed and accurate explanation of the communication constraints and the consensus-based estimation mechanism used in the paper.",
+      "error": null
+    },
+    {
+      "case_id": "st-014-consensus-method",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.75,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "基于一致性的NE求解策略由领导者跟随一致性协议和梯度博弈两个主要部分组成",
+          "supported": true
+        },
+        {
+          "text": "在领导者跟随一致性协议中，每个智能体作为虚拟领导者提供自身的动作作为参考信号，其他智能体通过该协议对其它玩家的行动进行估计",
+          "supported": true
+        },
+        {
+          "text": "在梯度博弈中，每个玩家在获得对其它玩家行动的估计之后，基于梯度博弈来更新自身的策略",
+          "supported": true
+        },
+        {
+          "text": "两者的结合使得玩家无需直接观测非邻居玩家的行动，仅通过与邻居通信即可完成分布式纳什均衡求解",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "它把领导者跟随一致性协议与梯度博弈结合",
+          "covered": true
+        },
+        {
+          "text": "一致性部分估计其他参与者动作",
+          "covered": true
+        },
+        {
+          "text": "参与者再依据估计执行梯度更新",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0002",
+        "8097c2e32a040c2f-C0004"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by identifying the two main components (leader-following consensus protocol and gradient play) and explaining their specific roles, perfectly aligning with the reference answer.",
+      "error": null
+    },
+    {
+      "case_id": "st-015-consensus-convergence",
+      "context_count": 6,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.3333333333333333,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该一致性NE策略基于leader-following共识协议与梯度博弈。",
+          "supported": true
+        },
+        {
+          "text": "非二次博弈中可能存在多个孤立的纳什均衡。",
+          "supported": true
+        },
+        {
+          "text": "对非二次博弈，在一定条件下推导出了局部收敛结果。",
+          "supported": true
+        },
+        {
+          "text": "对非二次博弈，在更强条件下推导出了非局部收敛结果。",
+          "supported": true
+        },
+        {
+          "text": "对二次博弈，在给定条件下，策略使玩家动作全局收敛到纳什均衡。",
+          "supported": true
+        },
+        {
+          "text": "对二次博弈，纳什均衡是全局指数稳定的。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "对可能存在多个孤立均衡的非二次博弈，论文先给出局部收敛",
+          "covered": true
+        },
+        {
+          "text": "并在更强条件下得到非局部收敛",
+          "covered": true
+        },
+        {
+          "text": "对二次博弈，在相应条件下得到全局收敛",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0025"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by detailing the convergence conclusions for both nonquadratic and quadratic games, perfectly aligning with the reference answer and providing additional supported details.",
+      "error": null
+    },
+    {
+      "case_id": "st-016-continuous-advantages",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "连续时间框架可以直接调用控制理论中成熟的稳定性分析手段，包括Lyapunov稳定性分析和非光滑分析。",
+          "supported": true
+        },
+        {
+          "text": "连续时间模型允许使用奇异摄动、无源性、输入-状态稳定性和一致性协议等控制设计方法来构造分布式NE求解算法。",
+          "supported": true
+        },
+        {
+          "text": "连续时间方法适合处理实际物理系统中的扰动抑制、非线性动态、复杂动态和时滞问题。",
+          "supported": true
+        },
+        {
+          "text": "连续时间方法在处理约束博弈时，可通过精确罚函数转化为无约束问题，无需乘子演化，减少通信变量数量。",
+          "supported": true
+        },
+        {
+          "text": "连续时间方法放松了对目标函数光滑性和Lagrange乘子唯一性的要求。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "连续时间方法可利用成熟的Lyapunov稳定性与控制理论分析收敛。",
+          "covered": true
+        },
+        {
+          "text": "也可使用奇异摄动、无源性和输入到状态稳定性等设计工具。",
+          "covered": true
+        },
+        {
+          "text": "并便于把博弈算法与物理系统及扰动结合。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0003",
+        "8097c2e32a040c2f-C0004",
+        "b3f03bef65256ae8-C0046",
+        "b3f03bef65256ae8-C0047"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by detailing the advantages of continuous-time control methods for distributed NE solving. It covers analysis tools, design tools, physical system adaptability, and constrained game handling, all of which are highly relevant and directly answer the prompt.",
+      "error": null
+    },
+    {
+      "case_id": "st-017-ne-seeking-challenges",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8,
+      "context_relevancy": 0.75,
+      "context_recall": 0.0,
+      "answer_claims": [
+        {
+          "text": "检索到的片段主要来自几篇关于连续时间 Nash 均衡求解的研究论文（如 Ye & Hu 的 IEEE TAC 2017 论文、关于非光滑广义凸博弈的分布式 NE 搜索论文等）",
+          "supported": true
+        },
+        {
+          "text": "参与者无法直接获取非邻居的行动信息（部分信息/通信受限）",
+          "supported": true
+        },
+        {
+          "text": "目标函数和约束的非光滑性",
+          "supported": true
+        },
+        {
+          "text": "耦合/共享约束的处理",
+          "supported": true
+        },
+        {
+          "text": "现有方法多为离散时间，连续时间方案较少",
+          "supported": true
+        },
+        {
+          "text": "收敛性分析的复杂性",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "均衡通常难以解析求得",
+          "covered": false
+        },
+        {
+          "text": "不同博弈条件下不存在通用算法",
+          "covered": false
+        },
+        {
+          "text": "所设计算法的收敛性证明依赖具体博弈设定",
+          "covered": false
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0003",
+        "8097c2e32a040c2f-C0001",
+        "8097c2e32a040c2f-C0004"
+      ],
+      "answer_relevancy_reason": "The generated answer correctly identifies that a specific review paper is missing from the corpus but still extracts and lists relevant challenges from the introductions of the retrieved research papers, reasonably addressing the core of the question despite the missing specific source.",
+      "error": null
+    },
+    {
+      "case_id": "st-018-nonsmooth-constraints",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "广义凸博弈的非光滑分布式算法允许共享不等式约束",
+          "supported": true
+        },
+        {
+          "text": "允许共享等式约束",
+          "supported": true
+        },
+        {
+          "text": "允许私有不等式约束，即仅依赖于参与者自身的不等式约束",
+          "supported": true
+        },
+        {
+          "text": "目标函数和约束函数都允许是非光滑且局部Lipschitz的",
+          "supported": true
+        },
+        {
+          "text": "算法通过精确的ℓ₁罚函数将带约束的博弈转化为无约束博弈",
+          "supported": true
+        },
+        {
+          "text": "利用微分包含和奇异摄动理论进行稳定性分析",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "模型允许共享不等式约束",
+          "covered": true
+        },
+        {
+          "text": "模型允许共享等式约束",
+          "covered": true
+        },
+        {
+          "text": "模型允许只依赖参与者自身的私有不等式约束",
+          "covered": true
+        },
+        {
+          "text": "目标函数和约束都可以是局部Lipschitz的非光滑函数",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0000",
+        "68699812d603c771-C0001",
+        "68699812d603c771-C0002",
+        "68699812d603c771-C0023"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by listing the three types of allowed constraints and also includes the properties of the objective and constraint functions as mentioned in the reference answer. The additional information about the algorithm's mechanism is also highly relevant to the context of the paper.",
+      "error": null
+    },
+    {
+      "case_id": "st-019-nonsmooth-penalty",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.75,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该方法采用精确 ℓ1 惩罚函数，将原博弈中的各类约束（私有不等式、共享不等式、等式）吸收到目标函数中。",
+          "supported": true
+        },
+        {
+          "text": "原约束博弈被转化为无约束博弈：min f_i(x) + α·([g_i(x_i)]⁺ + [g(x)]⁺ + |h(x)|)。",
+          "supported": true
+        },
+        {
+          "text": "惩罚项 φ_i(x) = α([g_i(x_i)]⁺ + [g(x)]⁺ + |h(x)|)。",
+          "supported": true
+        },
+        {
+          "text": "转化后的目标函数变为非光滑的，需要借助非光滑分析工具（如微分包含）来设计和分析求解算法。",
+          "supported": true
+        },
+        {
+          "text": "当惩罚参数 α 足够大时，转化后无约束博弈的纳什均衡与原约束博弈的纳什均衡一致。",
+          "supported": true
+        },
+        {
+          "text": "在实际操作中，可以通过逐步增大惩罚参数并比较仿真结果来验证所选参数是否足够大。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "方法使用精确的l1惩罚函数把有约束博弈转化为无约束博弈",
+          "covered": true
+        },
+        {
+          "text": "再以微分包含和非光滑分析构造均衡求解过程",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0002",
+        "68699812d603c771-C0005",
+        "68699812d603c771-C0023"
+      ],
+      "answer_relevancy_reason": "生成的回答非常直接且完整地回答了问题，详细解释了如何利用精确l1惩罚函数将约束吸收到目标函数中转化为无约束博弈，并说明了后续使用微分包含和非光滑分析进行求解的过程，完全切中问题核心。",
+      "error": null
+    },
+    {
+      "case_id": "st-020-nonsmooth-convergence",
+      "context_count": 6,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.3333333333333333,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "集中式微分包含指数收敛到强单调博弈的一个纳什均衡",
+          "supported": true
+        },
+        {
+          "text": "集中式假设每个参与者可以获取所有其他参与者的策略信息",
+          "supported": true
+        },
+        {
+          "text": "集中式采用基于精确 ℓ1 罚函数的微分包含方法，利用非光滑分析证明收敛性",
+          "supported": true
+        },
+        {
+          "text": "分布式微分包含指数收敛到强单调博弈的一个纳什均衡的 η-邻域",
+          "supported": true
+        },
+        {
+          "text": "η 是一个正数常数，但可以任意小",
+          "supported": true
+        },
+        {
+          "text": "分布式基于领导者-跟随者一致性方案",
+          "supported": true
+        },
+        {
+          "text": "分布式稳定性分析结合了非光滑分析和奇异摄动理论",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "在强单调条件下",
+          "covered": true
+        },
+        {
+          "text": "集中式微分包含指数收敛到纳什均衡",
+          "covered": true
+        },
+        {
+          "text": "分布式实现指数收敛到均衡的任意小η邻域",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0001",
+        "68699812d603c771-C0005"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by detailing the differences in convergence conclusions between the centralized and distributed implementations, including the exact vs. approximate convergence, assumptions, and analytical tools used.",
+      "error": null
+    },
+    {
+      "case_id": "st-021-dynamic-game-model",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.5,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "环境被刻画为一个确定性离散时间动力系统，包含一组状态和状态转移方程。",
+          "supported": true
+        },
+        {
+          "text": "博弈从某个初始状态出发，在每个时间步，参与者根据当前状态采取行动，获得效用值，然后系统转移到新的状态。",
+          "supported": true
+        },
+        {
+          "text": "这一状态转移序列在（可能无限的）时间范围内反复进行。",
+          "supported": true
+        },
+        {
+          "text": "效用函数、状态转移函数和约束条件都可以是非平稳的（nonstationary），即随时间变化。",
+          "supported": true
+        },
+        {
+          "text": "每个参与者拥有自己的效用函数，该函数依赖于系统的当前状态以及所有参与者的当前行动。",
+          "supported": true
+        },
+        {
+          "text": "状态集合和行动集合都受到约束。",
+          "supported": true
+        },
+        {
+          "text": "每个参与者的目标是：给定其他参与者的行动序列，找到一个行动序列来最大化自己的长期累积效用。",
+          "supported": true
+        },
+        {
+          "text": "一般地，一个动态博弈可以表示为一组耦合的最优控制问题（OCPs），求解困难。",
+          "supported": true
+        },
+        {
+          "text": "动态势博弈的特殊之处在于，其均衡解可以通过求解单个多变量最优控制问题（MOCP）来获得。",
+          "supported": true
+        },
+        {
+          "text": "论文展示了四类应用：智能电网中的能量需求控制、具有有限电池寿命的中继网络流优化、带有电池约束的上行多址接入通信、以及时变信道下的调度博弈。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "动态博弈由状态集合、状态转移方程、参与者动作和依赖当前状态与联合动作的效用构成",
+          "covered": true
+        },
+        {
+          "text": "状态和动作受约束",
+          "covered": true
+        },
+        {
+          "text": "过程在多个时间步上演化",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8cd42a00c01c48e6-C0001",
+        "8cd42a00c01c48e6-C0002"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by detailing how the environment is modeled and how participants make decisions, fully aligning with the core aspects of the question.",
+      "error": null
+    },
+    {
+      "case_id": "st-022-dynamic-reduction",
+      "context_count": 0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.0,
+      "context_recall": 0.0,
+      "answer_claims": [
+        {
+          "text": "势博弈的特殊结构将多主体耦合的博弈问题转化为一个单目标的优化问题。",
+          "supported": false
+        },
+        {
+          "text": "一般动态博弈需要为每个参与者建立值函数，形成多个耦合的Bellman方程。",
+          "supported": false
+        },
+        {
+          "text": "动态势博弈只需对势函数做动态规划或最优控制，避免了策略之间的耦合约束。",
+          "supported": false
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "一般动态博弈对应多个耦合的最优控制问题。",
+          "covered": false
+        },
+        {
+          "text": "动态势博弈可通过一个相关的多变量最优控制问题求解，从而避免直接处理整组耦合问题。",
+          "covered": false
+        }
+      ],
+      "relevant_context_ids": [],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question, explaining the core reasons why dynamic potential games are easier to solve than general dynamic games, such as transforming coupled problems into a single optimization problem.",
+      "error": null
+    },
+    {
+      "case_id": "st-023-dynamic-applications",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文《Dynamic Potential Games With Constraints: Fundamentals and Applications in Communications》给出了四类通信应用示例",
+          "supported": true
+        },
+        {
+          "text": "第一类是智能电网网络中的能量需求控制，将问题建模为线性-二次-动态博弈（LQDG），具有已知的解析解",
+          "supported": true
+        },
+        {
+          "text": "第二类是网络流优化，中继节点具有有限的链路容量和有限的电池寿命，用户目标是最大化流量同时优化中继电池的使用",
+          "supported": true
+        },
+        {
+          "text": "第三类是上行多址通信，用户设备配备电池，需要优化电池的使用，使博弈具有动态特性",
+          "supported": true
+        },
+        {
+          "text": "第四类是两个最优调度博弈，包括比例公平调度和等速率调度，多个用户共享时变信道，问题是非凹、非平稳的",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "智能电网能量需求控制",
+          "covered": true
+        },
+        {
+          "text": "带链路容量和电池限制的网络流优化",
+          "covered": true
+        },
+        {
+          "text": "电池受限用户的上行多址通信",
+          "covered": true
+        },
+        {
+          "text": "时变信道下的两类最优调度博弈",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0004",
+        "8cd42a00c01c48e6-C0005",
+        "8cd42a00c01c48e6-C0048"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by accurately listing the four communication applications mentioned in the paper, along with relevant and correct details for each application.",
+      "error": null
+    },
+    {
+      "case_id": "st-024-uav-decomposition",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "多无人机节能覆盖部署问题被分解为覆盖最大化和功率控制两个步骤。",
+          "supported": true
+        },
+        {
+          "text": "覆盖最大化优化无人机的部署位置，使目标区域的覆盖面积最大化。",
+          "supported": true
+        },
+        {
+          "text": "功率控制对各无人机的载波发射功率进行调控，以实现节能通信。",
+          "supported": true
+        },
+        {
+          "text": "这两个步骤均被证明是精确势博弈（Exact Potential Games, EPG）。",
+          "supported": true
+        },
+        {
+          "text": "都存在纳什均衡（NE）点。",
+          "supported": true
+        },
+        {
+          "text": "采用基于空间自适应博弈的多无人机节能覆盖部署算法（MUECD-SAP）来依次执行这两个步骤。",
+          "supported": true
+        },
+        {
+          "text": "保证最优的节能覆盖部署。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "问题被分为覆盖最大化和功率控制两个步骤",
+          "covered": true
+        },
+        {
+          "text": "两者都被证明是势博弈",
+          "covered": true
+        },
+        {
+          "text": "并具有纳什均衡点",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0033",
+        "e124a1b43d67eaf0-C0045"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by explicitly naming the two steps (coverage maximization and power control) and providing relevant additional context from the paper.",
+      "error": null
+    },
+    {
+      "case_id": "st-025-uav-algorithm",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该论文提出了基于空间自适应博弈的多无人机节能覆盖部署算法（MUECD-SAP）。",
+          "supported": true
+        },
+        {
+          "text": "论文将多无人机节能覆盖问题建模为一个博弈论框架。",
+          "supported": true
+        },
+        {
+          "text": "将覆盖部署问题分解为两个子问题：覆盖最大化和功率控制。",
+          "supported": true
+        },
+        {
+          "text": "采用集中-分布式优化架构降低策略选择复杂度。",
+          "supported": true
+        },
+        {
+          "text": "两个子问题均被证明为精确势博弈（EPG），且至少存在一个纳什均衡点。",
+          "supported": true
+        },
+        {
+          "text": "覆盖最大化部分采用二元对数线性学习规则，保证收敛到最优纳什均衡。",
+          "supported": true
+        },
+        {
+          "text": "功率控制部分采用空间自适应博弈（SAP），实现分布式功率收敛到稳定分配状态。",
+          "supported": true
+        },
+        {
+          "text": "该算法最终达到次优的节能覆盖部署方案。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文采用基于空间自适应博弈的MUECD-SAP算法。",
+          "covered": true
+        },
+        {
+          "text": "联合完成覆盖最大化和功率控制。",
+          "covered": true
+        },
+        {
+          "text": "以获得节能覆盖部署。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0002",
+        "e124a1b43d67eaf0-C0022",
+        "e124a1b43d67eaf0-C0045"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by explicitly naming the algorithm (MUECD-SAP) and providing detailed, highly relevant explanations of its game-theoretic framework, problem decomposition, and specific learning rules used for deployment.",
+      "error": null
+    },
+    {
+      "case_id": "st-026-uav-coverage",
+      "context_count": 5,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该模型采用'覆盖概率'（coverage probability）来描述成功覆盖",
+          "supported": true
+        },
+        {
+          "text": "引入了'软覆盖'（soft coverage）的概念",
+          "supported": true
+        },
+        {
+          "text": "与传统方法使用固定阈值判定是否覆盖成功不同，该模型将多架相关无人机的覆盖概率进行组合，综合考虑相邻无人机之间的协同影响",
+          "supported": true
+        },
+        {
+          "text": "在建模覆盖概率时，还纳入了信号天线增益和路径损耗等因素",
+          "supported": true
+        },
+        {
+          "text": "该模型兼顾的是'能效通信'（energy-efficient communication）",
+          "supported": true
+        },
+        {
+          "text": "具体做法是将覆盖部署问题分解为两个步骤——覆盖最大化（coverage maximization）和功率控制（power control）",
+          "supported": true
+        },
+        {
+          "text": "两者均被建模为精确势博弈（exact potential games）并证明存在纳什均衡点",
+          "supported": true
+        },
+        {
+          "text": "通过传输功率控制和位置调整，在实现覆盖最大化的同时降低能耗，解决无人机能量不足的问题",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "模型以覆盖概率描述成功覆盖",
+          "covered": true
+        },
+        {
+          "text": "在协同覆盖部署中同时考虑能量效率和通信功率控制",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0002",
+        "e124a1b43d67eaf0-C0003",
+        "e124a1b43d67eaf0-C0045"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses both parts of the question: how successful coverage is described (using coverage probability and soft coverage) and what communication goals are considered (energy-efficient communication, specifically through coverage maximization and power control).",
+      "error": null
+    },
+    {
+      "case_id": "st-027-hf-objective",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.5,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "这篇论文的优化目标是最大化整个高频(HF)通信系统的全局通信概率。",
+          "supported": true
+        },
+        {
+          "text": "论文研究了HF通信系统中的信道分集问题，将其建模为匹配-势博弈(matching-potential game)框架。",
+          "supported": true
+        },
+        {
+          "text": "目标是在有限的HF频谱资源下，通过合理分配信道和发射机资源，使整个系统的通信概率达到最大。",
+          "supported": true
+        },
+        {
+          "text": "论文将这一优化问题分解为两个子问题：信道-发射机匹配问题和发射机分配问题。",
+          "supported": true
+        },
+        {
+          "text": "信道-发射机匹配问题建模为多对一匹配博弈(many-to-one matching game)。",
+          "supported": true
+        },
+        {
+          "text": "发射机分配问题在信道-发射机匹配结果的基础上，决定每个发射机与哪个用户设备(UE)通信，建模为势博弈(potential game)。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "在频谱有限且信道共享的条件下",
+          "covered": true
+        },
+        {
+          "text": "方法为不同通信需求的用户设备选择发射机与信道",
+          "covered": true
+        },
+        {
+          "text": "以最大化整个HF系统的通信概率",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8ea212392df2fe65-C0000",
+        "8ea212392df2fe65-C0001"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by stating the optimization objective and providing relevant context on how the problem is modeled and decomposed to achieve this objective.",
+      "error": null
+    },
+    {
+      "case_id": "st-028-hf-decomposition",
+      "context_count": 9,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.3333333333333333,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "通信选择策略 profiles 表示为三维矩阵，涉及发射机集合 M、HF信道集合 F 和用户终端（UE）集合 N 三个维度。",
+          "supported": true
+        },
+        {
+          "text": "可能的策略选择方案数量巨大，例如当系统包含12个发射机、6个UE、10个HF信道且 k=3 时，策略空间规模约为 1.1338×10²⁶。",
+          "supported": true
+        },
+        {
+          "text": "论文提出将原始优化问题 P 分解为两个子问题，通过降维求解大幅降低复杂度。",
+          "supported": true
+        },
+        {
+          "text": "第一步为信道匹配（子问题 P1），将发射机与HF信道的配对建模为多对一匹配博弈，采用基于延迟接受（DA）算法的多轮稳定匹配算法（MRMSA）。",
+          "supported": true
+        },
+        {
+          "text": "定理证明每轮算法保证收敛到局部稳定匹配。",
+          "supported": true
+        },
+        {
+          "text": "第二步为发射机分配（子问题 P2），在信道匹配结果确定的前提下，将UE选择发射机的问题建模为势博弈（potential game）。",
+          "supported": true
+        },
+        {
+          "text": "势博弈的特性使得各UE可以通过分布式自主决策实现全局目标。",
+          "supported": true
+        },
+        {
+          "text": "两个子问题的解组合起来即构成原问题 P 的解。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "它把原问题分解为信道匹配和发射机分配两个子问题",
+          "covered": true
+        },
+        {
+          "text": "先优化发射机与信道的匹配",
+          "covered": true
+        },
+        {
+          "text": "再在该匹配下为用户设备选择发射机",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8ea212392df2fe65-C0001",
+        "8ea212392df2fe65-C0004",
+        "8ea212392df2fe65-C0006"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question. It explains the cause of the huge strategy space and details the dimensionality reduction method (decomposing into channel matching and transmitter allocation sub-problems) along with the specific game-theoretic frameworks used to solve them, which perfectly answers how the solving difficulty is reduced.",
+      "error": null
+    },
+    {
+      "case_id": "st-029-equality-problem",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文题为《Generalized Nash Equilibrium Seeking Strategy for Nonsmooth Noncooperative Game with Equality Constraints》",
+          "supported": true
+        },
+        {
+          "text": "研究的核心问题是带有等式约束的非光滑非合作博弈的纳什均衡求解问题",
+          "supported": true
+        },
+        {
+          "text": "每个参与者都试图最大化自身的收益函数，且该收益函数同时依赖于自身策略和其他参与者的策略",
+          "supported": true
+        },
+        {
+          "text": "各参与者的收益函数可以是不可微的，适用于电力市场中考虑传输限制时的非光滑成本函数、参与者风险厌恶导致收益函数不可微等实际场景",
+          "supported": true
+        },
+        {
+          "text": "每个参与者受到私有的局部线性等式约束",
+          "supported": true
+        },
+        {
+          "text": "采用 l₁ 罚函数处理等式约束",
+          "supported": true
+        },
+        {
+          "text": "基于微分包含和次梯度方法设计纳什均衡求解算法",
+          "supported": true
+        },
+        {
+          "text": "证明了算法的状态解在有限时间内进入可行集且不会逃逸",
+          "supported": true
+        },
+        {
+          "text": "证明了算法的平衡点与博弈的纳什均衡等价",
+          "supported": true
+        },
+        {
+          "text": "利用 Lyapunov 方法证明了参与者策略指数收敛到纳什均衡",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "研究纳什均衡求解问题",
+          "covered": true
+        },
+        {
+          "text": "每个参与者具有依赖联合策略的非光滑收益函数",
+          "covered": true
+        },
+        {
+          "text": "受到私有局部线性等式约束",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "f9dcb1528729941e-C0000",
+        "f9dcb1528729941e-C0001",
+        "f9dcb1528729941e-C0002",
+        "f9dcb1528729941e-C0027"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by clearly stating the core research problem and elaborating on the background, key features, methods, and theoretical results, all of which are highly relevant and provide a complete picture of what the paper studies.",
+      "error": null
+    },
+    {
+      "case_id": "st-030-equality-method",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该等式约束纳什均衡（NE）求解策略使用了l1惩罚函数处理玩家的局部等式约束，将带约束的博弈问题转化为无约束问题。",
+          "supported": true
+        },
+        {
+          "text": "策略基于微分包含框架进行设计，以处理非光滑动态系统。",
+          "supported": true
+        },
+        {
+          "text": "次梯度方法与微分包含结合使用，用于处理玩家不可微的收益函数。",
+          "supported": true
+        },
+        {
+          "text": "Lyapunov方法用于证明所提出策略的指数收敛性。",
+          "supported": true
+        },
+        {
+          "text": "这些技术的组合使得该策略能够处理具有局部线性等式约束的非光滑非合作博弈问题，并在任意给定初始值下保证收敛。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "方法使用l1惩罚函数处理等式约束",
+          "covered": true
+        },
+        {
+          "text": "结合微分包含设计均衡求解策略",
+          "covered": true
+        },
+        {
+          "text": "结合次梯度方法设计均衡求解策略",
+          "covered": true
+        },
+        {
+          "text": "结合Lyapunov分析证明均衡求解策略",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0003",
+        "f9dcb1528729941e-C0000",
+        "f9dcb1528729941e-C0001",
+        "f9dcb1528729941e-C0027"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by listing the main techniques (l1 penalty function, differential inclusions, subgradient methods, and Lyapunov methods) and explaining their specific roles, perfectly aligning with the reference answer.",
+      "error": null
+    },
+    {
+      "case_id": "st-031-equality-feasibility",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 0.0,
+      "answer_claims": [
+        {
+          "text": "将等式约束转化为无约束问题中的罚项，构造罚函数|h(x)|并加入目标函数中，当α足够大时迫使策略趋向可行域。",
+          "supported": true
+        },
+        {
+          "text": "要求等式约束的系数向量线性无关，且存在一个点满足所有等式约束并严格位于不等式约束内部（强Slater条件）。",
+          "supported": true
+        },
+        {
+          "text": "约束博弈的任意NE是无约束罚博弈的NE，无约束罚博弈的NE若满足原约束则是约束博弈的NE。",
+          "supported": true
+        },
+        {
+          "text": "对于不可行点，罚函数的次梯度存在下界c>0，确保动力学方程将状态推回可行域。",
+          "supported": true
+        },
+        {
+          "text": "通过Lyapunov方法证明状态指数收敛到Nash均衡点，同时满足局部约束条件。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文证明状态解会在有限时间进入由各参与者线性等式约束定义的可行集，并在进入后不再离开。",
+          "covered": false
+        },
+        {
+          "text": "随后在强单调等假设下证明指数收敛。",
+          "covered": false
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0006",
+        "f9dcb1528729941e-C0000",
+        "f9dcb1528729941e-C0023",
+        "f9dcb1528729941e-C0027"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by detailing the specific mechanisms (l1 penalty function, strong Slater condition, equivalence proof, subgradient lower bound assumption, and Lyapunov convergence) used in the paper to ensure the state satisfies feasible constraints.",
+      "error": null
+    },
+    {
+      "case_id": "st-032-data-sharing-motive",
+      "context_count": 0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.0,
+      "context_recall": 0.0,
+      "answer_claims": [
+        {
+          "text": "数据往往是组织的关键资产，共享数据可能让竞争对手获得关于自身业务模式、客户群体、运营效率等方面的洞察，从而削弱自身的竞争壁垒。",
+          "supported": false
+        },
+        {
+          "text": "数据中可能隐含组织的战略方向、市场布局、技术路线等敏感信息，即使经过脱敏处理，竞争对手仍可能通过数据分析推断出有价值的商业情报。",
+          "supported": false
+        },
+        {
+          "text": "数据本身具有商业价值，免费共享意味着放弃潜在的收入来源，且投入成本采集和处理的数据共享后对方可能搭便车。",
+          "supported": false
+        },
+        {
+          "text": "存在信任与博弈困境，担心对方不遵守共享协议超范围使用数据，且缺乏有效的监督和惩罚机制。",
+          "supported": false
+        },
+        {
+          "text": "数据可能涉及用户隐私，共享面临法律风险，且行业监管和合同义务可能限制向竞争对手披露数据。",
+          "supported": false
+        },
+        {
+          "text": "组织内部存在阻力，数据部门将其视为自身价值的体现，管理层担心共享后被质疑，内部考核机制不鼓励对外协作。",
+          "supported": false
+        },
+        {
+          "text": "存在不对称收益担忧，弱势方担心共享后强者获益更大，强势方则担心帮助对手成长反而威胁自身地位。",
+          "supported": false
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "组织担心共享数据会改善竞争者的服务质量和竞争力。",
+          "covered": false
+        },
+        {
+          "text": "自身还可能因数据流失而损失业务。",
+          "covered": false
+        },
+        {
+          "text": "因此缺乏共享动力。",
+          "covered": false
+        }
+      ],
+      "relevant_context_ids": [],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by providing multiple detailed and logical reasons why competing organizations might refuse to share data, covering competitive advantage, strategic risks, economic factors, trust issues, legal constraints, internal resistance, and asymmetric benefits.",
+      "error": null
+    },
+    {
+      "case_id": "st-033-data-sharing-mechanism",
+      "context_count": 6,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.8333333333333334,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文引入了'数据竞争力'概念作为数据交易的驱动力。",
+          "supported": true
+        },
+        {
+          "text": "具有潜在竞争关系的组织不愿共享数据，是因为担心数据共享会提升竞争对手的竞争力。",
+          "supported": true
+        },
+        {
+          "text": "该机制将'数据竞争力'作为激励因子，使数据提供方获得金钱、声誉、技术进步和商业竞争力收益，实现双赢。",
+          "supported": true
+        },
+        {
+          "text": "激励机制被建模为双层Stackelberg博弈（上层数据需求方，下层数据提供方）。",
+          "supported": true
+        },
+        {
+          "text": "论文给出了机制的闭式解，并证明了Stackelberg均衡的存在性和唯一性。",
+          "supported": true
+        },
+        {
+          "text": "提出了基于梯度的迭代算法求解Stackelberg均衡。",
+          "supported": true
+        },
+        {
+          "text": "算法流程包括初始化竞争因子、迭代更新（需求方决定收集量，提供方梯度上升更新竞争因子）、以及基于相对变化量的终止条件。",
+          "supported": true
+        },
+        {
+          "text": "仿真表明算法能收敛，且机制相比无数据共享显著提升了数据共享性能。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文把数据竞争力作为交易驱动力。",
+          "covered": true
+        },
+        {
+          "text": "将激励机制建模为Stackelberg博弈。",
+          "covered": true
+        },
+        {
+          "text": "用基于梯度的迭代算法求取均衡。",
+          "covered": true
+        },
+        {
+          "text": "仿真表明该机制能改善数据共享性能。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "d65d7a8617754fb7-C0001",
+        "d65d7a8617754fb7-C0005",
+        "d65d7a8617754fb7-C0024",
+        "d65d7a8617754fb7-C0025",
+        "d65d7a8617754fb7-C0028"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses both parts of the question (the incentive mechanism and the solution method) with high precision, without including any irrelevant information.",
+      "error": null
+    },
+    {
+      "case_id": "st-034-cognitive-two-games",
+      "context_count": 5,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文提出了两种局部交互博弈，分别优化不同的全局目标",
+          "supported": true
+        },
+        {
+          "text": "局部利他博弈优化目标：最大化网络吞吐量",
+          "supported": true
+        },
+        {
+          "text": "局部利他博弈机制：每个认知无线电用户不仅考虑自身的收益，还考虑其邻居用户的收益",
+          "supported": true
+        },
+        {
+          "text": "局部利他博弈代价：邻居之间需要交换相对较多的信息（包括当前选择的信道和各自可达吞吐量）",
+          "supported": true
+        },
+        {
+          "text": "局部拥塞博弈优化目标：最小化网络碰撞水平",
+          "supported": true
+        },
+        {
+          "text": "局部拥塞博弈机制：每个认知无线电用户最小化与其竞争的邻居数量",
+          "supported": true
+        },
+        {
+          "text": "局部拥塞博弈代价：邻居之间只需交换较少的信息（仅需当前选择的信道）",
+          "supported": true
+        },
+        {
+          "text": "两者对比：局部利他博弈始终能最大化吞吐量，但通信开销较大；局部拥塞博弈通信开销较小，能最优地最小化碰撞，并在干扰范围较小时同样达到吞吐量最优。实际选择取决于具体应用场景中吞吐量与通信开销之间的权衡。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "局部利他博弈同时考虑用户及其邻居收益",
+          "covered": true
+        },
+        {
+          "text": "局部利他博弈以最大化网络吞吐量",
+          "covered": true
+        },
+        {
+          "text": "局部拥塞博弈让用户减少竞争邻居数",
+          "covered": true
+        },
+        {
+          "text": "局部拥塞博弈以最小化网络碰撞水平",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0003",
+        "82314d0bd4754f24-C0031",
+        "82314d0bd4754f24-C0032",
+        "82314d0bd4754f24-C0033"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by clearly stating the optimization goals, mechanisms, and trade-offs of both the local altruistic game and the local congestion game.",
+      "error": null
+    },
+    {
+      "case_id": "st-035-cognitive-csap",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "C-SAP在认知无线信道选择中起到实现分布式信道选择全局优化的作用。",
+          "supported": true
+        },
+        {
+          "text": "C-SAP是空间自适应博弈（SAP）的扩展版本，用于让多个认知用户自主、快速地完成信道选择，达到全局最优。",
+          "supported": true
+        },
+        {
+          "text": "每次迭代中，C-SAP自主选出多个互不相邻的认知用户，让它们并发地更新各自的信道选择策略。",
+          "supported": true
+        },
+        {
+          "text": "不需要全局协调机制，借助公共控制信道（CCC）和类似802.11 DCF的竞争机制来实现用户选择。",
+          "supported": true
+        },
+        {
+          "text": "每个认知用户生成随机退避时间，到期后发送更新请求（URTS），相邻用户则冻结退避计时器并保持静默。",
+          "supported": true
+        },
+        {
+          "text": "SAP每次迭代只能选择一个用户更新信道，而C-SAP允许多个非相邻用户并发更新，因此收敛速度更快。",
+          "supported": true
+        },
+        {
+          "text": "两者都能以任意高概率收敛到全局最优，但C-SAP在统计意义上所需的迭代次数更少。",
+          "supported": true
+        },
+        {
+          "text": "C-SAP可与局部利他博弈（最大化网络吞吐量）和局部拥塞博弈（最小化网络碰撞水平）配合使用。",
+          "supported": true
+        },
+        {
+          "text": "两者均仅依赖局部邻居信息即可实现全局优化，适合大规模认知无线电网络的分布式部署。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "并发空间自适应博弈C-SAP是对SAP的扩展",
+          "covered": true
+        },
+        {
+          "text": "用于让分布式用户更快速且自主地达到全局最优信道选择",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0024",
+        "82314d0bd4754f24-C0027",
+        "82314d0bd4754f24-C0033"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by explaining the role, core function, working mechanism, advantages over SAP, and associated game models of C-SAP in cognitive radio channel selection.",
+      "error": null
+    },
+    {
+      "case_id": "st-036-cognitive-local",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "认知无线电网络（CRN）中不存在中心控制节点来收集全局信息并做出统一决策。",
+          "supported": true
+        },
+        {
+          "text": "局部交互博弈允许每个认知用户仅根据本地信息自主做出信道选择决策。",
+          "supported": true
+        },
+        {
+          "text": "局部利他博弈中，每个用户不仅考虑自身收益，还考虑其邻居的收益，能够最大化网络吞吐量。",
+          "supported": true
+        },
+        {
+          "text": "局部拥塞博弈中，每个用户最小化与其竞争的邻居数量，能够最小化网络碰撞水平，并在干扰范围较小时达到接近最优的吞吐量。",
+          "supported": true
+        },
+        {
+          "text": "由于不需要在中心点收集信息，该方法天然适合大规模网络。",
+          "supported": true
+        },
+        {
+          "text": "局部利他博弈始终最大化吞吐量，但需要邻居间交换更多信息。",
+          "supported": true
+        },
+        {
+          "text": "局部拥塞博弈需要的信息交换更少，且能最小化碰撞，在干扰范围较小时效果与利他博弈相当。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "该网络缺少中心控制",
+          "covered": true
+        },
+        {
+          "text": "用户只能获得邻居的局部信息",
+          "covered": true
+        },
+        {
+          "text": "干扰也主要发生在邻居之间",
+          "covered": true
+        },
+        {
+          "text": "局部交互博弈适合描述这种局部耦合并用局部信息追求全局优化",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0031",
+        "82314d0bd4754f24-C0032",
+        "82314d0bd4754f24-C0033"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses the question by explaining the reasons for adopting local interaction games in cognitive radio channel selection, including the lack of centralized control, achieving global optimization with local information, and suitability for large-scale networks. It also provides detailed context on the specific game models used.",
+      "error": null
+    },
+    {
+      "case_id": "st-037-colocated-resources",
+      "context_count": 5,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.8,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "联合分配的资源包括上行链路无线电资源、下行链路无线电资源和计算资源",
+          "supported": true
+        },
+        {
+          "text": "上行链路和下行链路无线电资源由各MNO管理，计算资源由CRP控制",
+          "supported": true
+        },
+        {
+          "text": "所有参与者的目标都是最小化自身的OPEX（运营支出）",
+          "supported": true
+        },
+        {
+          "text": "能耗是OPEX的主要组成部分",
+          "supported": true
+        },
+        {
+          "text": "CRP的目标是最小化总能耗成本，约束条件包括任务期望完成时间、计算资源预算、以及计算队列和下行队列的稳定性",
+          "supported": true
+        },
+        {
+          "text": "每个MNO的目标是最小化总能耗成本，约束条件包括任务期望完成时间、上行/下行资源预算、以及上行队列、下行队列和计算队列的稳定性",
+          "supported": true
+        },
+        {
+          "text": "每个MNO的优化问题依赖于CRP和其他MNO的资源分配决策",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "模型联合分配上行带宽、下行带宽和计算资源",
+          "covered": true
+        },
+        {
+          "text": "移动网络运营商与计算资源提供商都以降低自身运营支出为目标",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0003",
+        "017bb185b06de72c-C0007",
+        "017bb185b06de72c-C0024"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question: it lists the jointly allocated resources (uplink, downlink, and computing) and specifies the optimization objectives for each participant (minimizing OPEX/energy cost), along with their specific constraints.",
+      "error": null
+    },
+    {
+      "case_id": "st-038-colocated-queue",
+      "context_count": 11,
+      "faithfulness": 0.8888888888888888,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.8181818181818182,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文将任务卸载的三个阶段建模为一条流水线式队列网络",
+          "supported": true
+        },
+        {
+          "text": "上行链路传输队列建模为M/M/1队列，并给出了上行时延计算公式",
+          "supported": true
+        },
+        {
+          "text": "计算队列建模为多类M/M/1处理器共享队列",
+          "supported": false
+        },
+        {
+          "text": "下行链路传输队列建模为多类M/M/1处理器共享队列，并给出了下行时延计算公式",
+          "supported": true
+        },
+        {
+          "text": "端到端时延约束为三个阶段时延之和小于等于时隙持续时间",
+          "supported": true
+        },
+        {
+          "text": "多个MNOs和一个CRP共处于同一基站塔站，主要成本是OPEX，能耗是核心",
+          "supported": true
+        },
+        {
+          "text": "一个参与者的能耗受其他参与者资源分配决策的影响，形成利益冲突",
+          "supported": true
+        },
+        {
+          "text": "问题形式化为GNEP，每个参与者独立最小化自身OPEX，约束集合相互耦合",
+          "supported": true
+        },
+        {
+          "text": "求解方法包括惩罚算法与联合凸博弈，并给出了拉格朗日函数形式",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文把任务卸载建模为排队网络",
+          "covered": true
+        },
+        {
+          "text": "根据各级队列性能计算端到端时延",
+          "covered": true
+        },
+        {
+          "text": "把运营商与计算资源提供商之间存在耦合约束和利益冲突的资源分配转化为GNE问题",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0003",
+        "017bb185b06de72c-C0007",
+        "017bb185b06de72c-C0009",
+        "017bb185b06de72c-C0012",
+        "017bb185b06de72c-C0014",
+        "017bb185b06de72c-C0021",
+        "017bb185b06de72c-C0041",
+        "017bb185b06de72c-C0051"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and comprehensively addresses both parts of the question: how task offloading latency is modeled (using a pipeline of queues and end-to-end constraints) and how the GNE problem is formed (identifying players, conflicting interests, coupling constraints, and solution methods).",
+      "error": null
+    },
+    {
+      "case_id": "st-039-colocated-algorithms",
+      "context_count": 7,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.7142857142857143,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "论文提出的两个去中心化算法分别是惩罚 NEP 算法（Penalized NEP Algorithm）和惩罚联合 NEP 算法（Penalized Joint NEP Algorithm）",
+          "supported": true
+        },
+        {
+          "text": "惩罚 NEP 算法通过向耦合约束引入惩罚参数，将 GNEP 转化为 NEP，求解广义 Nash 均衡（GNE）",
+          "supported": true
+        },
+        {
+          "text": "惩罚联合 NEP 算法将 GNEP 重新建模为联合凸博弈，求解受限广义 Nash 均衡（restricted GNE）",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "两个算法都通过对耦合约束引入惩罚参数工作",
+          "covered": true
+        },
+        {
+          "text": "惩罚NEP算法求GNE",
+          "covered": true
+        },
+        {
+          "text": "联合惩罚NEP算法进一步协调乘子以求受限GNE",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0003",
+        "017bb185b06de72c-C0007",
+        "017bb185b06de72c-C0044",
+        "017bb185b06de72c-C0051"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question by clearly identifying the two algorithms and the specific equilibria they seek (GNE and restricted GNE), providing additional context on their mechanisms without deviating from the core question.",
+      "error": null
+    },
+    {
+      "case_id": "st-040-colocated-appendix",
+      "context_count": 6,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.3333333333333333,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "原始端到端时延函数中包含形如 1/(1−ν_u) 等的项，当队列利用率参数趋近于 1 时，这些项趋向无穷大，产生无穷不连续。",
+          "supported": true
+        },
+        {
+          "text": "数学附录引入一个常数 ε，对参数施加约束 ν_u ≤ 1 − ε 等，使得原来可能趋于无穷的项被统一替换为有界的常数 1/ε。",
+          "supported": true
+        },
+        {
+          "text": "变换后的函数 h̃_u 是原始端到端时延函数 h_u 的上界。",
+          "supported": true
+        },
+        {
+          "text": "h̃_u 关于各资源变量（计算资源 m_u、上行无线资源 ω^ul_u、下行无线资源 ω^dl_u）是凸函数。",
+          "supported": true
+        },
+        {
+          "text": "凸性使得端到端时延约束可以作为凸耦合约束纳入广义纳什均衡问题（GNEP）的求解框架中。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "附录用正数ε限制队列利用率远离1",
+          "covered": true
+        },
+        {
+          "text": "以有限上界替换端到端时延中的无穷不连续",
+          "covered": true
+        },
+        {
+          "text": "在该近似下，时延约束对计算、上行和下行资源变量呈凸性",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "017bb185b06de72c-C0028",
+        "0f27423c825612c0-C0000"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question: how the infinite discontinuities are handled (using a constant ε to bound the queue utilization parameters) and the resulting properties (upper bound and convexity with respect to resource variables).",
+      "error": null
+    },
+    {
+      "case_id": "st-041-partial-vehicular-field",
+      "context_count": 8,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.75,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该算法将车辆MEC卸载建模为一个多用户非合作计算卸载博弈，每辆车独立调整其卸载概率。",
+          "supported": true
+        },
+        {
+          "text": "博弈的收益函数综合考虑了车辆与MEC接入点之间的距离、应用与通信模型、以及其他车辆对MEC资源的竞争。",
+          "supported": true
+        },
+        {
+          "text": "根据NE存在定理，该卸载博弈中必然存在一个混合策略纳什均衡。",
+          "supported": true
+        },
+        {
+          "text": "算法采用最佳响应机制，在6辆车场景下，每辆车的卸载概率在15次迭代内即可快速收敛到稳定均衡点。",
+          "supported": true
+        },
+        {
+          "text": "在满足特定数学条件时，该博弈的纳什均衡是唯一且稳定的。",
+          "supported": true
+        },
+        {
+          "text": "任务到达率增大、定价因子增大、车辆与MEC接入点距离增大，均会导致均衡卸载概率下降。",
+          "supported": true
+        },
+        {
+          "text": "本地论文语料库中没有包含该算法在2025年真实车队部署中的节能数据，现有证据仅来自2020年发表的仿真数值实验。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "分布式最佳响应算法在给定条件下收敛到唯一稳定的纳什均衡。",
+          "covered": true
+        },
+        {
+          "text": "本地语料没有2025年真实车队部署的平均节能比例。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0002",
+        "4c26f68525f2edb0-C0003",
+        "4c26f68525f2edb0-C0016",
+        "4c26f68525f2edb0-C0029",
+        "4c26f68525f2edb0-C0030"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question. It thoroughly explains the equilibrium properties of the vehicular MEC offloading algorithm based on the retrieved paper and correctly states that the local corpus does not contain data on the average energy-saving ratio for real fleet deployments in 2025.",
+      "error": null
+    },
+    {
+      "case_id": "st-042-partial-blockchain-quantum",
+      "context_count": 6,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.8333333333333334,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该博弈采用Stackelberg博弈框架，建模云雾计算提供商（CFP）与区块链矿工之间的交互。",
+          "supported": true
+        },
+        {
+          "text": "第一阶段云雾计算提供商设定计算资源的单位价格。",
+          "supported": true
+        },
+        {
+          "text": "第二阶段给定CFP设定的价格，矿工们相互竞争，通过选择各自的服务需求量来最大化自身效用。",
+          "supported": true
+        },
+        {
+          "text": "这形成一个非合作的矿工需求博弈（MDG），参与者为所有矿工集合N，策略为每个矿工的服务需求量{xi}，收益函数为每个矿工的效用函数ui(xi, x−i, p)。",
+          "supported": true
+        },
+        {
+          "text": "求解方法采用逆向归纳法分析子博弈完美均衡，先求解第二阶段的纳什均衡，再回到第一阶段求解CFP的最优定价。",
+          "supported": true
+        },
+        {
+          "text": "统一定价对所有矿工收取相同的单位价格，实现简单且公平。",
+          "supported": true
+        },
+        {
+          "text": "歧视性定价对不同矿工设定不同的单位价格，CFP可根据矿工需求和偏好定制价格以获得更高利润。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文支持云雾提供商先定价、矿工后决定购买量的两阶段Stackelberg模型",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0005",
+        "df7e81c5ac2dae80-C0017",
+        "df7e81c5ac2dae80-C0018",
+        "df7e81c5ac2dae80-C0058"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses the question. It accurately explains the two-stage Stackelberg game based on the retrieved contexts and correctly identifies the lack of evidence regarding quantum miners, which aligns perfectly with the reference answer.",
+      "error": null
+    },
+    {
+      "case_id": "st-043-partial-drl-gpt6",
+      "context_count": 8,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "GNN 天然适配图结构数据，传统 DRL 方案使用全连接网络或卷积网络不适合从图结构数据中学习。",
+          "supported": true
+        },
+        {
+          "text": "消息传递机制实现拓扑不变性，输出被聚合为一个全局隐状态，长度是预定义的。",
+          "supported": true
+        },
+        {
+          "text": "问题特定的动作空间设计将动作以图的形式引入智能体内部，在链路级别增加一个特征表示带宽。",
+          "supported": true
+        },
+        {
+          "text": "GNN 被专门设计来捕获链路之间的关系以及流量在网络拓扑中的流动信息。",
+          "supported": true
+        },
+        {
+          "text": "在 180 个未见过的合成拓扑和 232 个真实世界拓扑上评估，100 节点拓扑上性能仅下降约 15%。",
+          "supported": true
+        },
+        {
+          "text": "本地论文语料库中不包含任何关于 GPT-6 路由算法的信息。",
+          "supported": true
+        },
+        {
+          "text": "在 Nsfnet 拓扑上，DRL+GNN 比在同一拓扑上训练的 SoA DRL 多分配 6.6% 的带宽。",
+          "supported": true
+        },
+        {
+          "text": "在 Geant2 拓扑上，DRL+GNN 比在同一拓扑上训练的 SoA DRL 多分配 3% 的带宽。",
+          "supported": true
+        },
+        {
+          "text": "在 232 个真实世界未见拓扑上，DRL+GNN 相对于理论流体模型的平均相对得分为 +4.78%。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文支持GNN利用图结构实现对未见拓扑的泛化。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0003",
+        "8277b122b6bf049f-C0010",
+        "8277b122b6bf049f-C0012",
+        "8277b122b6bf049f-C0020",
+        "8277b122b6bf049f-C0021",
+        "8277b122b6bf049f-C0030",
+        "8277b122b6bf049f-C0037"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question: it explains why DRL+GNN can generalize using specific details from the paper, and it correctly identifies that the GPT-6 routing algorithm is not present in the local corpus while providing the actual comparison results available.",
+      "error": null
+    },
+    {
+      "case_id": "st-044-partial-gne-asynchronous",
+      "context_count": 10,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.6,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该算法采用了一种称为'近端并行分裂算法'（proximal parallel splitting algorithm，即论文中的Algorithm 2）的方案处理不等式仿射耦合约束。",
+          "supported": true
+        },
+        {
+          "text": "不等式情况下x和Z可以并行更新，只有乘子λ的更新利用最新信息，更新顺序为 {x, Z} → λ̄。",
+          "supported": true
+        },
+        {
+          "text": "不等式情况下，子博弈的目标函数仅包含近端项和Lagrangian项，不考虑二次惩罚项。",
+          "supported": true
+        },
+        {
+          "text": "λ的更新使用了投影操作，将乘子投影到非负象限以处理不等式约束的对偶可行性要求。",
+          "supported": true
+        },
+        {
+          "text": "定义的单调算子M_i中包含了正常锥，用于处理不等式约束的互补松弛条件。",
+          "supported": true
+        },
+        {
+          "text": "算法的收敛性通过将其证明为预条件近端点算法（PPPA）的特例来建立，基于平均算子理论在固定步长下证明。",
+          "supported": true
+        },
+        {
+          "text": "本地论文语料库中缺乏异步有向图加速比的证据。",
+          "supported": true
+        },
+        {
+          "text": "论文结论部分明确将具有延迟信息的异步分布式GNE计算算法以及切换和有向通信图上的GNE计算列为未来的开放研究方向。",
+          "supported": true
+        },
+        {
+          "text": "该论文本身并未报告双层近端点GNE算法在异步有向图上的加速比。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文支持用并行分裂型算法处理不等式仿射耦合约束",
+          "covered": true
+        },
+        {
+          "text": "本地语料没有异步有向图实验的加速比",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "679c02946bc59dda-C0000",
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0005",
+        "679c02946bc59dda-C0028",
+        "679c02946bc59dda-C0029",
+        "679c02946bc59dda-C0057"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question. It provides a detailed and accurate explanation of how the algorithm handles inequality constraints using the proximal parallel splitting algorithm, and correctly states that the acceleration ratio on asynchronous directed graphs is not reported because it is listed as a future open problem in the paper's conclusion.",
+      "error": null
+    },
+    {
+      "case_id": "st-045-partial-consensus-grid",
+      "context_count": 11,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.2727272727272727,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "所有参与者通过一个无向且连通的通信图进行通信。",
+          "supported": true
+        },
+        {
+          "text": "如果参与者 j 不是参与者 i 的邻居，则参与者 i 无法直接获取参与者 j 的行动。",
+          "supported": true
+        },
+        {
+          "text": "算法采用领导者-跟随者一致性协议的改编版本。",
+          "supported": true
+        },
+        {
+          "text": "每个参与者作为虚拟领导者，将自己的行动作为参考信号广播给邻居；其他参与者通过一致性协议生成对所有参与者行动的估计值，再基于这些估计值执行梯度博弈。",
+          "supported": true
+        },
+        {
+          "text": "参与者的收益函数 f_i(x) 为 C² 函数。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文假设参与者通过无向连通通信图与邻居通信。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8097c2e32a040c2f-C0002",
+        "8097c2e32a040c2f-C0005",
+        "8097c2e32a040c2f-C0024"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question. It accurately extracts the communication assumptions from the provided contexts and correctly identifies that the convergence time on the real national power grid is not available in the local corpus.",
+      "error": null
+    },
+    {
+      "case_id": "st-046-partial-nonsmooth-dataset",
+      "context_count": 4,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.75,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "利用精确l1惩罚函数，将带约束的广义纳什均衡求解（GNES）问题转化为一个无约束的、目标函数非光滑的纳什均衡求解问题。",
+          "supported": true
+        },
+        {
+          "text": "原始博弈约束包括私有不等式约束 gi(xi) ≤ 0，共享不等式约束 g(x) ≤ 0，共享等式约束 h(x) = Σ mixi − n = 0。",
+          "supported": true
+        },
+        {
+          "text": "引入精确l1惩罚项后，转化为无约束博弈：min fi(x) + α( [gi(xi)]⁺ + [g(x)]⁺ + |h(x)| )。",
+          "supported": true
+        },
+        {
+          "text": "当惩罚参数 α 足够大时，转化后无约束博弈的纳什均衡与原约束博弈的纳什均衡完全一致。",
+          "supported": true
+        },
+        {
+          "text": "光滑惩罚方法只能得到近似解，需要惩罚参数趋于无穷才能逼近精确解。",
+          "supported": true
+        },
+        {
+          "text": "转化后的问题目标函数是非光滑的，论文提出基于微分包含的连续时间方法来求解，并通过奇异摄动分析证明收敛性。",
+          "supported": true
+        },
+        {
+          "text": "不需要乘子的演化，减少了分布式实现中需要通信的变量数量。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文支持使用精确l1惩罚把约束博弈转化为无约束博弈。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "68699812d603c771-C0003",
+        "68699812d603c771-C0005",
+        "68699812d603c771-C0023"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question. It provides a detailed and accurate explanation of how the l1 penalty is used in nonsmooth generalized convex games, including the mathematical formulation and key properties. It also correctly addresses the second part of the question by acknowledging the absence of industrial dataset accuracy in the local corpus.",
+      "error": null
+    },
+    {
+      "case_id": "st-047-partial-dynamic-5g",
+      "context_count": 12,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.4166666666666667,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "在非合作动态博弈中，多个智能体在时变环境中各自优化其长期累积效用。",
+          "supported": true
+        },
+        {
+          "text": "这等价于求解一组相互耦合的最优控制问题（coupled OCPs），求解难度很高。",
+          "supported": true
+        },
+        {
+          "text": "动态势博弈（DPGs）可以化为一个最优控制问题，核心原因在于存在一个势函数，使得每个玩家的效用函数关于自身策略的偏导数等于势函数关于该策略的偏导数。",
+          "supported": true
+        },
+        {
+          "text": "对于静态博弈，当且仅当效用函数满足交叉导数对称条件时，存在势函数。",
+          "supported": true
+        },
+        {
+          "text": "将这一思想推广到动态博弈，存在一个势函数使得所有玩家的动态优化目标可以统一为一个多变量最优控制问题（MOCP）。",
+          "supported": true
+        },
+        {
+          "text": "求解这个单一的 MOCP 比求解多个耦合的 OCPs 要简单得多。",
+          "supported": true
+        },
+        {
+          "text": "该 MOCP 的解即为原动态博弈的纳什均衡（Nash Equilibrium）。",
+          "supported": true
+        },
+        {
+          "text": "势函数的局部极大值对应博弈的均衡点；若所有玩家效用函数均为拟凹，则均衡唯一且稳定。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文支持动态势博弈可通过单个多变量最优控制问题求解",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0002",
+        "8cd42a00c01c48e6-C0005",
+        "8cd42a00c01c48e6-C0011",
+        "8cd42a00c01c48e6-C0048"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question: it explains the theoretical reduction of dynamic potential games to a single multivariate optimal control problem, and correctly states that the local corpus lacks data on throughput improvement in 5G commercial networks.",
+      "error": null
+    },
+    {
+      "case_id": "st-048-partial-uav-carbon",
+      "context_count": 11,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.36363636363636365,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "该模型通过降维方法将原始多维策略问题分解为覆盖最大化和功率控制两个顺序优化步骤。",
+          "supported": true
+        },
+        {
+          "text": "步骤一为覆盖最大化，在给定最大载波发射功率条件下搜索最优部署位置以最大化覆盖效用。",
+          "supported": true
+        },
+        {
+          "text": "步骤二为功率控制，在覆盖效用满足通信需求阈值时计算最优功率分配方案以最大化总能效。",
+          "supported": true
+        },
+        {
+          "text": "两个步骤均被证明为精确势博弈，存在至少一个纳什均衡点，并通过MUECD-SAP算法求解。",
+          "supported": true
+        },
+        {
+          "text": "现有文献为基于仿真的博弈论框架研究，发表于2018年前后。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文把问题分为覆盖最大化和功率控制。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0011",
+        "e124a1b43d67eaf0-C0045"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question. It accurately explains the two optimization steps based on the retrieved contexts and correctly identifies that the information regarding the 2025 urban trial carbon emission reduction ratio is not present in the local corpus.",
+      "error": null
+    },
+    {
+      "case_id": "st-049-partial-cognitive-6g",
+      "context_count": 9,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 1.0,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "局部利他博弈和局部拥塞博弈是针对认知无线电网络（CRN）中分布式信道选择提出的两种局部交互博弈。",
+          "supported": true
+        },
+        {
+          "text": "局部利他博弈中每个用户考虑自身及邻居的收益，目标是最大化网络吞吐量。",
+          "supported": true
+        },
+        {
+          "text": "局部拥塞博弈中每个用户最小化与其竞争的邻居数量，目标是最小化网络碰撞水平。",
+          "supported": true
+        },
+        {
+          "text": "局部利他博弈需要较多的信息交换，而局部拥塞博弈需要较少的信息交换。",
+          "supported": true
+        },
+        {
+          "text": "两者都是精确势博弈，保证存在纯策略纳什均衡。",
+          "supported": true
+        },
+        {
+          "text": "配合C-SAP学习算法可自主、快速地收敛到全局最优。",
+          "supported": true
+        },
+        {
+          "text": "本地论文语料库中不包含这两种博弈在6G原型系统中的时延数据。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文支持局部利他博弈最大化网络吞吐量。",
+          "covered": true
+        },
+        {
+          "text": "论文支持局部拥塞博弈最小化网络碰撞水平。",
+          "covered": true
+        },
+        {
+          "text": "本地语料没有6G原型系统时延。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0003",
+        "82314d0bd4754f24-C0015",
+        "82314d0bd4754f24-C0026",
+        "82314d0bd4754f24-C0027",
+        "82314d0bd4754f24-C0030",
+        "82314d0bd4754f24-C0031",
+        "82314d0bd4754f24-C0032",
+        "82314d0bd4754f24-C0033"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question. It provides a detailed and accurate comparison of the two games based on the retrieved contexts and correctly identifies that the local corpus does not contain latency data for 6G prototype systems.",
+      "error": null
+    },
+    {
+      "case_id": "st-050-partial-colocated-live",
+      "context_count": 9,
+      "faithfulness": 0.875,
+      "answer_relevancy": 1.0,
+      "context_relevancy": 0.2222222222222222,
+      "context_recall": 1.0,
+      "answer_claims": [
+        {
+          "text": "铁塔运营商提供物理基础设施，包括电力供应、机房空间、冷却设施和维护设备。",
+          "supported": true
+        },
+        {
+          "text": "移动网络运营商在铁塔站部署自己的天线和信号处理设备。",
+          "supported": true
+        },
+        {
+          "text": "上行链路无线电资源分配给用户以保证MEC微数据中心计算队列的稳定性，分配比例随业务负载和计算资源变化。",
+          "supported": true
+        },
+        {
+          "text": "下行链路无线电资源完全分配给用户以确保下行传输队列的稳定性。",
+          "supported": true
+        },
+        {
+          "text": "计算资源提供商在铁塔站部署MEC微数据中心，提供边缘计算服务。",
+          "supported": true
+        },
+        {
+          "text": "计算资源提供商提供计算资源（CPU），按用户需求分配。",
+          "supported": true
+        },
+        {
+          "text": "MEC服务器上的CPU频率在仿真中为16 GHz。",
+          "supported": false
+        },
+        {
+          "text": "该模型将联合上行、下行和计算资源分配问题建模为广义纳什均衡问题（GNEP），各参与方的目标是最小化各自的运营支出（OPEX）。",
+          "supported": true
+        }
+      ],
+      "reference_claims": [
+        {
+          "text": "论文支持模型联合分配上行、下行和计算资源。",
+          "covered": true
+        }
+      ],
+      "relevant_context_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0051"
+      ],
+      "answer_relevancy_reason": "The generated answer directly and completely addresses both parts of the question. It explains the resources allocated in the co-located edge computing model based on the retrieved contexts and correctly acknowledges the absence of the 2026 energy-saving ratio in the local corpus.",
+      "error": null
+    }
+  ]
+}

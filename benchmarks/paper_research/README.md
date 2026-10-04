@@ -51,7 +51,7 @@
 
 ## 计划使用的指标
 
-检索侧使用 `Recall@4`、`Precision@4`、`MRR`、平均/P95耗时和超时率；不计算 NDCG。生成侧使用 `Faithfulness`、`Answer Relevancy`、`Context Relevancy` 和 `Context Recall`。此外记录 `Decision Accuracy`、`Citation Accuracy`，并在多轮数据上统计 `Memory Consistency Rate`。
+检索侧使用 `Recall@8`、`Precision@8`、`MRR`、平均/P95耗时和超时率；不计算 NDCG。生成侧使用 `Faithfulness`、`Answer Relevancy`、`Context Relevancy` 和 `Context Recall`。此外记录 `Decision Accuracy`、`Citation Accuracy`，并在多轮数据上统计 `Memory Consistency Rate`。
 
 意图识别、Query 改写和子问题拆解只作为 Pipeline Trace 中的诊断信息，不单独计算准确率。
 
@@ -61,7 +61,7 @@
 nanobot-research eval-single benchmarks/paper_research/single_turn.jsonl `
   --data-dir D:/Data/paper-research/index `
   --hf-home D:/Data/huggingface `
-  --top-k 4 `
+  --top-k 8 `
   --output benchmarks/paper_research/results/single_turn_retrieval_raw.json
 ```
 
@@ -77,7 +77,7 @@ python benchmarks/paper_research/run_rewritten_query_eval.py `
   --workspace <独立评测工作区> `
   --data-dir D:/Data/paper-research/index `
   --hf-home D:/Data/huggingface `
-  --top-k 4 `
+  --top-k 8 `
   --output benchmarks/paper_research/results/single_turn_retrieval_en_query.json
 ```
 
@@ -86,6 +86,19 @@ python benchmarks/paper_research/run_rewritten_query_eval.py `
 单题异常会记录在报告的 `error` 字段中，整批评测会继续执行。`timeout_seconds` 是评测阈值：超过该时长会计入超时率，但评测程序会等待该次本地检索结束，从而避免在后台留下未受控的模型任务。
 
 Agent 完整回答可保存为 `SingleTurnPrediction` JSONL，随后执行 `nanobot-research score-single <测试集> <回答文件>` 计算完成率、决策准确率和引用准确率。回答记录包含 Agent 实际生成的英文检索 Query、检索/引用 chunk、`research_finalize` 的引用定位检查结果、任务 ID、总耗时和错误。Faithfulness、Answer Relevancy、Context Relevancy 与 Context Recall 需要真实回答和检索正文，不能在只有测试题时预先生成分数。
+
+已有完整 Agent 回答后，可直接运行生成侧语义评测，不需要重新检索或重新回答：
+
+```powershell
+python benchmarks/paper_research/run_semantic_eval.py `
+  --benchmark benchmarks/paper_research/single_turn.jsonl `
+  --predictions benchmarks/paper_research/results/single_turn_agent_full.jsonl `
+  --chunks D:/Data/paper-research/index/chunks.jsonl `
+  --output benchmarks/paper_research/results/single_turn_agent_semantic.json `
+  --resume --concurrency 3
+```
+
+语义评测只计算 40 道 `answer` 和 10 道 `partial`。`abstain` 由 `Decision Accuracy` 评价，不参与需要答案主张和目标上下文的四项语义指标。评审器把回答和标准答案分别拆成可验证主张：`Faithfulness` 是有证据支持的回答主张比例，`Context Recall` 是检索上下文覆盖的标准答案主张比例，`Context Relevancy` 是直接有助于回答的检索 chunk 比例，`Answer Relevancy` 是回答对原问题的直接性和完整性评分。
 
 命令默认启用 `--offline`，直接使用已经下载到本机的 BGE 模型文件，防止 Hugging Face 联网检查混入检索耗时。如果本机尚未缓存模型，可临时使用 `--online` 完成首次下载。
 
@@ -145,5 +158,18 @@ python benchmarks/paper_research/build_agent_report.py `
 | 目标 chunk 零命中率 | 8.0% |
 | 平均总耗时 | 138.0 秒 |
 | P95 总耗时 | 249.9 秒 |
+
+固定英文检索 Query 的 Top-8 基线为：`Recall@8` 76.7%、`Precision@8` 20.5%、`MRR` 74.6%，检索超时率为 0。每题平均仅标注 2.38 个目标 chunk，因此 `Precision@8` 的平均理论上限为 29.75%；它只计算精确命中的人工目标 chunk，不能解释为其余 chunk 全部与问题无关。
+
+基于上述完整 Agent 回答，使用 `qwen3.7-plus` 作为单一评审器得到的生成侧基线为：
+
+| 指标 | 结果 |
+|---|---:|
+| Faithfulness | 95.1% |
+| Answer Relevancy | 99.5% |
+| Context Relevancy | 74.3% |
+| Context Recall | 92.0% |
+
+50 道题全部完成语义评分，无评审错误。两个绕过论文检索的回答在 Faithfulness、Context Relevancy 和 Context Recall 上均为 0；另有两题的 Context Recall 为 0，与人工确认的关键证据遗漏一致。该结果属于单模型 LLM-as-judge 基线，后续对低分题做人工复核或更换独立评审模型时应保留评审器名称。
 
 严格口径把没有 `ResearchState` 的结果计为决策和 Pipeline 失败。本轮有两道可回答题绕过论文检索、直接使用模型常识作答；另有一道明显越界的天气题在检索前直接拒答。状态明确的两处行为错误是：`st-017` 未召回关键证据后误拒答，`st-059` 忽略“只依据指定文件”的来源约束后回答了另一份已入库论文。完整逐题结果见 `results/single_turn_agent_full_report.json`。
