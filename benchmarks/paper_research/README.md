@@ -77,18 +77,21 @@ python benchmarks/paper_research/build_multi_turn_report.py `
   --report <多轮报告.json>
 ```
 
-最后计算答案正确率、指代/约束保持率，以及实际发生压缩后的 Memory Consistency Rate：
+最后用一次评审调用同时计算四个生成侧指标、答案正确率、指代/约束保持率，以及实际发生压缩后的 Memory Consistency Rate：
 
 ```powershell
 python benchmarks/paper_research/run_multi_turn_consistency_eval.py `
   --benchmark benchmarks/paper_research/multi_turn.jsonl `
   --predictions <多轮回答.jsonl> `
+  --chunks D:/Data/paper-research/index/chunks.jsonl `
   --output <多轮一致性报告.json>
 ```
 
 普通四轮对话跑通后，再把上述三个命令中的 `multi_turn.jsonl` 换为 `multi_turn_long.jsonl`，使用独立的原始结果、回答和报告文件运行 3 组长对话。压缩一致性只统计 `compaction_before_turn=true` 且 `memory_probe=true` 的轮次；若本次运行没有发生压缩，该指标应为空，不能把普通记忆探针冒充压缩后结果。
 
-多轮报告用 `source_mode` 区分本轮重新检索、复用同一 Session 中已经验证的证据和无证据路径。检索流程成功率、决策与引用定位只在本轮确实重新检索时计算；回答正确率和指代/约束保持率覆盖所有成功完成的轮次，避免把合理的 Session 证据复用误判成流程失败。
+多轮报告用 `source_mode` 区分本轮重新检索、从长期 Memory 重新加载原始证据、复用同一 Session 中已经验证的证据和无证据路径。Recall@8、Precision@8 和 MRR 只统计完成了新检索且不属于拒答的轮次；多个子问题或二次检索产生的结果按子问题与检索轮次的实际返回顺序去重，再取前 8 个。检索流程成功率以所有已经创建研究任务的流程尝试为分母，超时和中途失败不会被排除。长期 Memory 和 Session 复用轮次不计算新的检索排名，但使用实际重新加载或当前会话已经获得的证据计算生成侧指标。回答正确率和指代/约束保持率覆盖所有成功完成的轮次，避免把合理的证据复用误判成流程失败。
+
+正式指标固定为：检索侧的 Recall@8、Precision@8、MRR；生成侧的 Faithfulness、Answer Relevancy、Context Relevancy、Context Recall；流程侧的决策准确率、引用准确率、Pipeline Success Rate、完成率与耗时；多轮侧的回答正确率、事实保持率、上下文一致性和实际压缩后的一致性。意图分类、Query 改写准确率和 NDCG 不纳入正式指标。
 
 ## 运行单轮检索基线
 

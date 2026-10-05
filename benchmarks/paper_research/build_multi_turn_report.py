@@ -21,6 +21,9 @@ def _unique(values: list[str]) -> list[str]:
     return list(dict.fromkeys(values))
 
 
+RETRIEVAL_TOP_K = 8
+
+
 def _load_state(result: dict[str, Any], state_dir: Path) -> ResearchState | None:
     task_ids = result.get("task_ids") or []
     if len(task_ids) != 1:
@@ -39,6 +42,41 @@ def _tool_count(result: dict[str, Any], suffix: str) -> int:
         if str(event.get("name") or "").endswith(suffix)
         and event.get("phase") == "end"
         and not event.get("error")
+    )
+
+
+def _ranked_semantic_chunk_ids(state: ResearchState) -> list[str]:
+    """Return the evidence order actually exposed by semantic retrieval rounds."""
+
+    return _unique(
+        [
+            chunk_id
+            for sub_question in state.plan.sub_questions
+            for attempt in sub_question.retrieval_attempts
+            if attempt.round_index > 0
+            for chunk_id in attempt.chunk_ids
+        ]
+    )
+
+
+def _retrieval_metrics(
+    ranked_chunk_ids: list[str], relevant_chunk_ids: list[str], *, top_k: int
+) -> tuple[float, float, float]:
+    top_ids = ranked_chunk_ids[:top_k]
+    relevant = set(relevant_chunk_ids)
+    matched = relevant.intersection(top_ids)
+    first_rank = next(
+        (
+            rank
+            for rank, chunk_id in enumerate(top_ids, start=1)
+            if chunk_id in relevant
+        ),
+        None,
+    )
+    return (
+        len(matched) / len(relevant),
+        len(matched) / top_k,
+        1.0 / first_rank if first_rank is not None else 0.0,
     )
 
 
@@ -84,6 +122,7 @@ def main() -> None:
         actual_behavior = STATUS_BEHAVIOR.get(state.status) if state is not None else None
         retrieval_queries: list[str] = []
         retrieved_chunk_ids: list[str] = []
+        ranked_semantic_chunk_ids: list[str] = []
         cited_chunk_ids: list[str] = []
         locator_valid = None
         if state is not None:
@@ -101,6 +140,7 @@ def main() -> None:
                     for chunk_id in sub_question.chunk_ids
                 ]
             )
+            ranked_semantic_chunk_ids = _ranked_semantic_chunk_ids(state)
             citations = state.metadata.get("finalization", {}).get("citations", [])
             cited_chunk_ids = _unique(
                 [
@@ -118,6 +158,15 @@ def main() -> None:
             {"retrieved": [], "cited": [], "locators_valid": False},
         )
         state_completed = actual_behavior is not None and result_error is None
+        has_semantic_retrieval = bool(state is not None and state.retrieval_calls > 0)
+        has_memory_rehydration = bool(
+            state is not None
+            and any(
+                attempt.round_index == 0
+                for sub_question in state.plan.sub_questions
+                for attempt in sub_question.retrieval_attempts
+            )
+        )
         if state_completed:
             carried["retrieved"] = _unique(
                 [*carried["retrieved"], *retrieved_chunk_ids]
@@ -126,10 +175,14 @@ def main() -> None:
             carried["locators_valid"] = bool(
                 carried["locators_valid"] or locator_valid is True
             )
-        if result_error is not None:
+        if result_error is not None or (state is not None and not state_completed):
             source_mode = "failed"
-        elif state_completed:
+        elif state_completed and has_semantic_retrieval:
             source_mode = "new_retrieval"
+        elif state_completed and has_memory_rehydration:
+            source_mode = "memory_rehydration"
+        elif state_completed:
+            source_mode = "research_without_evidence"
         elif carried["retrieved"]:
             source_mode = "session_reuse"
         else:
@@ -144,6 +197,19 @@ def main() -> None:
         behavior_matches = (
             actual_behavior == case.expected_behavior if state_completed else None
         )
+        retrieval_scores: tuple[float, float, float] | None = None
+        semantic_retrieval_completed = bool(
+            has_semantic_retrieval and result_error is None
+        )
+        if (
+            semantic_retrieval_completed
+            and case.expected_behavior != AnswerBehavior.ABSTAIN
+        ):
+            retrieval_scores = _retrieval_metrics(
+                ranked_semantic_chunk_ids,
+                case.relevant_chunk_ids,
+                top_k=RETRIEVAL_TOP_K,
+            )
         citations_required = case.expected_behavior != AnswerBehavior.ABSTAIN
         pipeline_success = bool(
             state_completed
@@ -159,9 +225,24 @@ def main() -> None:
             "task_status": task_status,
             "task_count": len(result.get("task_ids") or []),
             "source_mode": source_mode,
-            "new_retrieval_executed": state is not None,
-            "new_retrieval_success": pipeline_success,
+            "research_pipeline_attempted": state is not None,
+            "semantic_retrieval_completed": semantic_retrieval_completed,
+            "pipeline_success": pipeline_success,
             "retrieval_call_count": state.retrieval_calls if state is not None else 0,
+            "ranked_retrieved_chunk_ids": ranked_semantic_chunk_ids,
+            "recall_at_8": retrieval_scores[0] if retrieval_scores else None,
+            "precision_at_8": retrieval_scores[1] if retrieval_scores else None,
+            "reciprocal_rank": retrieval_scores[2] if retrieval_scores else None,
+            "retrieval_ms": (
+                sum(
+                    attempt.elapsed_ms
+                    for sub_question in state.plan.sub_questions
+                    for attempt in sub_question.retrieval_attempts
+                    if attempt.round_index > 0
+                )
+                if state is not None
+                else None
+            ),
             "reflect_call_count": _tool_count(result, "research_reflect"),
             "retrieved_chunk_count": len(retrieved_chunk_ids),
             "available_evidence_chunk_count": len(available_chunk_ids),
@@ -184,22 +265,36 @@ def main() -> None:
                 "retrieval_queries": retrieval_queries,
                 "retrieved_chunk_ids": available_chunk_ids,
                 "current_retrieved_chunk_ids": retrieved_chunk_ids,
+                "ranked_retrieved_chunk_ids": ranked_semantic_chunk_ids,
                 "cited_chunk_ids": list(carried["cited"]),
                 "current_cited_chunk_ids": cited_chunk_ids,
             }
         )
 
     denominator = len(details)
-    retrieval_turns = [item for item in details if item["source_mode"] == "new_retrieval"]
-    retrieval_non_abstain = [
-        item
-        for item in retrieval_turns
-        if item["expected_behavior"] != AnswerBehavior.ABSTAIN.value
+    retrieval_attempts = [item for item in details if item["research_pipeline_attempted"]]
+    retrieval_turns = [
+        item for item in retrieval_attempts if item["semantic_retrieval_completed"]
     ]
     recall_values = [
         float(item["target_chunk_recall"])
         for item in details
         if item["target_chunk_recall"] is not None and item["error"] is None
+    ]
+    retrieval_recall_values = [
+        float(item["recall_at_8"])
+        for item in retrieval_turns
+        if item["recall_at_8"] is not None
+    ]
+    retrieval_precision_values = [
+        float(item["precision_at_8"])
+        for item in retrieval_turns
+        if item["precision_at_8"] is not None
+    ]
+    reciprocal_ranks = [
+        float(item["reciprocal_rank"])
+        for item in retrieval_turns
+        if item["reciprocal_rank"] is not None
     ]
     latencies = [
         int(item["total_ms"])
@@ -229,22 +324,35 @@ def main() -> None:
             "decision_accuracy": (
                 sum(
                     item["actual_behavior"] == item["expected_behavior"]
-                    for item in retrieval_turns
+                    for item in retrieval_attempts
                 )
-                / len(retrieval_turns)
-                if retrieval_turns
+                / len(retrieval_attempts)
+                if retrieval_attempts
                 else None
             ),
             "citation_accuracy": (
                 sum(
                     item["citation_locators_valid"] is True
-                    for item in retrieval_non_abstain
+                    for item in retrieval_attempts
+                    if item["expected_behavior"] != AnswerBehavior.ABSTAIN.value
                 )
-                / len(retrieval_non_abstain)
-                if retrieval_non_abstain
+                / sum(
+                    item["expected_behavior"] != AnswerBehavior.ABSTAIN.value
+                    for item in retrieval_attempts
+                )
+                if any(
+                    item["expected_behavior"] != AnswerBehavior.ABSTAIN.value
+                    for item in retrieval_attempts
+                )
                 else None
             ),
-            "new_retrieval_turn_rate": (
+            "research_pipeline_attempt_rate": (
+                len(retrieval_attempts)
+                / denominator
+                if denominator
+                else None
+            ),
+            "successful_new_retrieval_turn_rate": (
                 sum(item["source_mode"] == "new_retrieval" for item in details)
                 / denominator
                 if denominator
@@ -256,19 +364,34 @@ def main() -> None:
                 if denominator
                 else None
             ),
+            "memory_rehydration_turn_rate": (
+                sum(item["source_mode"] == "memory_rehydration" for item in details)
+                / denominator
+                if denominator
+                else None
+            ),
             "untraced_turn_rate": (
                 sum(item["source_mode"] == "untraced" for item in details)
                 / denominator
                 if denominator
                 else None
             ),
-            "retrieval_pipeline_success_rate": (
-                sum(item["new_retrieval_success"] for item in retrieval_turns)
-                / len(retrieval_turns)
-                if retrieval_turns
+            "pipeline_success_rate": (
+                sum(item["pipeline_success"] for item in retrieval_attempts)
+                / len(retrieval_attempts)
+                if retrieval_attempts
                 else None
             ),
-            "mean_target_chunk_recall": (
+            "recall_at_8": (
+                mean(retrieval_recall_values) if retrieval_recall_values else None
+            ),
+            "precision_at_8": (
+                mean(retrieval_precision_values)
+                if retrieval_precision_values
+                else None
+            ),
+            "mrr": mean(reciprocal_ranks) if reciprocal_ranks else None,
+            "mean_effective_context_recall": (
                 mean(recall_values) if recall_values else None
             ),
             "mean_total_ms": (
