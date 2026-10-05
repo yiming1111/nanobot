@@ -13,11 +13,17 @@
     "abstain": 10
   },
   "multi_turn": {
-    "dialogues": 10,
-    "turns_per_dialogue": 8,
-    "turns": 80,
-    "memory_probes": 20
+    "dialogues": 30,
+    "turns_per_dialogue": 4,
+    "turns": 120,
+    "memory_probes": 30
   },
-  "retrieval_k": 4,
+  "multi_turn_long": {
+    "dialogues": 3,
+    "turns_per_dialogue": 12,
+    "turns": 36,
+    "memory_probes": 18
+  },
+  "retrieval_k": 8,
   "ndcg_enabled": false
 }

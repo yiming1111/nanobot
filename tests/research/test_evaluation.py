@@ -4,9 +4,11 @@ import pytest
 
 from nanobot.research.evaluation import (
     AnswerBehavior,
+    MultiTurnEvalCase,
     SingleTurnEvalCase,
     SingleTurnPrediction,
     evaluate_single_turn_retrieval,
+    load_multi_turn_cases,
     load_single_turn_cases,
     score_single_turn_outputs,
 )
@@ -94,6 +96,45 @@ def test_load_single_turn_cases_rejects_duplicate_ids(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="duplicate case_id"):
         load_single_turn_cases(path)
 
+
+def test_load_multi_turn_cases_requires_ordered_consecutive_turns(tmp_path: Path) -> None:
+    path = tmp_path / "multi.jsonl"
+    rows = [
+        MultiTurnEvalCase(
+            dialogue_id="dialogue-1",
+            turn_index=index,
+            query=f"Question {index}",
+            ground_truth="Supported answer",
+            relevant_chunk_ids=["P1-C1"],
+            expected_behavior=AnswerBehavior.ANSWER,
+        ).model_dump_json()
+        for index in (1, 3)
+    ]
+    path.write_text("\n".join(rows), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="consecutive ordered turns"):
+        load_multi_turn_cases(path)
+
+
+def test_bundled_multi_turn_datasets_have_expected_shape() -> None:
+    benchmark_dir = Path(__file__).parents[2] / "benchmarks" / "paper_research"
+
+    expected_shapes = {
+        "multi_turn.jsonl": (30, 4),
+        "multi_turn_long.jsonl": (3, 12),
+    }
+    for filename, (dialogue_count, turns_per_dialogue) in expected_shapes.items():
+        cases = load_multi_turn_cases(benchmark_dir / filename)
+        turns_by_dialogue: dict[str, list[int]] = {}
+        for case in cases:
+            turns_by_dialogue.setdefault(case.dialogue_id, []).append(case.turn_index)
+
+        assert len(turns_by_dialogue) == dialogue_count
+        assert all(
+            indexes == list(range(1, turns_per_dialogue + 1))
+            for indexes in turns_by_dialogue.values()
+        )
+        assert len(cases) == dialogue_count * turns_per_dialogue
 
 def test_score_single_turn_outputs_counts_missing_predictions_as_failures() -> None:
     report = score_single_turn_outputs(

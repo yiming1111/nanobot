@@ -7,11 +7,12 @@
 | 文件 | 规模 | 用途 |
 |---|---:|---|
 | `single_turn.jsonl` | 60 题 | 建立单轮检索、生成、证据边界和引用基线 |
-| `multi_turn.jsonl` | 10 组、80 轮 | 检查连续追问、指代与约束继承，以及上下文压缩后的信息保持 |
+| `multi_turn.jsonl` | 30 组、120 轮 | 检查四轮连续追问中的指代、约束继承与回答一致性 |
+| `multi_turn_long.jsonl` | 3 组、36 轮 | 专门检查长对话中实际发生上下文压缩后的信息保持 |
 
 单轮集包含 40 道 `answer`、10 道 `partial` 和 10 道 `abstain`。40 道可完整回答的问题覆盖当前索引中的全部 15 篇文档；部分回答和拒答案例用于检查系统是否会超出本地证据作答。
 
-多轮集每组固定 8 轮。后两轮通常回查对话前段出现的论文、约束或结论，并用 `memory_probe=true` 标记。只有运行日志确认该轮之前实际发生了上下文压缩，才能将这些轮次计入压缩后记忆一致性统计。
+普通多轮集每组固定 4 轮，第 4 轮回查前文中的论文、指代或约束；它用于衡量常规多轮一致性。长对话集每组固定 12 轮，第 7 轮以后设置记忆探针；只有运行日志确认该轮之前实际发生了上下文压缩，才能将该轮计入压缩后记忆一致性统计。
 
 ## 单轮字段
 
@@ -54,6 +55,40 @@
 检索侧使用 `Recall@8`、`Precision@8`、`MRR`、平均/P95耗时和超时率；不计算 NDCG。生成侧使用 `Faithfulness`、`Answer Relevancy`、`Context Relevancy` 和 `Context Recall`。此外记录 `Decision Accuracy`、`Citation Accuracy`，并在多轮数据上统计 `Memory Consistency Rate`。
 
 意图识别、Query 改写和子问题拆解只作为 Pipeline Trace 中的诊断信息，不单独计算准确率。
+
+多轮评测让同一 `dialogue_id` 的问题复用同一个 Session，不同对话使用隔离的 Session。普通多轮集先运行 3 组（12 轮）流程检查：
+
+```powershell
+python benchmarks/paper_research/run_multi_turn_eval.py `
+  --benchmark benchmarks/paper_research/multi_turn.jsonl `
+  --workspace <独立评测工作区> `
+  --output <多轮原始结果.json> `
+  --max-dialogues 3
+```
+
+运行结束后生成确定性指标与供语义评审使用的回答文件：
+
+```powershell
+python benchmarks/paper_research/build_multi_turn_report.py `
+  --benchmark benchmarks/paper_research/multi_turn.jsonl `
+  --raw <多轮原始结果.json> `
+  --state-dir D:/Data/paper-research/index/states `
+  --predictions <多轮回答.jsonl> `
+  --report <多轮报告.json>
+```
+
+最后计算答案正确率、指代/约束保持率，以及实际发生压缩后的 Memory Consistency Rate：
+
+```powershell
+python benchmarks/paper_research/run_multi_turn_consistency_eval.py `
+  --benchmark benchmarks/paper_research/multi_turn.jsonl `
+  --predictions <多轮回答.jsonl> `
+  --output <多轮一致性报告.json>
+```
+
+普通四轮对话跑通后，再把上述三个命令中的 `multi_turn.jsonl` 换为 `multi_turn_long.jsonl`，使用独立的原始结果、回答和报告文件运行 3 组长对话。压缩一致性只统计 `compaction_before_turn=true` 且 `memory_probe=true` 的轮次；若本次运行没有发生压缩，该指标应为空，不能把普通记忆探针冒充压缩后结果。
+
+多轮报告用 `source_mode` 区分本轮重新检索、复用同一 Session 中已经验证的证据和无证据路径。检索流程成功率、决策与引用定位只在本轮确实重新检索时计算；回答正确率和指代/约束保持率覆盖所有成功完成的轮次，避免把合理的 Session 证据复用误判成流程失败。
 
 ## 运行单轮检索基线
 

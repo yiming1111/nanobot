@@ -56,6 +56,41 @@ class SingleTurnEvalCase(ResearchModel):
         return self
 
 
+class MultiTurnEvalCase(ResearchModel):
+    dialogue_id: str = Field(min_length=1)
+    turn_index: int = Field(ge=1)
+    query: str = Field(min_length=1)
+    ground_truth: str = Field(min_length=1)
+    relevant_chunk_ids: list[str] = Field(default_factory=list)
+    expected_behavior: AnswerBehavior
+    unsupported_requirements: list[str] = Field(default_factory=list)
+    must_preserve: list[str] = Field(default_factory=list)
+    memory_probe: bool = False
+    tags: list[str] = Field(default_factory=list)
+
+    @property
+    def case_id(self) -> str:
+        return f"{self.dialogue_id}:t{self.turn_index}"
+
+    @model_validator(mode="after")
+    def validate_labels(self) -> "MultiTurnEvalCase":
+        if self.expected_behavior == AnswerBehavior.ANSWER:
+            if not self.relevant_chunk_ids:
+                raise ValueError("answer turns require at least one relevant chunk")
+            if self.unsupported_requirements:
+                raise ValueError("answer turns cannot contain unsupported requirements")
+        elif self.expected_behavior == AnswerBehavior.PARTIAL:
+            if not self.relevant_chunk_ids:
+                raise ValueError("partial turns require at least one relevant chunk")
+            if not self.unsupported_requirements:
+                raise ValueError("partial turns require an explicit evidence gap")
+        elif self.relevant_chunk_ids:
+            raise ValueError("abstain turns cannot contain relevant chunks")
+        elif not self.unsupported_requirements:
+            raise ValueError("abstain turns require an explicit evidence gap")
+        return self
+
+
 class SingleTurnRetrievalResult(ResearchModel):
     case_id: str
     expected_behavior: AnswerBehavior
@@ -138,6 +173,35 @@ def load_single_turn_cases(path: Path) -> list[SingleTurnEvalCase]:
         except ValueError as exc:
             raise ValueError(f"invalid single-turn case at line {line_number}: {exc}") from exc
     _ensure_unique_ids(parsed)
+    return [record for _, record in parsed]
+
+
+def load_multi_turn_cases(path: Path) -> list[MultiTurnEvalCase]:
+    parsed: list[tuple[int, MultiTurnEvalCase]] = []
+    for line_number, payload in _read_jsonl(path):
+        try:
+            parsed.append((line_number, MultiTurnEvalCase.model_validate(payload)))
+        except ValueError as exc:
+            raise ValueError(f"invalid multi-turn case at line {line_number}: {exc}") from exc
+
+    seen: dict[tuple[str, int], int] = {}
+    turns_by_dialogue: dict[str, list[int]] = {}
+    for line_number, record in parsed:
+        key = (record.dialogue_id, record.turn_index)
+        if key in seen:
+            raise ValueError(
+                f"duplicate dialogue turn {record.case_id!r} at lines "
+                f"{seen[key]} and {line_number}"
+            )
+        seen[key] = line_number
+        turns_by_dialogue.setdefault(record.dialogue_id, []).append(record.turn_index)
+    for dialogue_id, indexes in turns_by_dialogue.items():
+        expected = list(range(1, len(indexes) + 1))
+        if indexes != expected:
+            raise ValueError(
+                f"dialogue {dialogue_id!r} must contain consecutive ordered turns "
+                f"starting at 1; got {indexes}"
+            )
     return [record for _, record in parsed]
 
 
@@ -295,12 +359,14 @@ def score_single_turn_outputs(
 
 __all__ = [
     "AnswerBehavior",
+    "MultiTurnEvalCase",
     "SingleTurnEvalCase",
     "SingleTurnOutputReport",
     "SingleTurnPrediction",
     "SingleTurnRetrievalReport",
     "SingleTurnRetrievalResult",
     "evaluate_single_turn_retrieval",
+    "load_multi_turn_cases",
     "load_single_turn_cases",
     "load_single_turn_predictions",
     "score_single_turn_outputs",
