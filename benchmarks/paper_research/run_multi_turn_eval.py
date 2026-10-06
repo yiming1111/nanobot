@@ -20,6 +20,7 @@ from nanobot.cron.service import CronService
 from nanobot.providers.factory import make_provider
 from nanobot.providers.image_generation import image_gen_provider_configs
 from nanobot.research.evaluation import MultiTurnEvalCase, load_multi_turn_cases
+from nanobot.session.manager import SessionManager
 from nanobot.utils.helpers import sync_workspace_templates
 
 
@@ -97,6 +98,7 @@ async def main() -> None:
     parser.add_argument("--benchmark", type=Path, required=True)
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--sessions-root", type=Path)
     parser.add_argument("--run-id")
     parser.add_argument("--max-dialogues", type=int)
     parser.add_argument("--resume", action="store_true")
@@ -138,6 +140,11 @@ async def main() -> None:
     cron = CronService(args.workspace / "cron" / "jobs.json")
     tools = ToolRegistry()
     mcp_provider = MCPProvider.from_config(runtime_config, tools)
+    session_manager = (
+        SessionManager(runtime_config.workspace_path, sessions_root=args.sessions_root)
+        if args.sessions_root is not None
+        else None
+    )
     agent_loop = AgentLoop.from_config(
         runtime_config,
         bus,
@@ -146,11 +153,19 @@ async def main() -> None:
         image_generation_provider_configs=image_gen_provider_configs(runtime_config),
         hook_factories=[create_file_edit_activity_hook],
         tool_registry=tools,
+        session_manager=session_manager,
     )
 
     stop_run = False
     try:
         await mcp_provider.connect()
+        required_mcp_server = "paperResearch"
+        if required_mcp_server not in mcp_provider.connected_server_names:
+            status = mcp_provider.runtime_status().get(required_mcp_server, "not configured")
+            raise RuntimeError(
+                f"Required MCP server {required_mcp_server!r} is unavailable "
+                f"(status: {status}); aborting evaluation before any turn runs"
+            )
         for dialogue_id, turns in dialogues:
             if stop_run:
                 break

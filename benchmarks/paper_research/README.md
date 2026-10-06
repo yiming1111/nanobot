@@ -211,3 +211,43 @@ python benchmarks/paper_research/build_agent_report.py `
 50 道题全部完成语义评分，无评审错误。两个绕过论文检索的回答在 Faithfulness、Context Relevancy 和 Context Recall 上均为 0；另有两题的 Context Recall 为 0，与人工确认的关键证据遗漏一致。该结果属于单模型 LLM-as-judge 基线，后续对低分题做人工复核或更换独立评审模型时应保留评审器名称。
 
 严格口径把没有 `ResearchState` 的结果计为决策和 Pipeline 失败。本轮有两道可回答题绕过论文检索、直接使用模型常识作答；另有一道明显越界的天气题在检索前直接拒答。状态明确的两处行为错误是：`st-017` 未召回关键证据后误拒答，`st-059` 忽略“只依据指定文件”的来源约束后回答了另一份已入库论文。完整逐题结果见 `results/single_turn_agent_full_report.json`。
+
+## 检索消融实验（2026-10-06）
+
+消融实验固定使用 50 道可回答题及同一组英文检索 Query，只改变检索链路；编码、BM25、RRF 和重排均在本地执行，不产生外部模型调用费用。
+
+```powershell
+python benchmarks/paper_research/run_retrieval_ablation.py `
+  --benchmark benchmarks/paper_research/single_turn.jsonl `
+  --queries benchmarks/paper_research/results/single_turn_retrieval_en_query_top8.json `
+  --data-dir D:/Data/paper-research/index `
+  --hf-home D:/Data/huggingface `
+  --output benchmarks/paper_research/results/single_turn_retrieval_ablation.json
+```
+
+| 检索配置 | Recall@5 | Precision@5 | MRR@5 | Recall@8 | MRR@8 |
+|---|---:|---:|---:|---:|---:|
+| BGE-M3 稠密检索 | 56.6% | 23.6% | 49.0% | 69.1% | 49.9% |
+| BGE-M3 + BM25 + RRF | 63.6% | 26.4% | 63.0% | 72.1% | 63.3% |
+| 混合检索 + Cross-Encoder Rerank | 65.9% | 27.6% | 74.3% | 76.7% | 74.6% |
+
+在 Top-5 口径下，BM25 与 RRF 使 Recall 提升 7.0pts、MRR 提升 14.0pts；Cross-Encoder Rerank 进一步使 Recall 提升 2.3pts、MRR 提升 11.3pts。该结果分别验证了稀疏召回对关键词匹配的补充作用，以及重排模型对前列排序质量的改善。
+
+## qwen3.7-plus 多轮完整评测（2026-10-06）
+
+多轮正式结果包含 18 组完整对话、每组 4 轮，共 72 轮。每组对话使用独立 Session，同一组内保留指代、已确认结论和证据状态。最终结果见 `results/multi_turn_agent_18_dialogues_report.json`。
+
+| 指标 | 结果 |
+|---|---:|
+| 回答完成率 | 100.0% |
+| 决策准确率 | 95.5% |
+| 引用定位准确率 | 97.0% |
+| Research Pipeline 执行率 | 91.7% |
+| Pipeline Success Rate | 95.5% |
+| Recall@8 | 59.0% |
+| Precision@8 | 13.5% |
+| MRR | 60.1% |
+| 有效上下文召回率 | 69.4% |
+| 平均耗时 | 266.8 秒/轮 |
+
+决策准确率检查 Agent 的最终行为是否与人工标签 `answer`、`partial`、`abstain` 一致；引用定位准确率检查非拒答结果提交的论文标题、页码与 chunk 是否通过 `research_finalize` 校验；Pipeline Success 进一步要求研究任务完成、决策正确，并在需要回答时通过引用定位校验。多轮问题包含指代、省略和更细的追问，检索指标与固定英文 Query 的单轮检索消融不属于同一难度口径。

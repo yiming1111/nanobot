@@ -1,0 +1,3994 @@
+{
+  "run_kind": "retrieval_ablation",
+  "case_count": 50,
+  "candidate_k": 40,
+  "ks": [
+    5,
+    8
+  ],
+  "metrics": {
+    "dense": {
+      "5": {
+        "recall_at_5": 0.5656666666666667,
+        "precision_at_5": 0.23600000000000002,
+        "mrr_at_5": 0.49
+      },
+      "8": {
+        "recall_at_8": 0.6906666666666667,
+        "precision_at_8": 0.1875,
+        "mrr_at_8": 0.4990476190476191
+      }
+    },
+    "hybrid_rrf": {
+      "5": {
+        "recall_at_5": 0.6356666666666667,
+        "precision_at_5": 0.264,
+        "mrr_at_5": 0.6303333333333333
+      },
+      "8": {
+        "recall_at_8": 0.7206666666666667,
+        "precision_at_8": 0.19,
+        "mrr_at_8": 0.6331904761904762
+      }
+    },
+    "hybrid_rerank": {
+      "5": {
+        "recall_at_5": 0.659,
+        "precision_at_5": 0.276,
+        "mrr_at_5": 0.743
+      },
+      "8": {
+        "recall_at_8": 0.7673333333333333,
+        "precision_at_8": 0.205,
+        "mrr_at_8": 0.7455
+      }
+    }
+  },
+  "deltas": {
+    "hybrid_rrf_minus_dense_pts": {
+      "5": {
+        "recall_at_5": 7.0,
+        "precision_at_5": 2.8,
+        "mrr_at_5": 14.033
+      },
+      "8": {
+        "recall_at_8": 3.0,
+        "precision_at_8": 0.25,
+        "mrr_at_8": 13.414
+      }
+    },
+    "hybrid_rerank_minus_hybrid_rrf_pts": {
+      "5": {
+        "recall_at_5": 2.333,
+        "precision_at_5": 1.2,
+        "mrr_at_5": 11.267
+      },
+      "8": {
+        "recall_at_8": 4.667,
+        "precision_at_8": 1.5,
+        "mrr_at_8": 11.231
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "st-001-vehicular-game",
+      "query": "modeling multi-vehicle computation offloading vehicle MEC core decision variables vehicle adjustment",
+      "relevant_chunk_ids": [
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0003"
+      ],
+      "rankings": {
+        "dense": [
+          "4c26f68525f2edb0-C0002",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0033",
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0000",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0015",
+          "4c26f68525f2edb0-C0006"
+        ],
+        "hybrid_rrf": [
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0002",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0033",
+          "4c26f68525f2edb0-C0013",
+          "4c26f68525f2edb0-C0015",
+          "4c26f68525f2edb0-C0006"
+        ],
+        "hybrid_rerank": [
+          "4c26f68525f2edb0-C0002",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0000",
+          "4c26f68525f2edb0-C0015",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0013",
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0008"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-002-vehicular-payoff",
+      "query": "factors considered in the payoff function of vehicular MEC offloading game",
+      "relevant_chunk_ids": [
+        "4c26f68525f2edb0-C0000",
+        "4c26f68525f2edb0-C0003",
+        "4c26f68525f2edb0-C0013"
+      ],
+      "rankings": {
+        "dense": [
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0008",
+          "4c26f68525f2edb0-C0013",
+          "4c26f68525f2edb0-C0015",
+          "4c26f68525f2edb0-C0003",
+          "4c26f68525f2edb0-C0030"
+        ],
+        "hybrid_rrf": [
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0008",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0000",
+          "4c26f68525f2edb0-C0015",
+          "4c26f68525f2edb0-C0030",
+          "4c26f68525f2edb0-C0006"
+        ],
+        "hybrid_rerank": [
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0000",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0015",
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0008",
+          "4c26f68525f2edb0-C0003",
+          "4c26f68525f2edb0-C0030"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.3333333333333333,
+            "precision": 0.125,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 0.5
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-003-vehicular-convergence",
+      "query": "vehicular MEC distributed algorithm equilibrium numerical convergence results",
+      "relevant_chunk_ids": [
+        "4c26f68525f2edb0-C0003",
+        "4c26f68525f2edb0-C0016",
+        "4c26f68525f2edb0-C0019",
+        "4c26f68525f2edb0-C0029"
+      ],
+      "rankings": {
+        "dense": [
+          "4c26f68525f2edb0-C0029",
+          "4c26f68525f2edb0-C0033",
+          "68699812d603c771-C0031",
+          "679c02946bc59dda-C0069",
+          "017bb185b06de72c-C0047",
+          "b3f03bef65256ae8-C0060",
+          "4c26f68525f2edb0-C0003",
+          "4c26f68525f2edb0-C0016"
+        ],
+        "hybrid_rrf": [
+          "4c26f68525f2edb0-C0029",
+          "4c26f68525f2edb0-C0028",
+          "679c02946bc59dda-C0069",
+          "4c26f68525f2edb0-C0016",
+          "4c26f68525f2edb0-C0006",
+          "4c26f68525f2edb0-C0033",
+          "4c26f68525f2edb0-C0003",
+          "4c26f68525f2edb0-C0000"
+        ],
+        "hybrid_rerank": [
+          "4c26f68525f2edb0-C0000",
+          "4c26f68525f2edb0-C0029",
+          "017bb185b06de72c-C0047",
+          "4c26f68525f2edb0-C0028",
+          "4c26f68525f2edb0-C0016",
+          "017bb185b06de72c-C0051",
+          "4c26f68525f2edb0-C0033",
+          "4c26f68525f2edb0-C0003"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.25,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 0.5
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-004-blockchain-roles",
+      "query": "blockchain cloud-fog resource pricing two-stage Stackelberg game leader follower decision order",
+      "relevant_chunk_ids": [
+        "df7e81c5ac2dae80-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0001",
+          "df7e81c5ac2dae80-C0015",
+          "df7e81c5ac2dae80-C0049",
+          "df7e81c5ac2dae80-C0060"
+        ],
+        "hybrid_rrf": [
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0060",
+          "df7e81c5ac2dae80-C0006",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0018",
+          "df7e81c5ac2dae80-C0015"
+        ],
+        "hybrid_rerank": [
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0015",
+          "df7e81c5ac2dae80-C0006",
+          "df7e81c5ac2dae80-C0018",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0017"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-005-blockchain-pricing",
+      "query": "blockchain resource pricing uniform pricing versus differential pricing analysis",
+      "relevant_chunk_ids": [
+        "df7e81c5ac2dae80-C0000",
+        "df7e81c5ac2dae80-C0001",
+        "df7e81c5ac2dae80-C0018"
+      ],
+      "rankings": {
+        "dense": [
+          "df7e81c5ac2dae80-C0053",
+          "df7e81c5ac2dae80-C0018",
+          "df7e81c5ac2dae80-C0051",
+          "df7e81c5ac2dae80-C0006",
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0017",
+          "df7e81c5ac2dae80-C0001",
+          "df7e81c5ac2dae80-C0000"
+        ],
+        "hybrid_rrf": [
+          "df7e81c5ac2dae80-C0017",
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0006",
+          "df7e81c5ac2dae80-C0053",
+          "df7e81c5ac2dae80-C0018",
+          "df7e81c5ac2dae80-C0051",
+          "df7e81c5ac2dae80-C0052",
+          "df7e81c5ac2dae80-C0056"
+        ],
+        "hybrid_rerank": [
+          "df7e81c5ac2dae80-C0051",
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0017",
+          "df7e81c5ac2dae80-C0018",
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0053",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0056"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.3333333333333333,
+            "precision": 0.125,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 0.25
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-006-blockchain-offload",
+      "query": "PoW blockchain miners computation offloading to cloud-fog providers",
+      "relevant_chunk_ids": [
+        "df7e81c5ac2dae80-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "df7e81c5ac2dae80-C0012",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0010",
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0003",
+          "df7e81c5ac2dae80-C0004",
+          "df7e81c5ac2dae80-C0060",
+          "017bb185b06de72c-C0056"
+        ],
+        "hybrid_rrf": [
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0012",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0004",
+          "df7e81c5ac2dae80-C0010",
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0003",
+          "df7e81c5ac2dae80-C0058"
+        ],
+        "hybrid_rerank": [
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0004",
+          "df7e81c5ac2dae80-C0012",
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0010",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0013"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.25
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-007-drl-gnn-generalization",
+      "query": "why combining Deep Reinforcement Learning and Graph Neural Networks generalizes to unseen network topologies during training",
+      "relevant_chunk_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0035",
+          "8277b122b6bf049f-C0029",
+          "8277b122b6bf049f-C0004",
+          "8277b122b6bf049f-C0034"
+        ],
+        "hybrid_rrf": [
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0029",
+          "8277b122b6bf049f-C0004",
+          "8277b122b6bf049f-C0001"
+        ],
+        "hybrid_rerank": [
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0031",
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0004",
+          "8277b122b6bf049f-C0029",
+          "8277b122b6bf049f-C0030"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-008-drl-gnn-scale",
+      "query": "DRL+GNN routing number of unseen topologies tested",
+      "relevant_chunk_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0029",
+        "8277b122b6bf049f-C0030"
+      ],
+      "rankings": {
+        "dense": [
+          "8277b122b6bf049f-C0021",
+          "8277b122b6bf049f-C0031",
+          "8277b122b6bf049f-C0032",
+          "8277b122b6bf049f-C0034",
+          "8277b122b6bf049f-C0020",
+          "8277b122b6bf049f-C0019",
+          "8277b122b6bf049f-C0029",
+          "8277b122b6bf049f-C0003"
+        ],
+        "hybrid_rrf": [
+          "8277b122b6bf049f-C0029",
+          "8277b122b6bf049f-C0032",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0031",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0021",
+          "8277b122b6bf049f-C0023"
+        ],
+        "hybrid_rerank": [
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0029",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0031",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0032",
+          "8277b122b6bf049f-C0023"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.3333333333333333,
+            "precision": 0.125,
+            "mrr": 0.14285714285714285
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-009-drl-production",
+      "query": "lack of topology generalization hindering DRL routing deployment in production networks",
+      "relevant_chunk_ids": [
+        "8277b122b6bf049f-C0001",
+        "8277b122b6bf049f-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0001",
+          "8277b122b6bf049f-C0035",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0034",
+          "8277b122b6bf049f-C0021",
+          "8277b122b6bf049f-C0023"
+        ],
+        "hybrid_rrf": [
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0001",
+          "8277b122b6bf049f-C0023",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0029"
+        ],
+        "hybrid_rerank": [
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0023",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0022",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0001"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-010-gne-local-info",
+      "query": "bi-level proximal point GNE algorithm requirements for participant information and communication range",
+      "relevant_chunk_ids": [
+        "679c02946bc59dda-C0000",
+        "679c02946bc59dda-C0001",
+        "679c02946bc59dda-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0001",
+          "679c02946bc59dda-C0000",
+          "b3f03bef65256ae8-C0048",
+          "679c02946bc59dda-C0038",
+          "679c02946bc59dda-C0015",
+          "679c02946bc59dda-C0040",
+          "b3f03bef65256ae8-C0021"
+        ],
+        "hybrid_rrf": [
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0015",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0038",
+          "679c02946bc59dda-C0028",
+          "679c02946bc59dda-C0022",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0017"
+        ],
+        "hybrid_rerank": [
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0015",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0022",
+          "679c02946bc59dda-C0040",
+          "679c02946bc59dda-C0017"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 0.3333333333333333,
+            "precision": 0.125,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.3333333333333333,
+            "precision": 0.125,
+            "mrr": 0.2
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-011-gne-two-constraints",
+      "query": "bilevel proximal point paper how to handle equality and inequality affine coupling constraints respectively",
+      "relevant_chunk_ids": [
+        "679c02946bc59dda-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "017bb185b06de72c-C0037",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0029",
+          "b3f03bef65256ae8-C0023",
+          "679c02946bc59dda-C0022",
+          "017bb185b06de72c-C0041"
+        ],
+        "hybrid_rrf": [
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0029",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0040",
+          "017bb185b06de72c-C0037",
+          "679c02946bc59dda-C0022"
+        ],
+        "hybrid_rerank": [
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0029",
+          "017bb185b06de72c-C0041",
+          "68699812d603c771-C0031",
+          "017bb185b06de72c-C0037"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-012-gne-double-layer",
+      "query": "Why is the GNE solving algorithm called a bilevel algorithm in the paper",
+      "relevant_chunk_ids": [
+        "679c02946bc59dda-C0000",
+        "679c02946bc59dda-C0004",
+        "679c02946bc59dda-C0005"
+      ],
+      "rankings": {
+        "dense": [
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0038",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0003",
+          "b3f03bef65256ae8-C0021",
+          "679c02946bc59dda-C0001",
+          "679c02946bc59dda-C0015"
+        ],
+        "hybrid_rrf": [
+          "679c02946bc59dda-C0003",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0038",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0015",
+          "017bb185b06de72c-C0045"
+        ],
+        "hybrid_rerank": [
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0038",
+          "679c02946bc59dda-C0003",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0015",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0040"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.6,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.6,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-013-consensus-information",
+      "query": "consensus-based distributed Nash Equilibrium solving players directly observe all opponents' actions",
+      "relevant_chunk_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0002",
+        "8097c2e32a040c2f-C0006"
+      ],
+      "rankings": {
+        "dense": [
+          "8097c2e32a040c2f-C0000",
+          "8097c2e32a040c2f-C0004",
+          "68699812d603c771-C0020",
+          "8097c2e32a040c2f-C0002",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0000",
+          "b3f03bef65256ae8-C0039",
+          "68699812d603c771-C0001"
+        ],
+        "hybrid_rrf": [
+          "8097c2e32a040c2f-C0000",
+          "8097c2e32a040c2f-C0002",
+          "8097c2e32a040c2f-C0004",
+          "8097c2e32a040c2f-C0003",
+          "b3f03bef65256ae8-C0028",
+          "68699812d603c771-C0001",
+          "b3f03bef65256ae8-C0039",
+          "68699812d603c771-C0020"
+        ],
+        "hybrid_rerank": [
+          "8097c2e32a040c2f-C0000",
+          "8097c2e32a040c2f-C0002",
+          "8097c2e32a040c2f-C0003",
+          "8097c2e32a040c2f-C0004",
+          "8097c2e32a040c2f-C0024",
+          "b3f03bef65256ae8-C0039",
+          "b3f03bef65256ae8-C0028",
+          "68699812d603c771-C0001"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-014-consensus-method",
+      "query": "two main components of consensus-based NE solving strategy",
+      "relevant_chunk_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0002",
+        "8097c2e32a040c2f-C0003",
+        "8097c2e32a040c2f-C0006"
+      ],
+      "rankings": {
+        "dense": [
+          "b3f03bef65256ae8-C0008",
+          "b3f03bef65256ae8-C0007",
+          "b3f03bef65256ae8-C0010",
+          "b3f03bef65256ae8-C0001",
+          "b3f03bef65256ae8-C0028",
+          "b3f03bef65256ae8-C0039",
+          "679c02946bc59dda-C0002",
+          "b3f03bef65256ae8-C0013"
+        ],
+        "hybrid_rrf": [
+          "b3f03bef65256ae8-C0007",
+          "8097c2e32a040c2f-C0002",
+          "679c02946bc59dda-C0002",
+          "b3f03bef65256ae8-C0010",
+          "b3f03bef65256ae8-C0008",
+          "82314d0bd4754f24-C0017",
+          "679c02946bc59dda-C0005",
+          "b3f03bef65256ae8-C0046"
+        ],
+        "hybrid_rerank": [
+          "8097c2e32a040c2f-C0002",
+          "679c02946bc59dda-C0003",
+          "b3f03bef65256ae8-C0007",
+          "b3f03bef65256ae8-C0010",
+          "679c02946bc59dda-C0002",
+          "4c26f68525f2edb0-C0016",
+          "679c02946bc59dda-C0005",
+          "82314d0bd4754f24-C0017"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.25,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.25,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.25,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.25,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-015-consensus-convergence",
+      "query": "consensus NE strategy convergence conclusions non-quadratic games quadratic games",
+      "relevant_chunk_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0009",
+        "8097c2e32a040c2f-C0010",
+        "8097c2e32a040c2f-C0014"
+      ],
+      "rankings": {
+        "dense": [
+          "b3f03bef65256ae8-C0006",
+          "b3f03bef65256ae8-C0008",
+          "b3f03bef65256ae8-C0039",
+          "b3f03bef65256ae8-C0001",
+          "8097c2e32a040c2f-C0004",
+          "679c02946bc59dda-C0002",
+          "68699812d603c771-C0020",
+          "68699812d603c771-C0001"
+        ],
+        "hybrid_rrf": [
+          "8097c2e32a040c2f-C0004",
+          "8097c2e32a040c2f-C0000",
+          "8097c2e32a040c2f-C0006",
+          "b3f03bef65256ae8-C0001",
+          "b3f03bef65256ae8-C0007",
+          "b3f03bef65256ae8-C0006",
+          "b3f03bef65256ae8-C0008",
+          "b3f03bef65256ae8-C0039"
+        ],
+        "hybrid_rerank": [
+          "8097c2e32a040c2f-C0004",
+          "8097c2e32a040c2f-C0000",
+          "8097c2e32a040c2f-C0006",
+          "b3f03bef65256ae8-C0006",
+          "b3f03bef65256ae8-C0007",
+          "4c26f68525f2edb0-C0016",
+          "b3f03bef65256ae8-C0001",
+          "82314d0bd4754f24-C0017"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.25,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.25,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.25,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.25,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-016-continuous-advantages",
+      "query": "advantages of continuous-time control methods for distributed Nash equilibrium solving",
+      "relevant_chunk_ids": [
+        "b3f03bef65256ae8-C0002",
+        "b3f03bef65256ae8-C0004",
+        "b3f03bef65256ae8-C0046",
+        "b3f03bef65256ae8-C0047"
+      ],
+      "rankings": {
+        "dense": [
+          "b3f03bef65256ae8-C0046",
+          "8097c2e32a040c2f-C0004",
+          "8097c2e32a040c2f-C0001",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0030",
+          "b3f03bef65256ae8-C0047",
+          "b3f03bef65256ae8-C0058",
+          "b3f03bef65256ae8-C0059"
+        ],
+        "hybrid_rrf": [
+          "b3f03bef65256ae8-C0046",
+          "b3f03bef65256ae8-C0047",
+          "8097c2e32a040c2f-C0001",
+          "68699812d603c771-C0030",
+          "b3f03bef65256ae8-C0058",
+          "b3f03bef65256ae8-C0002",
+          "68699812d603c771-C0003",
+          "679c02946bc59dda-C0069"
+        ],
+        "hybrid_rerank": [
+          "b3f03bef65256ae8-C0047",
+          "b3f03bef65256ae8-C0046",
+          "68699812d603c771-C0003",
+          "8097c2e32a040c2f-C0004",
+          "8097c2e32a040c2f-C0001",
+          "b3f03bef65256ae8-C0058",
+          "f9dcb1528729941e-C0029",
+          "b3f03bef65256ae8-C0057"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.25,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-017-ne-seeking-challenges",
+      "query": "continuous-time Nash equilibrium review survey equilibrium solving difficulties",
+      "relevant_chunk_ids": [
+        "b3f03bef65256ae8-C0001"
+      ],
+      "rankings": {
+        "dense": [
+          "68699812d603c771-C0023",
+          "f9dcb1528729941e-C0027",
+          "68699812d603c771-C0021",
+          "8097c2e32a040c2f-C0004",
+          "b3f03bef65256ae8-C0047",
+          "b3f03bef65256ae8-C0050",
+          "f9dcb1528729941e-C0000",
+          "b3f03bef65256ae8-C0046"
+        ],
+        "hybrid_rrf": [
+          "b3f03bef65256ae8-C0047",
+          "8097c2e32a040c2f-C0004",
+          "f9dcb1528729941e-C0029",
+          "68699812d603c771-C0023",
+          "f9dcb1528729941e-C0027",
+          "68699812d603c771-C0003",
+          "b3f03bef65256ae8-C0046",
+          "68699812d603c771-C0030"
+        ],
+        "hybrid_rerank": [
+          "8097c2e32a040c2f-C0004",
+          "68699812d603c771-C0003",
+          "f9dcb1528729941e-C0027",
+          "b3f03bef65256ae8-C0047",
+          "68699812d603c771-C0030",
+          "68699812d603c771-C0023",
+          "f9dcb1528729941e-C0029",
+          "b3f03bef65256ae8-C0046"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-018-nonsmooth-constraints",
+      "query": "allowed constraints in non-smooth distributed algorithms for generalized convex games",
+      "relevant_chunk_ids": [
+        "68699812d603c771-C0000",
+        "68699812d603c771-C0001"
+      ],
+      "rankings": {
+        "dense": [
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0031",
+          "68699812d603c771-C0005",
+          "679c02946bc59dda-C0005",
+          "f9dcb1528729941e-C0002",
+          "f9dcb1528729941e-C0029"
+        ],
+        "hybrid_rrf": [
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0031",
+          "f9dcb1528729941e-C0029",
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0023",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0069",
+          "68699812d603c771-C0003"
+        ],
+        "hybrid_rerank": [
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0002",
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0003",
+          "f9dcb1528729941e-C0029",
+          "68699812d603c771-C0031",
+          "68699812d603c771-C0005"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-019-nonsmooth-penalty",
+      "query": "nonsmooth generalized convex games penalty methods constraints",
+      "relevant_chunk_ids": [
+        "68699812d603c771-C0000",
+        "68699812d603c771-C0001",
+        "68699812d603c771-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0005",
+          "68699812d603c771-C0003",
+          "017bb185b06de72c-C0041",
+          "68699812d603c771-C0002",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0006",
+          "68699812d603c771-C0001"
+        ],
+        "hybrid_rrf": [
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0002",
+          "68699812d603c771-C0005",
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0006",
+          "68699812d603c771-C0003",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0031"
+        ],
+        "hybrid_rerank": [
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0002",
+          "f9dcb1528729941e-C0000",
+          "017bb185b06de72c-C0041",
+          "68699812d603c771-C0003",
+          "68699812d603c771-C0005",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0001"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.5
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-020-nonsmooth-convergence",
+      "query": "centralized vs distributed convergence non-smooth generalized convex game algorithm",
+      "relevant_chunk_ids": [
+        "68699812d603c771-C0001"
+      ],
+      "rankings": {
+        "dense": [
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0031",
+          "679c02946bc59dda-C0002",
+          "68699812d603c771-C0005",
+          "b3f03bef65256ae8-C0039",
+          "68699812d603c771-C0023",
+          "679c02946bc59dda-C0004"
+        ],
+        "hybrid_rrf": [
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0005",
+          "68699812d603c771-C0031",
+          "68699812d603c771-C0000",
+          "f9dcb1528729941e-C0029",
+          "679c02946bc59dda-C0069",
+          "b3f03bef65256ae8-C0006",
+          "8097c2e32a040c2f-C0001"
+        ],
+        "hybrid_rerank": [
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0003",
+          "b3f03bef65256ae8-C0006",
+          "8097c2e32a040c2f-C0001",
+          "68699812d603c771-C0005",
+          "f9dcb1528729941e-C0029",
+          "68699812d603c771-C0031"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-021-dynamic-game-model",
+      "query": "dynamic potential games time-varying environments player decisions",
+      "relevant_chunk_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0009",
+          "82314d0bd4754f24-C0017",
+          "8cd42a00c01c48e6-C0001",
+          "8cd42a00c01c48e6-C0002",
+          "82314d0bd4754f24-C0016",
+          "b3f03bef65256ae8-C0045",
+          "b3f03bef65256ae8-C0009"
+        ],
+        "hybrid_rrf": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0001",
+          "8cd42a00c01c48e6-C0009",
+          "8cd42a00c01c48e6-C0048",
+          "82314d0bd4754f24-C0017",
+          "82314d0bd4754f24-C0016",
+          "8cd42a00c01c48e6-C0002",
+          "b3f03bef65256ae8-C0009"
+        ],
+        "hybrid_rerank": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0048",
+          "8cd42a00c01c48e6-C0001",
+          "8cd42a00c01c48e6-C0005",
+          "8cd42a00c01c48e6-C0002",
+          "8cd42a00c01c48e6-C0009",
+          "8097c2e32a040c2f-C0003",
+          "82314d0bd4754f24-C0016"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-022-dynamic-reduction",
+      "query": "why dynamic potential games are easier to solve than general dynamic games",
+      "relevant_chunk_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "8cd42a00c01c48e6-C0009",
+          "8cd42a00c01c48e6-C0002",
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0011",
+          "82314d0bd4754f24-C0017",
+          "8cd42a00c01c48e6-C0012",
+          "8cd42a00c01c48e6-C0021",
+          "8cd42a00c01c48e6-C0008"
+        ],
+        "hybrid_rrf": [
+          "8cd42a00c01c48e6-C0002",
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0009",
+          "82314d0bd4754f24-C0017",
+          "8cd42a00c01c48e6-C0011",
+          "8cd42a00c01c48e6-C0003",
+          "8cd42a00c01c48e6-C0005",
+          "8cd42a00c01c48e6-C0050"
+        ],
+        "hybrid_rerank": [
+          "8cd42a00c01c48e6-C0002",
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0005",
+          "8cd42a00c01c48e6-C0003",
+          "8cd42a00c01c48e6-C0011",
+          "8cd42a00c01c48e6-C0048",
+          "8cd42a00c01c48e6-C0012",
+          "8cd42a00c01c48e6-C0009"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-023-dynamic-applications",
+      "query": "constrained dynamic potential game four types of communication applications",
+      "relevant_chunk_ids": [
+        "8cd42a00c01c48e6-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0050",
+          "8cd42a00c01c48e6-C0004",
+          "82314d0bd4754f24-C0033",
+          "8cd42a00c01c48e6-C0003",
+          "8097c2e32a040c2f-C0015",
+          "82314d0bd4754f24-C0035",
+          "679c02946bc59dda-C0067"
+        ],
+        "hybrid_rrf": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0004",
+          "8cd42a00c01c48e6-C0050",
+          "8cd42a00c01c48e6-C0003",
+          "8cd42a00c01c48e6-C0048",
+          "8cd42a00c01c48e6-C0051",
+          "82314d0bd4754f24-C0016",
+          "8097c2e32a040c2f-C0015"
+        ],
+        "hybrid_rerank": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0048",
+          "8cd42a00c01c48e6-C0004",
+          "8cd42a00c01c48e6-C0005",
+          "8cd42a00c01c48e6-C0050",
+          "8097c2e32a040c2f-C0015",
+          "8cd42a00c01c48e6-C0003",
+          "8cd42a00c01c48e6-C0051"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-024-uav-decomposition",
+      "query": "two steps of multi-UAV energy-saving coverage deployment problem",
+      "relevant_chunk_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "e124a1b43d67eaf0-C0033",
+          "e124a1b43d67eaf0-C0011",
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0004",
+          "e124a1b43d67eaf0-C0001"
+        ],
+        "hybrid_rrf": [
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0011",
+          "e124a1b43d67eaf0-C0022",
+          "e124a1b43d67eaf0-C0033",
+          "e124a1b43d67eaf0-C0003"
+        ],
+        "hybrid_rerank": [
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0011",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0023",
+          "e124a1b43d67eaf0-C0033",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0015"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.25
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.6,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-025-uav-algorithm",
+      "query": "algorithm for energy-efficient coverage deployment of multiple UAVs",
+      "relevant_chunk_ids": [
+        "e124a1b43d67eaf0-C0001"
+      ],
+      "rankings": {
+        "dense": [
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0022",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0031",
+          "e124a1b43d67eaf0-C0015",
+          "e124a1b43d67eaf0-C0046"
+        ],
+        "hybrid_rrf": [
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0022",
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0033",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0015"
+        ],
+        "hybrid_rerank": [
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0022",
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0023",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0015"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-026-uav-coverage",
+      "query": "multi-UAV coverage model successful coverage description communication objective",
+      "relevant_chunk_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0001",
+        "e124a1b43d67eaf0-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0041",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0004",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0038"
+        ],
+        "hybrid_rrf": [
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0004",
+          "e124a1b43d67eaf0-C0017",
+          "e124a1b43d67eaf0-C0041"
+        ],
+        "hybrid_rerank": [
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0004",
+          "e124a1b43d67eaf0-C0041",
+          "e124a1b43d67eaf0-C0019"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.25
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.6,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.6,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-027-hf-objective",
+      "query": "high-frequency communication channel diversity optimization objective",
+      "relevant_chunk_ids": [
+        "8ea212392df2fe65-C0000",
+        "8ea212392df2fe65-C0001",
+        "8ea212392df2fe65-C0005"
+      ],
+      "rankings": {
+        "dense": [
+          "8ea212392df2fe65-C0006",
+          "8ea212392df2fe65-C0001",
+          "8ea212392df2fe65-C0000",
+          "8ea212392df2fe65-C0014",
+          "8ea212392df2fe65-C0016",
+          "8cd42a00c01c48e6-C0031",
+          "8277b122b6bf049f-C0036",
+          "8ea212392df2fe65-C0004"
+        ],
+        "hybrid_rrf": [
+          "8ea212392df2fe65-C0000",
+          "e124a1b43d67eaf0-C0046",
+          "82314d0bd4754f24-C0009",
+          "8ea212392df2fe65-C0001",
+          "82314d0bd4754f24-C0010",
+          "82314d0bd4754f24-C0032",
+          "017bb185b06de72c-C0010",
+          "e124a1b43d67eaf0-C0045"
+        ],
+        "hybrid_rerank": [
+          "8ea212392df2fe65-C0001",
+          "8ea212392df2fe65-C0000",
+          "82314d0bd4754f24-C0009",
+          "017bb185b06de72c-C0024",
+          "82314d0bd4754f24-C0032",
+          "8cd42a00c01c48e6-C0035",
+          "82314d0bd4754f24-C0010",
+          "8ea212392df2fe65-C0022"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-028-hf-decomposition",
+      "query": "HF channel diversity optimization reduce solving difficulty huge strategy space",
+      "relevant_chunk_ids": [
+        "8ea212392df2fe65-C0004",
+        "8ea212392df2fe65-C0005",
+        "8ea212392df2fe65-C0007"
+      ],
+      "rankings": {
+        "dense": [
+          "8ea212392df2fe65-C0006",
+          "e124a1b43d67eaf0-C0011",
+          "8ea212392df2fe65-C0001",
+          "8ea212392df2fe65-C0014",
+          "e124a1b43d67eaf0-C0010",
+          "8ea212392df2fe65-C0016",
+          "82314d0bd4754f24-C0026",
+          "8ea212392df2fe65-C0021"
+        ],
+        "hybrid_rrf": [
+          "e124a1b43d67eaf0-C0011",
+          "8ea212392df2fe65-C0006",
+          "8ea212392df2fe65-C0001",
+          "8cd42a00c01c48e6-C0047",
+          "82314d0bd4754f24-C0037",
+          "8ea212392df2fe65-C0022",
+          "8cd42a00c01c48e6-C0035",
+          "8ea212392df2fe65-C0016"
+        ],
+        "hybrid_rerank": [
+          "8ea212392df2fe65-C0006",
+          "8ea212392df2fe65-C0001",
+          "8ea212392df2fe65-C0004",
+          "e124a1b43d67eaf0-C0002",
+          "82314d0bd4754f24-C0032",
+          "e124a1b43d67eaf0-C0011",
+          "8cd42a00c01c48e6-C0035",
+          "82314d0bd4754f24-C0037"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 0.3333333333333333,
+            "precision": 0.125,
+            "mrr": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-029-equality-problem",
+      "query": "nonsmooth noncooperative games equality constraints",
+      "relevant_chunk_ids": [
+        "f9dcb1528729941e-C0000",
+        "f9dcb1528729941e-C0002",
+        "f9dcb1528729941e-C0004"
+      ],
+      "rankings": {
+        "dense": [
+          "f9dcb1528729941e-C0000",
+          "f9dcb1528729941e-C0002",
+          "68699812d603c771-C0026",
+          "68699812d603c771-C0000",
+          "f9dcb1528729941e-C0001",
+          "68699812d603c771-C0003",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0005"
+        ],
+        "hybrid_rrf": [
+          "f9dcb1528729941e-C0000",
+          "f9dcb1528729941e-C0001",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0023",
+          "f9dcb1528729941e-C0002",
+          "68699812d603c771-C0003",
+          "68699812d603c771-C0006",
+          "f9dcb1528729941e-C0027"
+        ],
+        "hybrid_rerank": [
+          "f9dcb1528729941e-C0000",
+          "f9dcb1528729941e-C0001",
+          "f9dcb1528729941e-C0002",
+          "f9dcb1528729941e-C0027",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0004",
+          "68699812d603c771-C0005",
+          "68699812d603c771-C0003"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-030-equality-method",
+      "query": "main techniques used in equality-constrained Nash Equilibrium solution strategy",
+      "relevant_chunk_ids": [
+        "f9dcb1528729941e-C0000",
+        "f9dcb1528729941e-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "f9dcb1528729941e-C0027",
+          "f9dcb1528729941e-C0000",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0001",
+          "8097c2e32a040c2f-C0002",
+          "68699812d603c771-C0002",
+          "68699812d603c771-C0003",
+          "8097c2e32a040c2f-C0004"
+        ],
+        "hybrid_rrf": [
+          "f9dcb1528729941e-C0027",
+          "f9dcb1528729941e-C0000",
+          "68699812d603c771-C0003",
+          "68699812d603c771-C0001",
+          "68699812d603c771-C0005",
+          "8097c2e32a040c2f-C0004",
+          "f9dcb1528729941e-C0001",
+          "68699812d603c771-C0023"
+        ],
+        "hybrid_rerank": [
+          "f9dcb1528729941e-C0000",
+          "68699812d603c771-C0003",
+          "f9dcb1528729941e-C0027",
+          "f9dcb1528729941e-C0001",
+          "8097c2e32a040c2f-C0002",
+          "68699812d603c771-C0005",
+          "f9dcb1528729941e-C0002",
+          "68699812d603c771-C0001"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-031-equality-feasibility",
+      "query": "How does equality-constrained NE policy ensure state satisfies feasible constraints?",
+      "relevant_chunk_ids": [
+        "f9dcb1528729941e-C0002",
+        "f9dcb1528729941e-C0006",
+        "f9dcb1528729941e-C0007"
+      ],
+      "rankings": {
+        "dense": [
+          "b3f03bef65256ae8-C0016",
+          "b3f03bef65256ae8-C0048",
+          "017bb185b06de72c-C0042",
+          "e124a1b43d67eaf0-C0012",
+          "017bb185b06de72c-C0044",
+          "017bb185b06de72c-C0041",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0000"
+        ],
+        "hybrid_rrf": [
+          "b3f03bef65256ae8-C0016",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0000",
+          "b3f03bef65256ae8-C0018",
+          "68699812d603c771-C0001",
+          "679c02946bc59dda-C0009",
+          "8cd42a00c01c48e6-C0015",
+          "b3f03bef65256ae8-C0001"
+        ],
+        "hybrid_rerank": [
+          "b3f03bef65256ae8-C0018",
+          "68699812d603c771-C0006",
+          "679c02946bc59dda-C0000",
+          "b3f03bef65256ae8-C0016",
+          "8cd42a00c01c48e6-C0015",
+          "b3f03bef65256ae8-C0001",
+          "f9dcb1528729941e-C0027",
+          "f9dcb1528729941e-C0000"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-032-data-sharing-motive",
+      "query": "why competing organizations may refuse to share data",
+      "relevant_chunk_ids": [
+        "d65d7a8617754fb7-C0001",
+        "d65d7a8617754fb7-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "d65d7a8617754fb7-C0002",
+          "d65d7a8617754fb7-C0001",
+          "d65d7a8617754fb7-C0005",
+          "d65d7a8617754fb7-C0006",
+          "d65d7a8617754fb7-C0000",
+          "d65d7a8617754fb7-C0007",
+          "d65d7a8617754fb7-C0004",
+          "d65d7a8617754fb7-C0027"
+        ],
+        "hybrid_rrf": [
+          "d65d7a8617754fb7-C0001",
+          "d65d7a8617754fb7-C0002",
+          "d65d7a8617754fb7-C0000",
+          "d65d7a8617754fb7-C0005",
+          "d65d7a8617754fb7-C0006",
+          "d65d7a8617754fb7-C0004",
+          "d65d7a8617754fb7-C0007",
+          "d65d7a8617754fb7-C0028"
+        ],
+        "hybrid_rerank": [
+          "d65d7a8617754fb7-C0001",
+          "d65d7a8617754fb7-C0002",
+          "d65d7a8617754fb7-C0004",
+          "d65d7a8617754fb7-C0005",
+          "d65d7a8617754fb7-C0028",
+          "d65d7a8617754fb7-C0006",
+          "d65d7a8617754fb7-C0000",
+          "d65d7a8617754fb7-C0007"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-033-data-sharing-mechanism",
+      "query": "incentive mechanism and solution method for data competitiveness",
+      "relevant_chunk_ids": [
+        "d65d7a8617754fb7-C0001"
+      ],
+      "rankings": {
+        "dense": [
+          "d65d7a8617754fb7-C0005",
+          "d65d7a8617754fb7-C0001",
+          "d65d7a8617754fb7-C0028",
+          "d65d7a8617754fb7-C0002",
+          "d65d7a8617754fb7-C0029",
+          "d65d7a8617754fb7-C0006",
+          "d65d7a8617754fb7-C0000",
+          "d65d7a8617754fb7-C0003"
+        ],
+        "hybrid_rrf": [
+          "d65d7a8617754fb7-C0001",
+          "d65d7a8617754fb7-C0005",
+          "d65d7a8617754fb7-C0028",
+          "d65d7a8617754fb7-C0002",
+          "d65d7a8617754fb7-C0006",
+          "d65d7a8617754fb7-C0029",
+          "d65d7a8617754fb7-C0000",
+          "d65d7a8617754fb7-C0003"
+        ],
+        "hybrid_rerank": [
+          "d65d7a8617754fb7-C0001",
+          "d65d7a8617754fb7-C0005",
+          "d65d7a8617754fb7-C0028",
+          "d65d7a8617754fb7-C0002",
+          "d65d7a8617754fb7-C0000",
+          "d65d7a8617754fb7-C0024",
+          "d65d7a8617754fb7-C0006",
+          "d65d7a8617754fb7-C0003"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-034-cognitive-two-games",
+      "query": "cognitive radio networks local altruistic game local congestion game respectively optimize",
+      "relevant_chunk_ids": [
+        "82314d0bd4754f24-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0005",
+          "82314d0bd4754f24-C0032",
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0004",
+          "82314d0bd4754f24-C0027"
+        ],
+        "hybrid_rrf": [
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0032",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0005",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0004",
+          "82314d0bd4754f24-C0027"
+        ],
+        "hybrid_rerank": [
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0032",
+          "82314d0bd4754f24-C0027",
+          "82314d0bd4754f24-C0004",
+          "82314d0bd4754f24-C0030"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.16666666666666666
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-035-cognitive-csap",
+      "query": "role of C-SAP in cognitive radio channel selection",
+      "relevant_chunk_ids": [
+        "82314d0bd4754f24-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "82314d0bd4754f24-C0024",
+          "82314d0bd4754f24-C0023",
+          "82314d0bd4754f24-C0025",
+          "82314d0bd4754f24-C0018",
+          "82314d0bd4754f24-C0027",
+          "82314d0bd4754f24-C0028",
+          "82314d0bd4754f24-C0026",
+          "82314d0bd4754f24-C0029"
+        ],
+        "hybrid_rrf": [
+          "82314d0bd4754f24-C0024",
+          "82314d0bd4754f24-C0023",
+          "82314d0bd4754f24-C0027",
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0018",
+          "82314d0bd4754f24-C0034",
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0019"
+        ],
+        "hybrid_rerank": [
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0024",
+          "82314d0bd4754f24-C0027",
+          "82314d0bd4754f24-C0026",
+          "82314d0bd4754f24-C0023",
+          "82314d0bd4754f24-C0025",
+          "82314d0bd4754f24-C0018"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.25
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-036-cognitive-local",
+      "query": "why cognitive radio channel selection adopts local interaction games",
+      "relevant_chunk_ids": [
+        "82314d0bd4754f24-C0001",
+        "82314d0bd4754f24-C0002",
+        "82314d0bd4754f24-C0000",
+        "82314d0bd4754f24-C0033"
+      ],
+      "rankings": {
+        "dense": [
+          "82314d0bd4754f24-C0002",
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0032",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0026",
+          "82314d0bd4754f24-C0005"
+        ],
+        "hybrid_rrf": [
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0002",
+          "82314d0bd4754f24-C0032",
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0035",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0011"
+        ],
+        "hybrid_rerank": [
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0032",
+          "82314d0bd4754f24-C0002",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0022",
+          "82314d0bd4754f24-C0011"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.75,
+            "precision": 0.6,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.75,
+            "precision": 0.6,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.75,
+            "precision": 0.6,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-037-colocated-resources",
+      "query": "co-located edge computing GNE model joint resource allocation participant optimization objective",
+      "relevant_chunk_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0007"
+      ],
+      "rankings": {
+        "dense": [
+          "017bb185b06de72c-C0007",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0046",
+          "679c02946bc59dda-C0001",
+          "017bb185b06de72c-C0051",
+          "679c02946bc59dda-C0004",
+          "017bb185b06de72c-C0045",
+          "017bb185b06de72c-C0049"
+        ],
+        "hybrid_rrf": [
+          "017bb185b06de72c-C0046",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0007",
+          "017bb185b06de72c-C0049",
+          "017bb185b06de72c-C0045",
+          "017bb185b06de72c-C0051"
+        ],
+        "hybrid_rerank": [
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0007",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0051",
+          "017bb185b06de72c-C0008",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0046",
+          "017bb185b06de72c-C0049"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-038-colocated-queue",
+      "query": "co-located edge computing task offloading delay generalized Nash equilibrium problem formulation",
+      "relevant_chunk_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0032"
+      ],
+      "rankings": {
+        "dense": [
+          "017bb185b06de72c-C0055",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0000",
+          "68699812d603c771-C0030",
+          "679c02946bc59dda-C0069",
+          "679c02946bc59dda-C0068",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0031"
+        ],
+        "hybrid_rrf": [
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0055",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0052",
+          "017bb185b06de72c-C0054",
+          "68699812d603c771-C0030",
+          "68699812d603c771-C0023"
+        ],
+        "hybrid_rerank": [
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0051",
+          "017bb185b06de72c-C0055",
+          "4c26f68525f2edb0-C0005",
+          "68699812d603c771-C0002",
+          "017bb185b06de72c-C0054"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-039-colocated-algorithms",
+      "query": "What equilibria do the two decentralized algorithms proposed in the co-located edge computing GNE paper respectively solve for?",
+      "relevant_chunk_ids": [
+        "017bb185b06de72c-C0007",
+        "017bb185b06de72c-C0039",
+        "017bb185b06de72c-C0040",
+        "017bb185b06de72c-C0042",
+        "017bb185b06de72c-C0043"
+      ],
+      "rankings": {
+        "dense": [
+          "679c02946bc59dda-C0000",
+          "017bb185b06de72c-C0007",
+          "679c02946bc59dda-C0004",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0051",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0002",
+          "017bb185b06de72c-C0046"
+        ],
+        "hybrid_rrf": [
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0046",
+          "679c02946bc59dda-C0000",
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0007",
+          "017bb185b06de72c-C0003",
+          "679c02946bc59dda-C0004",
+          "017bb185b06de72c-C0051"
+        ],
+        "hybrid_rerank": [
+          "017bb185b06de72c-C0000",
+          "679c02946bc59dda-C0000",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0051",
+          "017bb185b06de72c-C0007",
+          "017bb185b06de72c-C0005",
+          "679c02946bc59dda-C0004",
+          "017bb185b06de72c-C0046"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.2,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.2,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.2,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.2,
+            "precision": 0.125,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.2,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.2,
+            "precision": 0.125,
+            "mrr": 0.2
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-040-colocated-appendix",
+      "query": "co-located edge computing mathematical appendix end-to-end delay infinite discontinuity properties",
+      "relevant_chunk_ids": [
+        "0f27423c825612c0-C0000",
+        "0f27423c825612c0-C0001"
+      ],
+      "rankings": {
+        "dense": [
+          "017bb185b06de72c-C0053",
+          "017bb185b06de72c-C0028",
+          "4c26f68525f2edb0-C0035",
+          "017bb185b06de72c-C0046",
+          "0f27423c825612c0-C0000",
+          "4c26f68525f2edb0-C0034",
+          "0f27423c825612c0-C0001",
+          "4c26f68525f2edb0-C0001"
+        ],
+        "hybrid_rrf": [
+          "4c26f68525f2edb0-C0001",
+          "017bb185b06de72c-C0046",
+          "0f27423c825612c0-C0000",
+          "017bb185b06de72c-C0028",
+          "4c26f68525f2edb0-C0000",
+          "017bb185b06de72c-C0053",
+          "017bb185b06de72c-C0049",
+          "017bb185b06de72c-C0021"
+        ],
+        "hybrid_rerank": [
+          "0f27423c825612c0-C0000",
+          "017bb185b06de72c-C0028",
+          "017bb185b06de72c-C0049",
+          "017bb185b06de72c-C0046",
+          "4c26f68525f2edb0-C0001",
+          "0f27423c825612c0-C0001",
+          "017bb185b06de72c-C0026",
+          "017bb185b06de72c-C0053"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-041-partial-vehicular-field",
+      "query": "vehicle MEC offloading algorithm equilibrium properties 2025 real fleet deployment average energy saving ratio",
+      "relevant_chunk_ids": [
+        "4c26f68525f2edb0-C0003",
+        "4c26f68525f2edb0-C0019",
+        "4c26f68525f2edb0-C0029"
+      ],
+      "rankings": {
+        "dense": [
+          "4c26f68525f2edb0-C0029",
+          "4c26f68525f2edb0-C0033",
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0028",
+          "4c26f68525f2edb0-C0003",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0000"
+        ],
+        "hybrid_rrf": [
+          "4c26f68525f2edb0-C0029",
+          "4c26f68525f2edb0-C0031",
+          "4c26f68525f2edb0-C0028",
+          "4c26f68525f2edb0-C0030",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0033",
+          "4c26f68525f2edb0-C0003",
+          "4c26f68525f2edb0-C0000"
+        ],
+        "hybrid_rerank": [
+          "4c26f68525f2edb0-C0000",
+          "4c26f68525f2edb0-C0029",
+          "4c26f68525f2edb0-C0030",
+          "4c26f68525f2edb0-C0003",
+          "4c26f68525f2edb0-C0007",
+          "4c26f68525f2edb0-C0032",
+          "4c26f68525f2edb0-C0013",
+          "4c26f68525f2edb0-C0028"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.3333333333333333,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.6666666666666666,
+            "precision": 0.4,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 0.6666666666666666,
+            "precision": 0.25,
+            "mrr": 0.5
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-042-partial-blockchain-quantum",
+      "query": "blockchain cloud-fog pricing two-stage game equilibrium price comparison quantum miners",
+      "relevant_chunk_ids": [
+        "df7e81c5ac2dae80-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0012",
+          "df7e81c5ac2dae80-C0053",
+          "df7e81c5ac2dae80-C0001",
+          "df7e81c5ac2dae80-C0018"
+        ],
+        "hybrid_rrf": [
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0011",
+          "df7e81c5ac2dae80-C0018",
+          "df7e81c5ac2dae80-C0012",
+          "df7e81c5ac2dae80-C0006",
+          "df7e81c5ac2dae80-C0051"
+        ],
+        "hybrid_rerank": [
+          "df7e81c5ac2dae80-C0000",
+          "df7e81c5ac2dae80-C0005",
+          "df7e81c5ac2dae80-C0018",
+          "df7e81c5ac2dae80-C0058",
+          "df7e81c5ac2dae80-C0006",
+          "df7e81c5ac2dae80-C0017",
+          "df7e81c5ac2dae80-C0004",
+          "df7e81c5ac2dae80-C0011"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.25
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-043-partial-drl-gpt6",
+      "query": "DRL+GNN routing generalization compared with GPT-6 routing algorithm results",
+      "relevant_chunk_ids": [
+        "8277b122b6bf049f-C0000",
+        "8277b122b6bf049f-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0035",
+          "8277b122b6bf049f-C0021",
+          "8277b122b6bf049f-C0029"
+        ],
+        "hybrid_rrf": [
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0021",
+          "8277b122b6bf049f-C0002",
+          "8277b122b6bf049f-C0022",
+          "8277b122b6bf049f-C0020"
+        ],
+        "hybrid_rerank": [
+          "8277b122b6bf049f-C0003",
+          "8277b122b6bf049f-C0037",
+          "8277b122b6bf049f-C0030",
+          "8277b122b6bf049f-C0000",
+          "8277b122b6bf049f-C0022",
+          "8277b122b6bf049f-C0023",
+          "8277b122b6bf049f-C0021",
+          "8277b122b6bf049f-C0020"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.25
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-044-partial-gne-asynchronous",
+      "query": "bilevel proximal point GNE algorithm inequality constraints asynchronous directed graph speedup",
+      "relevant_chunk_ids": [
+        "679c02946bc59dda-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0000",
+          "b3f03bef65256ae8-C0021",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0057",
+          "68699812d603c771-C0031",
+          "679c02946bc59dda-C0038",
+          "679c02946bc59dda-C0040"
+        ],
+        "hybrid_rrf": [
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0017",
+          "679c02946bc59dda-C0040",
+          "68699812d603c771-C0031",
+          "679c02946bc59dda-C0015"
+        ],
+        "hybrid_rerank": [
+          "679c02946bc59dda-C0057",
+          "679c02946bc59dda-C0004",
+          "679c02946bc59dda-C0017",
+          "679c02946bc59dda-C0000",
+          "679c02946bc59dda-C0005",
+          "679c02946bc59dda-C0015",
+          "679c02946bc59dda-C0029",
+          "679c02946bc59dda-C0003"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.5
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.25
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.25
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-045-partial-consensus-grid",
+      "query": "consensus NE algorithm communication assumptions convergence time real national power grid",
+      "relevant_chunk_ids": [
+        "8097c2e32a040c2f-C0000",
+        "8097c2e32a040c2f-C0006",
+        "8097c2e32a040c2f-C0002",
+        "8097c2e32a040c2f-C0005",
+        "8097c2e32a040c2f-C0007"
+      ],
+      "rankings": {
+        "dense": [
+          "b3f03bef65256ae8-C0008",
+          "82314d0bd4754f24-C0005",
+          "b3f03bef65256ae8-C0007",
+          "e124a1b43d67eaf0-C0043",
+          "017bb185b06de72c-C0047",
+          "b3f03bef65256ae8-C0047",
+          "679c02946bc59dda-C0067",
+          "8ea212392df2fe65-C0009"
+        ],
+        "hybrid_rrf": [
+          "b3f03bef65256ae8-C0008",
+          "b3f03bef65256ae8-C0007",
+          "e124a1b43d67eaf0-C0043",
+          "e124a1b43d67eaf0-C0040",
+          "b3f03bef65256ae8-C0039",
+          "b3f03bef65256ae8-C0033",
+          "8097c2e32a040c2f-C0036",
+          "b3f03bef65256ae8-C0034"
+        ],
+        "hybrid_rerank": [
+          "679c02946bc59dda-C0003",
+          "b3f03bef65256ae8-C0007",
+          "b3f03bef65256ae8-C0034",
+          "b3f03bef65256ae8-C0033",
+          "b3f03bef65256ae8-C0008",
+          "e124a1b43d67eaf0-C0043",
+          "e124a1b43d67eaf0-C0045",
+          "b3f03bef65256ae8-C0046"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-046-partial-nonsmooth-dataset",
+      "query": "non-smooth generalized convex games l1 penalty industrial dataset accuracy",
+      "relevant_chunk_ids": [
+        "68699812d603c771-C0000",
+        "68699812d603c771-C0002",
+        "68699812d603c771-C0003",
+        "68699812d603c771-C0023"
+      ],
+      "rankings": {
+        "dense": [
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0003",
+          "68699812d603c771-C0005",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0002",
+          "f9dcb1528729941e-C0002",
+          "68699812d603c771-C0001",
+          "b3f03bef65256ae8-C0006"
+        ],
+        "hybrid_rrf": [
+          "68699812d603c771-C0002",
+          "68699812d603c771-C0005",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0031",
+          "68699812d603c771-C0001",
+          "f9dcb1528729941e-C0029",
+          "68699812d603c771-C0006",
+          "68699812d603c771-C0000"
+        ],
+        "hybrid_rerank": [
+          "68699812d603c771-C0003",
+          "68699812d603c771-C0023",
+          "68699812d603c771-C0005",
+          "017bb185b06de72c-C0041",
+          "f9dcb1528729941e-C0002",
+          "68699812d603c771-C0031",
+          "68699812d603c771-C0000",
+          "68699812d603c771-C0002"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.8,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.5,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.75,
+            "precision": 0.375,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.5,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-047-partial-dynamic-5g",
+      "query": "dynamic potential games optimal control problem formulation throughput improvement 5G commercial networks",
+      "relevant_chunk_ids": [
+        "8cd42a00c01c48e6-C0000",
+        "8cd42a00c01c48e6-C0002"
+      ],
+      "rankings": {
+        "dense": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0050",
+          "82314d0bd4754f24-C0014",
+          "8cd42a00c01c48e6-C0051",
+          "82314d0bd4754f24-C0017",
+          "8cd42a00c01c48e6-C0002",
+          "8cd42a00c01c48e6-C0004",
+          "82314d0bd4754f24-C0031"
+        ],
+        "hybrid_rrf": [
+          "8cd42a00c01c48e6-C0000",
+          "82314d0bd4754f24-C0017",
+          "8cd42a00c01c48e6-C0050",
+          "8cd42a00c01c48e6-C0004",
+          "8cd42a00c01c48e6-C0051",
+          "8cd42a00c01c48e6-C0002",
+          "82314d0bd4754f24-C0005",
+          "82314d0bd4754f24-C0014"
+        ],
+        "hybrid_rerank": [
+          "8cd42a00c01c48e6-C0000",
+          "8cd42a00c01c48e6-C0048",
+          "82314d0bd4754f24-C0013",
+          "8cd42a00c01c48e6-C0004",
+          "82314d0bd4754f24-C0030",
+          "82314d0bd4754f24-C0017",
+          "82314d0bd4754f24-C0005",
+          "8cd42a00c01c48e6-C0002"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-048-partial-uav-carbon",
+      "query": "multi-UAV coverage deployment two optimization steps 2025 urban trial carbon emission reduction ratio",
+      "relevant_chunk_ids": [
+        "e124a1b43d67eaf0-C0000",
+        "e124a1b43d67eaf0-C0001"
+      ],
+      "rankings": {
+        "dense": [
+          "e124a1b43d67eaf0-C0033",
+          "e124a1b43d67eaf0-C0038",
+          "e124a1b43d67eaf0-C0023",
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0004",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0011"
+        ],
+        "hybrid_rrf": [
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0023",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0038",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0010",
+          "e124a1b43d67eaf0-C0011"
+        ],
+        "hybrid_rerank": [
+          "e124a1b43d67eaf0-C0000",
+          "e124a1b43d67eaf0-C0045",
+          "e124a1b43d67eaf0-C0023",
+          "e124a1b43d67eaf0-C0001",
+          "e124a1b43d67eaf0-C0003",
+          "e124a1b43d67eaf0-C0010",
+          "e124a1b43d67eaf0-C0002",
+          "e124a1b43d67eaf0-C0033"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.14285714285714285
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 0.3333333333333333
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 0.3333333333333333
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.25,
+            "mrr": 1.0
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-049-partial-cognitive-6g",
+      "query": "latency comparison of local altruistic game and local congestion game in 6G prototype system",
+      "relevant_chunk_ids": [
+        "82314d0bd4754f24-C0000"
+      ],
+      "rankings": {
+        "dense": [
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0005",
+          "82314d0bd4754f24-C0004",
+          "82314d0bd4754f24-C0028",
+          "82314d0bd4754f24-C0027",
+          "82314d0bd4754f24-C0019"
+        ],
+        "hybrid_rrf": [
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0004",
+          "82314d0bd4754f24-C0005",
+          "82314d0bd4754f24-C0027",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0000",
+          "82314d0bd4754f24-C0028"
+        ],
+        "hybrid_rerank": [
+          "82314d0bd4754f24-C0033",
+          "82314d0bd4754f24-C0031",
+          "82314d0bd4754f24-C0003",
+          "82314d0bd4754f24-C0027",
+          "82314d0bd4754f24-C0030",
+          "82314d0bd4754f24-C0032",
+          "82314d0bd4754f24-C0026",
+          "82314d0bd4754f24-C0000"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.14285714285714285
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0
+          },
+          "8": {
+            "recall": 1.0,
+            "precision": 0.125,
+            "mrr": 0.125
+          }
+        }
+      }
+    },
+    {
+      "case_id": "st-050-partial-colocated-live",
+      "query": "co-located edge computing model resource allocation 2026 commercial network sites energy saving ratio",
+      "relevant_chunk_ids": [
+        "017bb185b06de72c-C0000",
+        "017bb185b06de72c-C0007"
+      ],
+      "rankings": {
+        "dense": [
+          "017bb185b06de72c-C0053",
+          "017bb185b06de72c-C0054",
+          "017bb185b06de72c-C0051",
+          "017bb185b06de72c-C0052",
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0046",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0055"
+        ],
+        "hybrid_rrf": [
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0053",
+          "017bb185b06de72c-C0046",
+          "017bb185b06de72c-C0052",
+          "017bb185b06de72c-C0054",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0051"
+        ],
+        "hybrid_rerank": [
+          "017bb185b06de72c-C0000",
+          "017bb185b06de72c-C0049",
+          "017bb185b06de72c-C0003",
+          "017bb185b06de72c-C0046",
+          "017bb185b06de72c-C0051",
+          "017bb185b06de72c-C0053",
+          "017bb185b06de72c-C0005",
+          "017bb185b06de72c-C0054"
+        ]
+      },
+      "scores": {
+        "dense": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 0.2
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 0.2
+          }
+        },
+        "hybrid_rrf": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        },
+        "hybrid_rerank": {
+          "5": {
+            "recall": 0.5,
+            "precision": 0.2,
+            "mrr": 1.0
+          },
+          "8": {
+            "recall": 0.5,
+            "precision": 0.125,
+            "mrr": 1.0
+          }
+        }
+      }
+    }
+  ]
+}
